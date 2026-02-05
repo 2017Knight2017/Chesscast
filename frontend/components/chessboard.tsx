@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Chessground from '@bezalel6/react-chessground';
 import { Chess, Move } from 'chess.js';
-import '@bezalel6/react-chessground/dist/styles/chessground.css';
 
 interface BroadcastProps {
   pgn: string;
