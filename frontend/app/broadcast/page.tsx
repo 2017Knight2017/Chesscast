@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import ChessBroadcast from '@/components/chessboard';
+import { createMatch } from '@/components/actions';
 
 export default function BroadcastPage() {
   const [pgnInput, setPgnInput] = useState('');
@@ -23,7 +24,7 @@ export default function BroadcastPage() {
           onChange={(e) => setPgnInput(e.target.value)}
         />
         <button
-          onClick={handleStart}
+          onClick={() => createMatch(pgnInput)}
           className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded font-bold transition-colors"
         >
           Запустить трансляцию

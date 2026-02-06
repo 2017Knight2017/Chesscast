@@ -1,0 +1,21 @@
+[Event "Live Chess"]
+[Site "Chess.com"]
+[Date "2026.01.24"]
+[Round "?"]
+[White "Stacheusz"]
+[Black "2017Knight2017"]
+[Result "0-1"]
+[TimeControl "600+5"]
+[WhiteElo "1546"]
+[BlackElo "1540"]
+[Termination "2017Knight2017 поставил мат"]
+[ECO "C65"]
+[EndTime "12:02:48 GMT+0000"]
+[Link "https://www.chess.com/game/live/148421754354"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. O-O Bc5 5. d3 O-O 6. c3 d6 7. Bg5 h6 8. Bh4 a6
+9. Ba4 b5 10. Bb3 g5 11. Nxg5 hxg5 12. Bxg5 Kg7 13. Qf3 Rh8 14. Qg3 Nh5 15. Qh4
+Nf6 16. Qg3 Nh5 17. Bxd8+ Nxg3 18. Bg5 Nxf1 19. Kxf1 Rxh2 20. Kg1 Rh7 21. Nd2
+Be6 22. Bxe6 fxe6 23. g3 Rah8 24. Bh4 d5 25. Kg2 Be7 26. Nf3 Bxh4 27. Nxh4 Rxh4
+28. gxh4 Rxh4 29. f3 Ne7 30. Kf2 Rh2+ 31. Ke3 Rxb2 32. a4 c5 33. axb5 d4+ 34.
+cxd4 cxd4# 0-1

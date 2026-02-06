@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # 1. Backend (Nest.js)
   backend:
@@ -7,10 +5,10 @@ services:
     expose:
       - "3000"
     depends_on:
-      - postgres
+      - db
       - redis
     environment:
-      DATABASE_URL: postgres://user:password@postgres:5432/db
+      DATABASE_URL: postgres://admin:Gay%4mE92%%7@postgres:5432/db
 
   # 2. Frontend (Next.js)
   frontend:
@@ -30,18 +28,39 @@ services:
       - redis
 
   # 4. Database (PostgreSQL)
-  postgres:
-    image: postgres:15-alpine
+  db:
+    image: postgres:17-alpine  # Используем легкую версию Alpine
+    container_name: chess_postgres
+    restart: always
+    ports:
+      - "5432:5432" # Пробрасываем порт наружу, чтобы ты мог подключиться через DBeaver
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: db
+      POSTGRES_USER: admin           # Твой логин
+      POSTGRES_PASSWORD: Gay%4mE92%%7        # Твой пароль (для локальной разработки пойдет)
+      POSTGRES_DB: chess_platform    # Имя базы данных
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data # !ВАЖНО: Чтобы данные не стирались при перезапуске
 
   # 5. Redis
   redis:
     image: redis:7-alpine
+    container_name: chess_redis
+    restart: always
+    command: redis-server --save 60 1 --loglevel warning # Включаем сохранение данных на диск раз в минуту
+    ports:
+      - "6379:6379" # Проброс порта для локального подключения (RedisInsight)
+    volumes:
+      - redis_data:/data # Чтобы данные очереди не исчезли при перезагрузке
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: redis_ui
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
 
   nginx:
     image: nginx:stable-alpine
@@ -52,6 +71,8 @@ services:
     depends_on:
       - frontend
       - backend
+
 volumes:
   postgres_data:
+  redis_data:
   frontend_node_modules:
