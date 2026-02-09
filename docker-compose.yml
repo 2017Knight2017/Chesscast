@@ -9,6 +9,7 @@ services:
       - redis
     environment:
       DATABASE_URL: postgres://admin:Gay%4mE92%%7@postgres:5432/db
+      REDIS_HOST: redis
 
   # 2. Frontend (Next.js)
   frontend:
@@ -18,8 +19,11 @@ services:
     volumes:
       - ./frontend:/app         # Связываем папку на диске с папкой в контейнере
       - frontend_node_modules:/app/node_modules  # Используем именованный том, чтобы инициализировать модули из образа
+    depends_on:
+      - redis
     environment:
       - WATCHPACK_POLLING=true
+      - REDIS_URL=redis://redis:6379
 
   # 3. Worker (Python)
   worker:
@@ -44,7 +48,7 @@ services:
   # 5. Redis
   redis:
     image: redis:7-alpine
-    container_name: chess_redis
+    container_name: redis
     restart: always
     command: redis-server --save 60 1 --loglevel warning # Включаем сохранение данных на диск раз в минуту
     ports:

@@ -10,7 +10,9 @@ export async function createMatch(pgn: string) {
     await redis.lpush('chess_tasks_queue', JSON.stringify({
         id: matchId,
         pgn: pgn,
-        timestamp: Date.now()
+		status: "pending",
+        createdAt: Date.now(),
+		movesData: null
     }));
 
     return { success: true, matchId };

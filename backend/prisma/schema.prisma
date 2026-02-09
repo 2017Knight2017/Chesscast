@@ -18,6 +18,8 @@ model Match {
   pgn       String   @db.Text
   status    String   @default("pending") // pending, running, finished
   createdAt DateTime @default(now())
+  startedAt DateTime?
+  finishedAt DateTime?
   
   // Связь с ходами (храним как JSON, так быстрее для шахмат)
   movesData Json?    
