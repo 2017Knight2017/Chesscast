@@ -30,6 +30,11 @@ services:
     build: ./worker
     depends_on:
       - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
 
   # 4. Database (PostgreSQL)
   db:

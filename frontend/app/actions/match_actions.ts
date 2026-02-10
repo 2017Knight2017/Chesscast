@@ -10,7 +10,7 @@ interface StartMatchResponse {
 }
 
 export async function startMatchAction(matchId: string) {
-  const apiUrl = process.env.NEST_API_URL || 'http://localhost:3000';
+  const apiUrl = process.env.NEST_API_URL;
   
   try {
     // 1. Делаем запрос к NestJS

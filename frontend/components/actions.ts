@@ -1,6 +1,7 @@
 'use server'
 
 import redis from '@/components/redis';
+import { Console } from 'console';
 import { randomUUID } from 'crypto';
 
 export async function createMatch(pgn: string) {
