@@ -22,11 +22,28 @@ def get_durations(pgn: str, initial_time: int, archetypes: tuple[str, str]) -> l
 	for move in game.mainline_moves():
 		fen = board.fen()
 		
+		with open("archetypes.json") as data_file:
+			data = json.load(data_file)
+			bias_white = {
+				"k": data[archetypes[0]]["k"],
+				"w1": data[archetypes[0]]["weights"][0],
+				"w2": data[archetypes[0]]["weights"][1],
+				"w3": data[archetypes[0]]["weights"][2],
+				"sigma": data[archetypes[0]]["sigma"]
+			}
+			bias_black = {
+				"k": data[archetypes[1]]["k"],
+				"w1": data[archetypes[1]]["weights"][0],
+				"w2": data[archetypes[1]]["weights"][1],
+				"w3": data[archetypes[1]]["weights"][2],
+				"sigma": data[archetypes[1]]["sigma"]
+			}
+
 		evaluation, move_time = calculate_move_time(
 			time_left,
 			moves_played,
 			fen,
-			archetypes[board.turn == chess.BLACK]
+			bias_white if board.turn == chess.WHITE else bias_black
 		)
 		
 		evaluations.append(evaluation)
@@ -94,15 +111,11 @@ def calculate_move_time(
 		time_left_sec: float,
 		moves_played: int,
 		fen: str,
-		archetype: str,
+		bias: tuple[float, float, float, float, float],
 		control_move=40,
 		engine_depth=12,
 	) -> tuple[float, float]:
-
-		with open("archetypes.json") as data_file:
-			data = json.load(data_file)
-			k, w1, w2, w3, sigma = data[archetype]["k"], *data[archetype]["weights"], data[archetype]["sigma"]
-
+		
 		board = chess.Board(fen)
 			
 		moves_to_control = control_move - moves_played
@@ -120,7 +133,7 @@ def calculate_move_time(
 		e1, e2 = vals[0], vals[1]
 
 		delta = abs(e1 - e2)
-		uncertainty_factor = 1 - math.tanh(k * delta)
+		uncertainty_factor = 1 - math.tanh(bias["k"] * delta)
 
 		if stats["winning_lines"] >= 2:
 			uncertainty_factor *= 0.1 
@@ -139,14 +152,14 @@ def calculate_move_time(
 
 		tactics_factor = tactics / board.legal_moves.count()
 
-		complexity = w1 * uncertainty_factor + w2 * sharpness_factor + w3 * tactics_factor
+		complexity = bias["w1"] * uncertainty_factor + bias["w2"] * sharpness_factor + bias["w3"] * tactics_factor
 		complexity_mult = 0.5 + (complexity * 2.0)
 
 		panic_factor = 1.0
 		if moves_to_control <= 3 and time_left_sec < 180:
 			panic_factor = 0.3
 
-		calculated_time = base_time * complexity_mult * panic_factor * random.lognormvariate(0, sigma)
+		calculated_time = base_time * complexity_mult * panic_factor * random.lognormvariate(0, bias["sigma"])
 
 		max_allowed = time_left_sec - 5
 		if max_allowed < 1:
