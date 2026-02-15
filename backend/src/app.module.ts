@@ -30,6 +30,10 @@ import { ConfigModule } from '@nestjs/config';
 		}),
 		BullModule.registerQueue({
 			name: 'chess_broadcast',
+			defaultJobOptions: {
+    			removeOnComplete: true, 
+    			removeOnFail: false,
+			}
 		}),
 		MatchesModule,
 		DrizzleModule

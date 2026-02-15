@@ -45,7 +45,7 @@ def get_durations(pgn: str, initial_time: int, archetypes: tuple[str, str]) -> l
 			fen,
 			bias_white if board.turn == chess.WHITE else bias_black
 		)
-		
+		print(evaluation)
 		evaluations.append(evaluation)
 		durations.append(move_time)
 		
@@ -59,7 +59,7 @@ def get_durations(pgn: str, initial_time: int, archetypes: tuple[str, str]) -> l
 	return evaluations, durations
 
 
-def normalize_evaluations(info_list, mate_ceiling=30000):
+def normalize_evaluations(info_list: list[chess.engine.InfoDict], mate_ceiling=30000):
 	cp_values = []
 		
 	mate_stats = {
@@ -169,19 +169,19 @@ def calculate_move_time(
 
 		final_time = max(min_allowed, min(calculated_time, max_allowed))
 
-		return e1, final_time
+		return e1 if board.turn == chess.WHITE else e1 * -1, final_time
 
 
-def report_analysis(match_id: str, evaluations: list[float], durations: list[float]):
+def report_analysis(match_id: str, evaluations: list[int], durations: list[float]):
 	url = f"{os.getenv('BACKEND_URL')}/matches/{match_id}/report"
+	print(evaluations)
 	payload = {
-		"evaluation": list(map(str, evaluations)),
-		"durations_data": list(map(lambda x: int(x * 1000), durations))
+		"evaluations": evaluations,
+		"durations": list(map(lambda x: int(x * 1000), durations))
 	}
 	try:
 		response = requests.post(url, json=payload, timeout=5)
 		response.raise_for_status()
-		print(response.json())
 		return response.json()
 	except requests.exceptions.RequestException as e:
 		print(f"Ошибка при связи с бэкендом: {e}")

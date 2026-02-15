@@ -1,5 +1,6 @@
 import { Controller, Post, Param, HttpCode, HttpStatus, Body } from '@nestjs/common';
 import { MatchesService } from './matches.service';
+import { log } from 'console';
 
 @Controller('matches')
 export class MatchesController {
@@ -18,9 +19,9 @@ export class MatchesController {
 	@Post(':id/report')
 	async handleWorkerReport(
 		@Param('id') id: string,
-		@Body() data: { evaluations: number[], durations_data: number[] }
+		@Body() data: { evaluations: number[], durations: number[] }
 	) {
-		return await this.matchesService.handleWorkerReport(id, data['evaluations'], data['durations_data'])
+		return await this.matchesService.handleWorkerReport(id, data['evaluations'], data['durations'])
 		
 
 		// Опционально: уведомляем фронтенд через WebSockets, что данные готовы

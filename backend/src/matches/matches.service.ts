@@ -5,6 +5,7 @@ import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import * as q from 'drizzle-orm';
 import { Queue } from 'bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
+import { log } from 'console';
 
 
 @Injectable()
