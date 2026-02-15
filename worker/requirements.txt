@@ -1,5 +1,3 @@
-redis
+bullmq
 requests
-sqlalchemy
-psycopg2-binary
 chess

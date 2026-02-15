@@ -1,10 +1,11 @@
-import redis
+import asyncio
 import json
 import math
 import random
 import chess, chess.engine, chess.pgn
-from sqlalchemy import create_engine, text
-from db_url import DB_URL
+import os
+import requests
+from bullmq import Worker
 from io import StringIO
 
 
@@ -14,30 +15,80 @@ def get_durations(pgn: str, initial_time: int, archetypes: tuple[str, str]) -> l
 	
 	board = chess.Board()
 	durations = []
+	evaluations = []
 	moves_played = 0
 	time_left = initial_time
 	
 	for move in game.mainline_moves():
 		fen = board.fen()
 		
-		move_time = calculate_move_time(
+		evaluation, move_time = calculate_move_time(
 			time_left,
 			moves_played,
 			fen,
 			archetypes[board.turn == chess.BLACK]
 		)
 		
+		evaluations.append(evaluation)
 		durations.append(move_time)
 		
 		time_left -= move_time
 		if time_left < 0:
 			time_left = 0
 		moves_played += 1
-		
+		print(f"Ход {moves_played}")
 		board.push(move)
 	
-	return durations
+	return evaluations, durations
 
+
+def normalize_evaluations(info_list, mate_ceiling=30000):
+	cp_values = []
+		
+	mate_stats = {
+		"winning_lines": 0,
+		"losing_lines": 0,
+		"closest_win": float('inf'),
+		"closest_loss": float('inf')
+	}
+
+	if not info_list:
+		return [0], mate_stats
+
+	for i, info in enumerate(info_list):
+		score_obj = info["score"].relative
+		
+		if score_obj.is_mate():
+			moves_to_mate = score_obj.mate()
+			
+			if moves_to_mate > 0:
+				val = mate_ceiling - (moves_to_mate * 100)
+				
+				mate_stats["winning_lines"] += 1
+				mate_stats["closest_win"] = min(mate_stats["closest_win"], moves_to_mate)
+				
+			else:
+				abs_moves = abs(moves_to_mate)
+				val = -mate_ceiling + (abs_moves * 100)
+				
+				mate_stats["losing_lines"] += 1
+				mate_stats["closest_loss"] = min(mate_stats["closest_loss"], abs_moves)
+		
+		else:
+			val = score_obj.score()
+			if val is None: val = 0 
+			
+			val = max(min(val, 1500), -1500)
+
+		cp_values.append(val)
+
+	while len(cp_values) < 3:
+		last_val = cp_values[-1] if cp_values else 0
+		padding = last_val - 100 if last_val > -29000 else last_val
+		cp_values.append(padding)
+
+	return cp_values, mate_stats
+	
 
 def calculate_move_time(
 		time_left_sec: float,
@@ -45,20 +96,14 @@ def calculate_move_time(
 		fen: str,
 		archetype: str,
 		control_move=40,
-		is_forcing=False,
 		engine_depth=12,
-	) -> float:
-		if is_forcing:
-			return random.uniform(2, 10)
+	) -> tuple[float, float]:
 
 		with open("archetypes.json") as data_file:
 			data = json.load(data_file)
 			k, w1, w2, w3, sigma = data[archetype]["k"], *data[archetype]["weights"], data[archetype]["sigma"]
 
 		board = chess.Board(fen)
-		with chess.engine.SimpleEngine.popen_uci("stockfish") as eng:
-			best_moves = eng.analyse(board, chess.engine.Limit(depth=engine_depth), multipv=3)
-			scores = [move.get('score') for move in best_moves]
 			
 		moves_to_control = control_move - moves_played
 		if moves_to_control <= 0:
@@ -67,12 +112,32 @@ def calculate_move_time(
 		conservatism_factor = 4
 		base_time = time_left_sec / (moves_to_control + conservatism_factor)
 
-		uncertainty_factor = 1 - math.tanh(k - abs(scores[0] - scores[1]))
-		sharpness_factor = abs(scores[0] - (sum(scores)/3)) / 100
-		tactics = 0
+		with chess.engine.SimpleEngine.popen_uci("../usr/games/stockfish") as eng:
+			info = eng.analyse(board, chess.engine.Limit(depth=engine_depth), multipv=3)
+
+		vals, stats = normalize_evaluations(info)
+
+		e1, e2 = vals[0], vals[1]
+
+		delta = abs(e1 - e2)
+		uncertainty_factor = 1 - math.tanh(k * delta)
+
+		if stats["winning_lines"] >= 2:
+			uncertainty_factor *= 0.1 
+
+		if stats["closest_win"] == 1:
+			uncertainty_factor = 0
+
+		sharpness_factor = abs(e1 - (sum(vals))/3) / 100
+		tactics = sum(1 for move in board.legal_moves if board.is_capture(move))
+
 		for move in board.legal_moves:
-			tactics += board.is_check(move) + board.is_capture(move)
-		tactics_factor = tactics / len(board.legal_moves)
+			board.push(move)
+			if board.is_check():
+				tactics += 1
+			board.pop()
+
+		tactics_factor = tactics / board.legal_moves.count()
 
 		complexity = w1 * uncertainty_factor + w2 * sharpness_factor + w3 * tactics_factor
 		complexity_mult = 0.5 + (complexity * 2.0)
@@ -91,46 +156,50 @@ def calculate_move_time(
 
 		final_time = max(min_allowed, min(calculated_time, max_allowed))
 
-		return final_time
+		return e1, final_time
 
 
-engine = create_engine(DB_URL)
+def report_analysis(match_id: str, evaluations: list[float], durations: list[float]):
+	url = f"{os.getenv('BACKEND_URL')}/matches/{match_id}/report"
+	payload = {
+		"evaluation": list(map(str, evaluations)),
+		"durations_data": list(map(lambda x: int(x * 1000), durations))
+	}
+	try:
+		response = requests.post(url, json=payload, timeout=5)
+		response.raise_for_status()
+		print(response.json())
+		return response.json()
+	except requests.exceptions.RequestException as e:
+		print(f"Ошибка при связи с бэкендом: {e}")
+		return None
 
-def save_match_data(match_id, moves_json):
-	with engine.connect() as conn:
-		query = text("UPDATE \"Match\" SET \"movesData\" = :data, status = 'ready' WHERE id = :id")
-		conn.execute(query, {"data": json.dumps(moves_json), "id": match_id})
-		conn.commit()
+async def process_job(job, job_token):
+	print(f"Обработка задачи {job.id}")
 
+	loop = asyncio.get_event_loop()
 
-def main():
-	print("dsadas")
-	r = redis.Redis(host='redis', port=6379, decode_responses=True)
-	while True:
-		task_data = r.blpop("chess_tasks_queue", timeout=0)
-		_, message = task_data
+	try:
+		match_id = job.data.get('id')
+		pgn = job.data.get('pgn')
+		archetypes = job.data.get('archetypes')
+		print(f"Получена задача для матча {match_id}")
+		evaluations, durations = await loop.run_in_executor(None, get_durations, pgn, 9000, archetypes)
+		report_analysis(match_id, evaluations, durations)
 		
-		try:
-			data = json.loads(message)
-			match_id = data.get('id')
-			pgn = data.get('pgn')
-			
-			print(f"Получена задача для матча {match_id}")
-			
-			durations = get_durations(pgn, 9000, ("intuitive", "calculator"))
-			
-			# 2. Формируем результат
-			result = {
-				"movesData": durations,
-				"status": "ready"
-			}
-			
-			# 3. Здесь должен быть код записи в PostgreSQL (через библиотеку psycopg2 или SQLAlchemy)
-			print(f"Результат для {match_id}: {durations}")
-			print(f"Данные успешно сохранены в БД. Матч готов к трансляции.")
-			
-		except Exception as e:
-			print(f"Ошибка при обработке задачи: {e}")
+	except Exception as e:
+		print(f"Ошибка при обработке задачи: {e}")
+
+async def main():
+	redis_opts = {"host":"redis", "port":6379}
+
+	worker = Worker("matches", process_job, {"connection": redis_opts, "concurrency": 1})
+	try:
+		await asyncio.Future() 
+	except (KeyboardInterrupt, asyncio.CancelledError):
+		print("Воркер останавливается...")
+	finally:
+		await worker.close()
 
 if __name__ == "__main__":
-	main()
+	asyncio.run(main())

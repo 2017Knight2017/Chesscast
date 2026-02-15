@@ -1,17 +1,29 @@
-import { Controller, Post, Param, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Param, HttpCode, HttpStatus, Body } from '@nestjs/common';
 import { MatchesService } from './matches.service';
 
 @Controller('matches')
 export class MatchesController {
-  constructor(private readonly matchesService: MatchesService) {}
+	constructor(private readonly matchesService: MatchesService) {}
 
-  @Post(':id/start')
-  @HttpCode(HttpStatus.OK)
-  async startMatch(@Param('id') id: string) {
-    // Логика:
-    // 1. Проверить статус в Redis/DB
-    // 2. Запустить таймер трансляции
-    // 3. Вернуть успех
-    return await this.matchesService.startBroadcasting(id);
-  }
+	@Post()
+	@HttpCode(HttpStatus.CREATED) 
+	async createBroadcast(
+		@Body('author') author: string,
+		@Body('pgn') pgn: string,
+		@Body('archetypes') archetypes: [string, string]
+	) {
+		return await this.matchesService.createBroadcast(author, pgn, archetypes);
+	}
+	
+	@Post(':id/report')
+	async handleWorkerReport(
+		@Param('id') id: string,
+		@Body() data: { evaluations: number[], durations_data: number[] }
+	) {
+		return await this.matchesService.handleWorkerReport(id, data['evaluations'], data['durations_data'])
+		
+
+		// Опционально: уведомляем фронтенд через WebSockets, что данные готовы
+		//this.eventsGateway.notifyMatchReady(id); 
+	}
 }

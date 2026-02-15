@@ -1,38 +1,27 @@
-
-#FROM oven/bun:1-alpine
-#
-#WORKDIR /app
-#
-## Копируем файлы зависимостей
-#COPY package.json bun.lock ./
-#RUN bun install --frozen-lockfile
-#
-## Копируем остальной код
-#COPY . .
-#
-## Собираем Nest.js (если используете TypeScript)
-#RUN bun run build
-#
-#EXPOSE 3000
-#CMD ["bun", "run", "start:prod"]
-
-
-# Стейдж 1: Сборка
-FROM oven/bun:1-alpine AS builder
+FROM oven/bun:1-alpine AS base
 WORKDIR /app
+
+# --- Этап зависимостей ---
+FROM base AS install
 COPY package.json bun.lock ./
-RUN bun install
-COPY . .
-# Генерируем клиент Prisma и собираем проект
-RUN bun x prisma generate
-RUN bun run build 
+RUN bun install --frozen-lockfile
 
-# Стейдж 2: Запуск
-FROM oven/bun:1.1-slim
-WORKDIR /app
-# Копируем только то, что нужно для работы
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
+# --- Этап сборки ---
+FROM base AS build
+COPY --from=install /app/node_modules ./node_modules
+COPY . .
+RUN bun run build
+
+# --- Финальный этап (Production) ---
+FROM base AS release
+COPY --from=install /app/node_modules ./node_modules
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/package.json ./package.json
+COPY --from=build /app/drizzle ./drizzle
+COPY --from=build /app/drizzle.config.ts ./drizzle.config.ts
+COPY --from=build /app/tsconfig.json ./tsconfig.json
+COPY --from=build /app/src ./src
+
+EXPOSE 3000
 
 CMD ["bun", "run", "start:prod"]

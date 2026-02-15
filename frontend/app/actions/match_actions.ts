@@ -1,28 +1,21 @@
 'use server'
 
-import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
-
-// Тип ответа от NestJS
 interface StartMatchResponse {
   success: boolean;
   message: string;
 }
 
-export async function startMatchAction(matchId: string) {
+export async function createMatchAction(pgn: string, archetypes: [string, string]) {
   const apiUrl = process.env.NEST_API_URL;
   
   try {
-    // 1. Делаем запрос к NestJS
-    // Обрати внимание: это запрос Server-to-Server
-    const res = await fetch(`${apiUrl}/matches/${matchId}/start`, {
+    const res = await fetch(`${apiUrl}/matches`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        // Если нужна авторизация, передаем токен
-        // 'Authorization': `Bearer ${token}` 
+        'Content-Type': 'application/json', 
       },
-      cache: 'no-store' // Важно! Не кешируем ответ
+	  body: JSON.stringify({ author: 'admin', pgn: pgn, archetypes: archetypes }),
+      cache: 'no-store'
     });
 
     if (!res.ok) {
@@ -34,9 +27,6 @@ export async function startMatchAction(matchId: string) {
     }
 
     const data: StartMatchResponse = await res.json();
-
-    // 2. Обновляем кэш страницы, чтобы UI сразу показал статус "Running"
-    revalidatePath(`/matches/${matchId}`);
     
     return { success: true, message: 'Трансляция запущена!' };
 

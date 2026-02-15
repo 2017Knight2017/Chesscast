@@ -14,21 +14,25 @@ export class AppModule {}
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { MatchesModule } from './matches/matches.module';
+import { DrizzleModule } from './drizzle/drizzle.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
 	imports: [
+		ConfigModule.forRoot({
+      		isGlobal: true,
+    	}),
 		BullModule.forRoot({
 			connection: {
-				host: process.env.REDIS_HOST, // 'redis' внутри Docker
+				host: process.env.REDIS_HOST, 
 				port: 6379,
 			},
 		}),
-		// Регистрация очереди, которую использует MatchesService/Processor
 		BullModule.registerQueue({
 			name: 'chess_broadcast',
 		}),
-		// Импортируем модуль матчей, чтобы контроллер и воркер были подключены
 		MatchesModule,
+		DrizzleModule
 	],
 })
 export class AppModule {}
