@@ -3,7 +3,7 @@ import Link from 'next/link';
 export default function HomePage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-24 bg-slate-900 text-white">
-      <h1 className="text-5xl font-extrabold mb-6">
+      <h1 className="text-5xl font-extrabold mb-6 text-center">
         Chess <span className="text-blue-500">Live</span> Stream
       </h1>
       
@@ -15,10 +15,10 @@ export default function HomePage() {
       <div className="flex gap-4">
         {/* Ссылка на будущую страницу создания трансляции */}
         <Link 
-          href="/broadcast" 
+          href="/new" 
           className="bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-lg font-semibold transition-all"
         >
-          Начать трансляцию
+          Создать трансляцию
         </Link>
         
         <button className="border border-slate-700 hover:bg-slate-800 px-8 py-3 rounded-lg font-semibold transition-all">
