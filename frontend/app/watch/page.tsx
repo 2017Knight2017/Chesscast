@@ -35,9 +35,10 @@ export default function WatchPage() {
 
 				{/* ЦЕНТР (Доска) */}
 				<section className="flex justify-center items-center">
-					{/* max-w-[min(50vw,70vh)] - хитрость, чтобы доска не вылезала по высоте */}
-					<div className="board-frame w-full max-w-[min(50vw,70vh)] aspect-square shadow-2xl p-[3%]">
-						<ChessBoard />
+					<div className="board-frame w-[90%] max-w-[70vh] aspect-square shadow-2xl flex items-center justify-center">
+						<div className="w-[83%] h-[83%]"> 
+							<ChessBoard />
+						</div>
 					</div>
 				</section>
 

@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "@bezalel6/react-chessground/dist/react-chessground.css";
+import 'chessground/assets/chessground.base.css';
+import 'chessground/assets/chessground.brown.css';
+import 'chessground/assets/chessground.cburnett.css';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

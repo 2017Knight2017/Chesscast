@@ -14,12 +14,14 @@ export default function ChessBoard() {
 	const [history, setHistory] = useState<Move[]>([]);
 
 	return (
-		<div className='flex justify-center items-center flex-col sepia-100 brightness-75 contrast-125'>
+		<div className='w-full h-full flex justify-center items-center flex-col sepia-100 brightness-75 contrast-125'>
 			<Chessground
 				fen={fen}
 				viewOnly={false}
+				width={"100%"}
+        		height={"100%"}
 				movable={{
-					free: false,
+					free: true,
 					color: "both"
 				}}
 				animation={{
