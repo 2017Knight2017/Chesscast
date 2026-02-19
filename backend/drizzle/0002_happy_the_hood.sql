@@ -1,0 +1,1 @@
+ALTER TABLE "broadcasts" RENAME TO "analysis";

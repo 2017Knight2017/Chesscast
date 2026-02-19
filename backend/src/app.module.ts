@@ -29,7 +29,14 @@ import { ConfigModule } from '@nestjs/config';
 			},
 		}),
 		BullModule.registerQueue({
-			name: 'chess_broadcast',
+			name: 'analysis',
+			defaultJobOptions: {
+    			removeOnComplete: true, 
+    			removeOnFail: false,
+			}
+		}),
+		BullModule.registerQueue({
+			name: 'timer',
 			defaultJobOptions: {
     			removeOnComplete: true, 
     			removeOnFail: false,

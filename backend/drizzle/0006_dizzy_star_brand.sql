@@ -1,0 +1,1 @@
+ALTER TABLE "analysis" ADD COLUMN "notation" text[] DEFAULT '{}'::text[] NOT NULL;

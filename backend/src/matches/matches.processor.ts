@@ -1,52 +1,68 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Processor, WorkerHost, InjectQueue } from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
-import { Logger, Inject } from '@nestjs/common';
-// Здесь ты бы импортировал WebSocketGateway, чтобы слать данные клиентам
-// import { MatchesGateway } from './matches.gateway';
+import { Inject, forwardRef } from '@nestjs/common';
+import { MatchesGateway } from './matches.gateway';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
+import * as sc from '../schema';
+import { eq, and } from 'drizzle-orm';
 
-@Processor('chess_broadcast')
+// Интерфейс данных, которые мы передаем в задачу Redis
+interface BroadcastJobData {
+	broadcastId: string;
+	nextMoveNumber: number; // Номер хода, который нужно сейчас показать
+}
+
+@Processor('match-timers')
 export class MatchesProcessor extends WorkerHost {
-  private readonly logger = new Logger(MatchesProcessor.name);
+	constructor(
+		@Inject(forwardRef(() => MatchesGateway)) private readonly gateway: MatchesGateway,
+		@Inject(DrizzleAsyncProvider) private db: NodePgDatabase<typeof sc>,
+		@InjectQueue('timer') private timerQueue: Queue,
+	) {
+		super();
+	}
 
-  constructor(@Inject('BullQueue_chess_broadcast') private queue: Queue) {
-    super();
-  }
+	async process(job: Job<{ matchId: string; moveIndex: number }>): Promise<void> {
+		const { matchId, moveIndex } = job.data;
 
-  async process(job: Job<any, any, string>): Promise<any> {
-    const { matchId, moveIndex, totalMoves, moveData, allMoves } = job.data;
+		const [broadcast] = await this.db
+			.select()
+			.from(sc.analysis)
+			.where(eq(sc.analysis.id, matchId))
+			.limit(1);
 
-    // 1. ЛОГИКА ТРАНСЛЯЦИИ
-    // Здесь мы отправляем данные по WebSocket всем, кто подписан на этот матч
-    this.logger.log(`📢 Матч ${matchId}: Ход ${moveIndex + 1}/${totalMoves} (${moveData.san})`);
-    
-    // this.matchesGateway.server.to(`match_${matchId}`).emit('new_move', moveData);
+		if (!broadcast) {
+			console.error(`Broadcast ${matchId} not found`);
+			return;
+		}
 
-    // 2. ПЛАНИРОВАНИЕ СЛЕДУЮЩЕГО ХОДА (Рекурсия)
-    const nextIndex = moveIndex + 1;
+		if (moveIndex >= broadcast.notation.length) {
+			this.gateway.server.to(matchId).emit('broadcastEnded', { matchId });
+			return;
+		}
 
-    if (nextIndex < totalMoves) {
-      const nextMove = allMoves[nextIndex];
-      const delay = moveData.duration * 1000; // Ждем столько, сколько длился текущий ход
+		this.gateway.server.to(matchId).emit('newMove', {
+			move: broadcast.notation[moveIndex],
+			evaluation: broadcast.evaluations[moveIndex],
+			nextMoveDelay: broadcast.durations[moveIndex],
+			moveIndex: moveIndex,
+		});
 
-      this.logger.log(`⏳ Следующий ход через ${delay} мс`);
+		const nextIndex = moveIndex + 1;
+		
+		if (nextIndex < broadcast.notation.length) {
+			const delay = broadcast.durations[moveIndex] || 1000;
 
-      // Добавляем следующую задачу в ту же очередь
-      await this.queue.add(
-        'broadcast-move',
-        {
-            matchId,
-            moveIndex: nextIndex,
-            totalMoves,
-            moveData: nextMove,
-            allMoves
-        },
-        {
-            delay: delay // Самое важное: отложенное выполнение!
-        }
-      );
-    } else {
-        this.logger.log(`🏁 Матч ${matchId} завершен!`);
-        // Тут можно обновить статус в БД на FINISHED
-    }
-  }
+			await this.timerQueue.add(
+				'nextStep',
+				{ matchId, moveIndex: nextIndex },
+				{
+					delay: delay,
+					jobId: `timer_${matchId}`,
+					removeOnComplete: true,
+				},
+			);
+		}
+	}
 }

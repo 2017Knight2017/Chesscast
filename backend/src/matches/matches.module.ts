@@ -3,21 +3,20 @@ import { BullModule } from '@nestjs/bullmq';
 import { MatchesController } from './matches.controller';
 import { MatchesService } from './matches.service';
 import { MatchesProcessor } from './matches.processor';
+import { MatchesGateway } from './matches.gateway';
 import { DrizzleModule } from 'src/drizzle/drizzle.module';
 
 @Module({
 	imports: [
 		DrizzleModule,
-		BullModule.registerQueue({
-			name: 'matches',
-		}),
 	],
 	controllers: [
 		MatchesController
 	],
 	providers: [
 		MatchesService, 
-		//MatchesProcessor,
+		MatchesProcessor,
+		MatchesGateway
 	],
 	exports: [MatchesService],
 })

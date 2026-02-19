@@ -13,6 +13,7 @@ def get_durations(pgn: str, initial_time: int, archetypes: tuple[str, str]) -> l
 	pgn_io = StringIO(pgn)
 	game = chess.pgn.read_game(pgn_io)
 	
+	notation = [move.uci() for move in game.mainline_moves()]
 	board = chess.Board()
 	durations = []
 	evaluations = []
@@ -56,7 +57,7 @@ def get_durations(pgn: str, initial_time: int, archetypes: tuple[str, str]) -> l
 		print(f"Ход {moves_played}")
 		board.push(move)
 	
-	return evaluations, durations
+	return evaluations, durations, notation
 
 
 def normalize_evaluations(info_list: list[chess.engine.InfoDict], mate_ceiling=30000):
@@ -172,12 +173,13 @@ def calculate_move_time(
 		return e1 if board.turn == chess.WHITE else e1 * -1, final_time
 
 
-def report_analysis(match_id: str, evaluations: list[int], durations: list[float]):
+def report_analysis(match_id: str, evaluations: list[int], durations: list[float], notation: list[str]):
 	url = f"{os.getenv('BACKEND_URL')}/matches/{match_id}/report"
 	print(evaluations)
 	payload = {
 		"evaluations": evaluations,
-		"durations": list(map(lambda x: int(x * 1000), durations))
+		"durations": list(map(lambda x: int(x * 1000), durations)),
+		"notation": notation
 	}
 	try:
 		response = requests.post(url, json=payload, timeout=5)
@@ -197,8 +199,8 @@ async def process_job(job, job_token):
 		pgn = job.data.get('pgn')
 		archetypes = job.data.get('archetypes')
 		print(f"Получена задача для матча {match_id}")
-		evaluations, durations = await loop.run_in_executor(None, get_durations, pgn, 9000, archetypes)
-		report_analysis(match_id, evaluations, durations)
+		evaluations, durations, notation = await loop.run_in_executor(None, get_durations, pgn, 9000, archetypes)
+		report_analysis(match_id, evaluations, durations, notation)
 		
 	except Exception as e:
 		print(f"Ошибка при обработке задачи: {e}")
