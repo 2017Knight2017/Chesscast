@@ -5,50 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1770881028285,
-      "tag": "0000_swift_miek",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1770912293896,
-      "tag": "0001_amazing_tusk",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1771474184714,
-      "tag": "0002_happy_the_hood",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1771474537318,
-      "tag": "0003_flowery_dragon_man",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1771476325094,
-      "tag": "0004_groovy_manta",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1771476746681,
-      "tag": "0005_premium_vindicator",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1771482672785,
-      "tag": "0006_dizzy_star_brand",
+      "when": 1771563341063,
+      "tag": "0000_friendly_menace",
       "breakpoints": true
     }
   ]

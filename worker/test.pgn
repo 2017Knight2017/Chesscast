@@ -1,21 +1,22 @@
-[Event "Live Chess"]
-[Site "Chess.com"]
-[Date "2026.01.24"]
-[Round "?"]
-[White "Stacheusz"]
-[Black "2017Knight2017"]
+[Event "Capablanca - Alekhine World Championship Match"]
+[Site "Buenos Aires ARG"]
+[Date "1927.09.16"]
+[EventDate "?"]
+[Round "1"]
 [Result "0-1"]
-[TimeControl "600+5"]
-[WhiteElo "1546"]
-[BlackElo "1540"]
-[Termination "2017Knight2017 поставил мат"]
-[ECO "C65"]
-[EndTime "12:02:48 GMT+0000"]
-[Link "https://www.chess.com/game/live/148421754354"]
+[White "Jose Raul Capablanca"]
+[Black "Alexander Alekhine"]
+[ECO "C01"]
+[WhiteElo "?"]
+[BlackElo "?"]
+[PlyCount "86"]
 
-1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. O-O Bc5 5. d3 O-O 6. c3 d6 7. Bg5 h6 8. Bh4 a6
-9. Ba4 b5 10. Bb3 g5 11. Nxg5 hxg5 12. Bxg5 Kg7 13. Qf3 Rh8 14. Qg3 Nh5 15. Qh4
-Nf6 16. Qg3 Nh5 17. Bxd8+ Nxg3 18. Bg5 Nxf1 19. Kxf1 Rxh2 20. Kg1 Rh7 21. Nd2
-Be6 22. Bxe6 fxe6 23. g3 Rah8 24. Bh4 d5 25. Kg2 Be7 26. Nf3 Bxh4 27. Nxh4 Rxh4
-28. gxh4 Rxh4 29. f3 Ne7 30. Kf2 Rh2+ 31. Ke3 Rxb2 32. a4 c5 33. axb5 d4+ 34.
-cxd4 cxd4# 0-1
+1. e4 e6 2. d4 d5 3. Nc3 Bb4 4. exd5 exd5 5. Bd3 Nc6
+6. Ne2 Nge7 7. O-O Bf5 8. Bxf5 Nxf5 9. Qd3 Qd7 10. Nd1 O-O
+11. Ne3 Nxe3 12. Bxe3 Rfe8 13. Nf4 Bd6 14. Rfe1 Nb4 15. Qb3 Qf5
+16. Rac1 Nxc2 17. Rxc2 Qxf4 18. g3 Qf5 19. Rce2 b6 20. Qb5 h5
+21. h4 Re4 22. Bd2 Rxd4 23. Bc3 Rd3 24. Be5 Rd8 25. Bxd6 Rxd6
+26. Re5 Qf3 27. Rxh5 Qxh5 28. Re8+ Kh7 29. Qxd3+ Qg6 30. Qd1 Re6
+31. Ra8 Re5 32. Rxa7 c5 33. Rd7 Qe6 34. Qd3+ g6 35. Rd8 d4
+36. a4 Re1+ 37. Kg2 Qc6+ 38. f3 Re3 39. Qd1 Qe6 40. g4 Re2+
+41. Kh3 Qe3 42. Qh1 Qf4 43. h5 Rf2 0-1

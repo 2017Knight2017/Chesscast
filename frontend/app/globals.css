@@ -32,8 +32,9 @@ body {
 .board-frame {
 	background-image: url('../public/board-frame.png');
     background-size: 100% 100%;
+	contain: layout size;
+	will-change: width, height;
 }
-
 
 .cg-wrap {
   width: 100% !important;

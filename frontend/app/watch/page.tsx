@@ -35,9 +35,9 @@ export default function WatchPage() {
 
 				{/* ЦЕНТР (Доска) */}
 				<section className="flex justify-center items-center">
-					<div className="board-frame w-[90%] max-w-[70vh] aspect-square shadow-2xl flex items-center justify-center">
-						<div className="w-[83%] h-[83%]"> 
-							<ChessBoard />
+					<div className="board-frame w-full max-w-[70vh] aspect-square shadow-2xl flex items-center justify-center">
+						<div className="w-[83.5%] h-[83.5%]"> 
+							<ChessBoard id="bb438ab2-51b8-4e53-a81a-297474fe6c4b"/>
 						</div>
 					</div>
 				</section>
@@ -45,7 +45,7 @@ export default function WatchPage() {
 				{/* ПРАВАЯ КОЛОНКА */}
 				<aside className="h-[75vh] flex flex-col justify-center">
 					<div className="bg-[#f4ead5]/20 backdrop-blur-sm p-4 h-full border border-[#8b5e34]/20 shadow-lg">
-						<MoveList />
+						<MoveList id="bb438ab2-51b8-4e53-a81a-297474fe6c4b"/>
 					</div>
 				</aside>
 

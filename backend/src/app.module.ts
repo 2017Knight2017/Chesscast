@@ -1,16 +1,3 @@
-/*
-import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-
-@Module({
-  imports: [],
-  controllers: [AppController],
-  providers: [AppService],
-})
-export class AppModule {}
-*/
-
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { MatchesModule } from './matches/matches.module';
@@ -27,20 +14,6 @@ import { ConfigModule } from '@nestjs/config';
 				host: process.env.REDIS_HOST, 
 				port: 6379,
 			},
-		}),
-		BullModule.registerQueue({
-			name: 'analysis',
-			defaultJobOptions: {
-    			removeOnComplete: true, 
-    			removeOnFail: false,
-			}
-		}),
-		BullModule.registerQueue({
-			name: 'timer',
-			defaultJobOptions: {
-    			removeOnComplete: true, 
-    			removeOnFail: false,
-			}
 		}),
 		MatchesModule,
 		DrizzleModule

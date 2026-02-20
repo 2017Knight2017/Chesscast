@@ -9,6 +9,19 @@ import { DrizzleModule } from 'src/drizzle/drizzle.module';
 @Module({
 	imports: [
 		DrizzleModule,
+		BullModule.registerQueue({
+			name: 'analysis',
+			defaultJobOptions: {
+    			removeOnComplete: true, 
+    			removeOnFail: false,
+			}},
+			{
+			name: 'timer',
+			defaultJobOptions: {
+    			removeOnComplete: true, 
+    			removeOnFail: false,
+			}}
+		),
 	],
 	controllers: [
 		MatchesController

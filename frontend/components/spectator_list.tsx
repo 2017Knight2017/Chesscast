@@ -5,7 +5,6 @@ import { useState } from "react";
 interface Viewer {
 	id: string;
 	name: string;
-	rating?: number;
 }
 
 export default function SpectatorList({ spectators }: { spectators: Viewer[]; }) {

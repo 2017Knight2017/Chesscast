@@ -199,7 +199,7 @@ async def process_job(job, job_token):
 		pgn = job.data.get('pgn')
 		archetypes = job.data.get('archetypes')
 		print(f"Получена задача для матча {match_id}")
-		evaluations, durations, notation = await loop.run_in_executor(None, get_durations, pgn, 9000, archetypes)
+		evaluations, durations, notation = await loop.run_in_executor(None, get_durations, pgn, 1000, archetypes)
 		report_analysis(match_id, evaluations, durations, notation)
 		
 	except Exception as e:
@@ -208,7 +208,7 @@ async def process_job(job, job_token):
 async def main():
 	redis_opts = {"host":"redis", "port":6379}
 
-	worker = Worker("matches", process_job, {"connection": redis_opts, "concurrency": 1})
+	worker = Worker("analysis", process_job, {"connection": redis_opts, "concurrency": 1})
 	try:
 		await asyncio.Future() 
 	except (KeyboardInterrupt, asyncio.CancelledError):

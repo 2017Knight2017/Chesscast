@@ -1,22 +1,17 @@
 'use client';
 
-import { useEffect, useState } from "react";
+import { useBroadcast } from "@/hooks/use_broadcast";
 
-export default function MoveList() {
-	const [moves, setMoves] = useState<string[]>(["e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4","e4"]);
-
+export default function MoveList({ id }: { id: string }) {
+	const { history } = useBroadcast(id);
 	const pairs = [];
-	for (let i = 0; i < moves.length; i += 2) {
+	for (let i = 0; i < history.length; i += 2) {
 		pairs.push({
 			num: Math.floor(i / 2) + 1,
-			white: moves[i],
-			black: moves[i + 1] || '...',
+			white: history[i],
+			black: history[i + 1] || '...',
 		});
 	}
-
-	const addMove = (new_move: string) => {
-		setMoves((prev) => [...prev, new_move]);
-	};
 	
 	return (
 		<div className="bg-[#f4ead5] text-[#3e2b1d] shadow-inner p-6 border-l-4 border-[#8b5e34] font-mono">

@@ -28,7 +28,7 @@ export async function createMatchAction(pgn: string, archetypes: [string, string
 
     const data: StartMatchResponse = await res.json();
     
-    return { success: true, message: 'Трансляция запущена!' };
+    return { success: true, message: 'Трансляция создана!' };
 
   } catch (error) {
     console.error('Ошибка связи с API:', error);

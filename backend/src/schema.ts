@@ -8,9 +8,10 @@ import {
 import { sql } from 'drizzle-orm';
 
 export const matches = pgTable('matches', {
-	id:                  uuid('id').primaryKey().defaultRandom(),
+	id:                  uuid('id').primaryKey().references(() => analysis.id, { onDelete: 'cascade' }),
 	whitePlayer:         text('white_player').notNull(),
 	blackPlayer:         text('black_player').notNull(),
+	history:             text('history').array().notNull().default(sql`'{}'::text[]`),
 	status:              text('status').$type<'waiting' | 'in_progress' | 'finished'>().default('waiting'),
 	timeControl:         integer('time_control').notNull(), 
 	increment:           integer('increment').default(0),    

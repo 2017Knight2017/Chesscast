@@ -9,11 +9,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import { Inject, forwardRef } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
-import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
-import * as sc from '../schema';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+
 
 @WebSocketGateway({ cors: { origin: '*' } })
 export class MatchesGateway implements OnGatewayConnection {
@@ -22,11 +18,16 @@ export class MatchesGateway implements OnGatewayConnection {
 
 	constructor(
 		@InjectQueue('timer') private readonly timerQueue: Queue,
-		@Inject(DrizzleAsyncProvider) private db: NodePgDatabase<typeof sc>,
 	) {}
 
+	// Хук подключения клиента
 	handleConnection(client: Socket) {
-		console.log(`Client connected: ${client.id}`);
+		console.log(`[Socket] Клиент подключился: ${client.id}`);
+	}
+
+	// Хук отключения клиента
+	handleDisconnect(client: Socket) {
+		console.log(`[Socket] Клиент отключился: ${client.id}`);
 	}
 
 	@SubscribeMessage('joinMatch')
@@ -45,5 +46,16 @@ export class MatchesGateway implements OnGatewayConnection {
 			{ matchId: data.matchId, moveIndex: 0 },
 			{ jobId: `timer_${data.matchId}` }
 		);
+	}
+
+	@SubscribeMessage('leaveMatch')
+	handleLeaveMatch(
+		@MessageBody('matchId') matchId: string,
+		@ConnectedSocket() client: Socket,
+	) {
+		client.leave(matchId);
+		console.log(`[Socket] Клиент ${client.id} покинул партию ${matchId}`);
+		
+		return { status: 'left', matchId };
 	}
 }
