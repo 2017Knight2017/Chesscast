@@ -6,6 +6,12 @@ import * as sc from '../schema';
 import { eq, or } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
+interface User {
+	id: number,
+	email: string,
+	username: string
+}
+
 @Injectable()
 export class AuthService {
 	constructor(
@@ -49,11 +55,11 @@ export class AuthService {
 		return null;
 	}
 
-	async login(user: any) {
+	async login(user: User) {
 		const payload = { email: user.email, sub: user.id };
 		return {
 			access_token: this.jwtService.sign(payload),
-			user: { id: user.id, email: user.email }
+			user: { id: user.id, username: user.username, email: user.email }
 		};
 	}
 }

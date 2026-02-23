@@ -29,7 +29,6 @@ export function LoginForm({ isRegister } : { isRegister: boolean }) {
 		
 		try {
 			const url = `${apiUrl}${endpoint}`;
-			console.log("Отправка запроса на:", url);
 			const response = await fetch(url, {
 				method: 'POST',
 				headers: {

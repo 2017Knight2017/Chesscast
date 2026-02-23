@@ -19,7 +19,6 @@ export class AuthController {
 
 	@Post('register')
 	async register(@Body() body: RegisterData) {
-		console.log('--- ПОЛУЧЕН ЗАПРОС НА РЕГИСТРАЦИЮ ---', body);
 		return this.authService.register(body.email, body.username, body.password);
 	}
 

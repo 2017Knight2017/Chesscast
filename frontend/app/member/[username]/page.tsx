@@ -1,6 +1,7 @@
 'use client'
 
 import { Broadcast, BroadcastCard } from '@/components/broadcast_card';
+import { use } from "react";
 
 const mockBroadcasts: Broadcast[] = [
 	{
@@ -29,8 +30,9 @@ const mockBroadcasts: Broadcast[] = [
 	}
 ];
 
-export default function MemberProfilePage({ params }: { params: { username: string } }) {
-	const decodedUsername = decodeURIComponent(params.username);
+export default function MemberProfilePage({ params }: { params: Promise<{ username: string }> }) {
+	const resolvedParams = use(params);
+	const decodedUsername = decodeURIComponent(resolvedParams.username);
 		
 	const liveBroadcasts = mockBroadcasts.filter(b => b.status === 'live');
 	const scheduledBroadcasts = mockBroadcasts.filter(b => b.status === 'scheduled');
