@@ -4,19 +4,13 @@ import {
 	text,
 	integer,
 	uuid,
+	varchar,
+	serial,
+	pgEnum
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
-export const matches = pgTable('matches', {
-	id:                  uuid('id').primaryKey().references(() => analysis.id, { onDelete: 'cascade' }),
-	whitePlayer:         text('white_player').notNull(),
-	blackPlayer:         text('black_player').notNull(),
-	history:             text('history').array().notNull().default(sql`'{}'::text[]`),
-	status:              text('status').$type<'waiting' | 'in_progress' | 'finished'>().default('waiting'),
-	timeControl:         integer('time_control').notNull(), 
-	increment:           integer('increment').default(0),    
-	createdAt:           timestamp('created_at').defaultNow(),
-});
+export const statusEnum = pgEnum("status", ['waiting', 'in_progress', 'finished']);
 
 export const analysis = pgTable('analysis', {
 	id:               uuid('id').defaultRandom().primaryKey(),
@@ -28,17 +22,26 @@ export const analysis = pgTable('analysis', {
 	createdAt:        timestamp('created_at').notNull().defaultNow(),
 });
 
-export const moves = pgTable('moves', {
-	id:                 uuid('id').primaryKey().defaultRandom(),
-	matchId:            uuid('match_id').references(() => matches.id),
-	moveNumber:         integer('move_number').notNull(),
-	notation:           text('notation').notNull(),
-	playedBy:           uuid('played_by'),
-	createdAt:          timestamp('created_at').defaultNow(),
-	remainingTime:      integer('remaining_time'), 
+export const matches = pgTable('matches', {
+	id:                  uuid('id').primaryKey().references(() => analysis.id, { onDelete: 'cascade' }),
+	whitePlayer:         text('white_player').notNull(),
+	blackPlayer:         text('black_player').notNull(),
+	history:             text('history').array().notNull().default(sql`'{}'::text[]`),
+	status:              statusEnum().default('waiting'),
+	timeControl:         integer('time_control').notNull(), 
+	increment:           integer('increment').default(0),    
+	createdAt:           timestamp('created_at').defaultNow(),
 });
 
 export const users = pgTable('users', {
-	nickname:           text('nickname'),
-	broadcastsPlanned:  uuid('broadcasts_planned').references(() => matches.id)
+	id: serial('id').primaryKey(),
+	email: varchar('email', { length: 255 }).notNull().unique(),
+	username: varchar('username', { length: 255 }).notNull().unique(),
+	password: text('password').notNull(),
+});
+
+export const plannedBroadcasts = pgTable('planned_broadcasts', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  matchId: uuid('match_id').notNull().references(() => matches.id, { onDelete: 'cascade' }),
 });

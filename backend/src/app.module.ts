@@ -3,6 +3,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { MatchesModule } from './matches/matches.module';
 import { DrizzleModule } from './drizzle/drizzle.module';
 import { ConfigModule } from '@nestjs/config';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
 	imports: [
@@ -16,7 +17,8 @@ import { ConfigModule } from '@nestjs/config';
 			},
 		}),
 		MatchesModule,
-		DrizzleModule
+		DrizzleModule,
+		AuthModule
 	],
 })
 export class AppModule {}

@@ -1,5 +1,5 @@
 {
-  "id": "e986779c-d587-4678-b82f-56b6b9b52856",
+  "id": "86adfae7-03cf-4091-a605-e80f0dec0d45",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -95,7 +95,8 @@
         },
         "status": {
           "name": "status",
-          "type": "text",
+          "type": "status",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": false,
           "default": "'waiting'"
@@ -143,60 +144,47 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.moves": {
-      "name": "moves",
+    "public.planned_broadcasts": {
+      "name": "planned_broadcasts",
       "schema": "",
       "columns": {
         "id": {
           "name": "id",
-          "type": "uuid",
+          "type": "serial",
           "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
         },
         "match_id": {
           "name": "match_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": false
-        },
-        "move_number": {
-          "name": "move_number",
-          "type": "integer",
-          "primaryKey": false,
           "notNull": true
-        },
-        "notation": {
-          "name": "notation",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "played_by": {
-          "name": "played_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
-        },
-        "remaining_time": {
-          "name": "remaining_time",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "moves_match_id_matches_id_fk": {
-          "name": "moves_match_id_matches_id_fk",
-          "tableFrom": "moves",
+        "planned_broadcasts_user_id_users_id_fk": {
+          "name": "planned_broadcasts_user_id_users_id_fk",
+          "tableFrom": "planned_broadcasts",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "planned_broadcasts_match_id_matches_id_fk": {
+          "name": "planned_broadcasts_match_id_matches_id_fk",
+          "tableFrom": "planned_broadcasts",
           "tableTo": "matches",
           "columnsFrom": [
             "match_id"
@@ -204,7 +192,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -218,43 +206,66 @@
       "name": "users",
       "schema": "",
       "columns": {
-        "nickname": {
-          "name": "nickname",
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "username": {
+          "name": "username",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "password": {
+          "name": "password",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
-        },
-        "broadcasts_planned": {
-          "name": "broadcasts_planned",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
+          "notNull": true
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "users_broadcasts_planned_matches_id_fk": {
-          "name": "users_broadcasts_planned_matches_id_fk",
-          "tableFrom": "users",
-          "tableTo": "matches",
-          "columnsFrom": [
-            "broadcasts_planned"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "users_email_unique": {
+          "name": "users_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email"
+          ]
+        },
+        "users_username_unique": {
+          "name": "users_username_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "username"
+          ]
         }
       },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
     }
   },
-  "enums": {},
+  "enums": {
+    "public.status": {
+      "name": "status",
+      "schema": "public",
+      "values": [
+        "waiting",
+        "in_progress",
+        "finished"
+      ]
+    }
+  },
   "schemas": {},
   "sequences": {},
   "roles": {},
