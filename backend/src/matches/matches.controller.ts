@@ -1,5 +1,13 @@
-import { Controller, Post, Get, Param, HttpCode, HttpStatus, Body, Inject, NotFoundException } from '@nestjs/common';
+import { Controller, Post, Get, Param, HttpCode, HttpStatus, Body, Inject, NotFoundException, UseGuards, Request } from '@nestjs/common';
 import { MatchesService } from './matches.service';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+
+interface userRequest extends Request {
+	user: {
+		id: number;
+		username: string;
+	}
+}
 
 @Controller('matches')
 export class MatchesController {
@@ -7,14 +15,16 @@ export class MatchesController {
 		private readonly matchesService: MatchesService,
 	) {}
 
-	@Post()
+	@Post('create')
+	@UseGuards(JwtAuthGuard)
 	@HttpCode(HttpStatus.CREATED) 
-	async createBroadcast(
-		@Body('author') author: string,
-		@Body('pgn') pgn: string,
-		@Body('archetypes') archetypes: [string, string]
-	) {
-		return await this.matchesService.createBroadcast(author, pgn, archetypes);
+	async createBroadcast(@Request() req: userRequest, @Body() body: {
+		pgn: string,
+		archetypes: [string, string],
+		title: string,
+		scheduledAt: string
+	}){
+		return this.matchesService.createBroadcast(req.user.id, req.user.username, body.title, new Date(body.scheduledAt), body.pgn, body.archetypes);
 	}
 	
 	@Post(':id/report')
@@ -38,6 +48,16 @@ export class MatchesController {
 	) {
 		return await this.matchesService.checkGameState(id);
 	}
-		// Опционально: уведомляем фронтенд через WebSockets, что данные готовы
-		//this.eventsGateway.notifyMatchReady(id); 
+
+	@Get('followed')
+	@UseGuards(JwtAuthGuard)
+	async getFollowed(@Request() req) {
+		return this.matchesService.checkFollowedMatches(req.user.id);
+	}
+	
+	@Get('planned')
+	@UseGuards(JwtAuthGuard)
+	async getPlanned(@Request() req) {
+		return this.matchesService.checkPlannedMatches(req.user.id);
+	}
 }

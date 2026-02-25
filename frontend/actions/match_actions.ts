@@ -1,37 +1,44 @@
 'use server'
 
+import { cookies } from 'next/headers';
+
 interface StartMatchResponse {
-  success: boolean;
-  message: string;
+	success: boolean;
+	message: string;
 }
 
-export async function createMatchAction(pgn: string, archetypes: [string, string]) {
-  const apiUrl = process.env.NEST_API_URL;
-  
-  try {
-    const res = await fetch(`${apiUrl}/matches`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json', 
-      },
-	  body: JSON.stringify({ author: 'admin', pgn: pgn, archetypes: archetypes }),
-      cache: 'no-store'
-    });
+export async function createMatchAction(pgn: string, archetypes: [string, string], title: string, scheduledAt: string): Promise<StartMatchResponse> {
+	const apiUrl = process.env.NEST_API_URL;
+	const cookieStore = await cookies();
+	const token = cookieStore.get('token')?.value;
 
-    if (!res.ok) {
-      const errorData = await res.json();
-      return { 
-        success: false, 
-        message: errorData.message || 'Ошибка при запуске матча' 
-      };
-    }
+	if (!token) {
+		return { success: false, message: 'Требуется авторизация' };
+	}
 
-    const data: StartMatchResponse = await res.json();
-    
-    return { success: true, message: 'Трансляция создана!' };
+	try {
+		const res = await fetch(`${apiUrl}/matches/create`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'Authorization': `Bearer ${token}`,
+			},
+		body: JSON.stringify({ pgn: pgn, archetypes: archetypes, title: title, scheduledAt: scheduledAt }),
+			cache: 'no-store'
+		});
 
-  } catch (error) {
-    console.error('Ошибка связи с API:', error);
-    return { success: false, message: 'Не удалось соединиться с сервером' };
-  }
+		if (!res.ok) {
+			const errorData = await res.json();
+			return { 
+				success: false, 
+				message: errorData.message || 'Ошибка при запуске матча' 
+			};
+		}
+
+		return { success: true, message: 'Трансляция создана!' };
+
+	} catch (error) {
+		console.error('Ошибка связи с API:', error);
+		return { success: false, message: 'Не удалось соединиться с сервером' };
+	}
 }

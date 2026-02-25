@@ -17,8 +17,7 @@ export default function BroadcastPage() {
 					value={pgnInput}
 					onChange={(e) => setPgnInput(e.target.value)}
 				/>
-
-				<CreateMatchButton pgn={pgnInput} archetypes={["calculator", "intuitive"]} />
+				<CreateMatchButton pgn={pgnInput} archetypes={["calculator", "intuitive"]} title="Новая трансляция" scheduledAt={new Date().toISOString()} />
 			</div>
 		</div>
 	);

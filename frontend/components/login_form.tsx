@@ -51,7 +51,7 @@ export function LoginForm({ isRegister } : { isRegister: boolean }) {
 					localStorage.setItem('user', JSON.stringify(data.user));
 				}
 
-				router.push('/member/' + data.user.username);
+				router.push('/member/' + encodeURIComponent(data.user.username));
 				router.refresh(); 
 			}
 		} catch (err: any) {

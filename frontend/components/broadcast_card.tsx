@@ -7,12 +7,12 @@ export interface Broadcast {
 	title: string;
 	playerWhite: string;
 	playerBlack: string;
-	status: 'live' | 'scheduled';
-	scheduledTime: string;
+	status: 'waiting' | 'in_progress' | 'finished';
+	scheduledAt: string;
 }
 
 export const BroadcastCard = ({ broadcast }: { broadcast: Broadcast }) => {
-	const isLive = broadcast.status === 'live';
+	const isLive = broadcast.status === 'in_progress';
 
 	return (
 		<div className="bg-[#f4ead5] border-2 border-[#5d4037] p-5 shadow-[4px_4px_0px_#3e2723] hover:-translate-y-1 hover:shadow-[6px_6px_0px_#3e2723] transition-all duration-200 flex flex-col justify-between">
@@ -23,7 +23,7 @@ export const BroadcastCard = ({ broadcast }: { broadcast: Broadcast }) => {
 						{isLive ? 'В ЭФИРЕ' : 'АНОНС'}
 					</span>
 					<span className="text-sm font-serif italic text-[#5d4037]/80">
-						{broadcast.scheduledTime}
+						{broadcast.scheduledAt}
 					</span>
 				</div>
 

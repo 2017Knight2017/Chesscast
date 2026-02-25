@@ -1,5 +1,5 @@
 {
-  "id": "86adfae7-03cf-4091-a605-e80f0dec0d45",
+  "id": "0fe79574-b219-45c7-a4b6-d976dbe5cd1a",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -14,12 +14,6 @@
           "primaryKey": true,
           "notNull": true,
           "default": "gen_random_uuid()"
-        },
-        "author": {
-          "name": "author",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
         },
         "pgn": {
           "name": "pgn",
@@ -64,6 +58,66 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.followed_broadcasts": {
+      "name": "followed_broadcasts",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_id": {
+          "name": "match_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "followed_broadcasts_user_id_users_id_fk": {
+          "name": "followed_broadcasts_user_id_users_id_fk",
+          "tableFrom": "followed_broadcasts",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "followed_broadcasts_match_id_matches_id_fk": {
+          "name": "followed_broadcasts_match_id_matches_id_fk",
+          "tableFrom": "followed_broadcasts",
+          "tableTo": "matches",
+          "columnsFrom": [
+            "match_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "followed_broadcasts_user_id_match_id_pk": {
+          "name": "followed_broadcasts_user_id_match_id_pk",
+          "columns": [
+            "user_id",
+            "match_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.matches": {
       "name": "matches",
       "schema": "",
@@ -73,6 +127,19 @@
           "type": "uuid",
           "primaryKey": true,
           "notNull": true
+        },
+        "author": {
+          "name": "author",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'Без названия'"
         },
         "white_player": {
           "name": "white_player",
@@ -114,11 +181,17 @@
           "notNull": false,
           "default": 0
         },
+        "scheduled_time": {
+          "name": "scheduled_time",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "default": "now()"
         }
       },
@@ -136,6 +209,19 @@
           ],
           "onDelete": "cascade",
           "onUpdate": "no action"
+        },
+        "matches_author_users_username_fk": {
+          "name": "matches_author_users_username_fk",
+          "tableFrom": "matches",
+          "tableTo": "users",
+          "columnsFrom": [
+            "author"
+          ],
+          "columnsTo": [
+            "username"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -148,12 +234,6 @@
       "name": "planned_broadcasts",
       "schema": "",
       "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
         "user_id": {
           "name": "user_id",
           "type": "integer",
@@ -196,7 +276,15 @@
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {},
+      "compositePrimaryKeys": {
+        "planned_broadcasts_user_id_match_id_pk": {
+          "name": "planned_broadcasts_user_id_match_id_pk",
+          "columns": [
+            "user_id",
+            "match_id"
+          ]
+        }
+      },
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
@@ -229,6 +317,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {},
