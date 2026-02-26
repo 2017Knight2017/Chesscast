@@ -21,6 +21,7 @@ def get_durations(pgn: str, initial_time: int, archetypes: tuple[str, str], arch
 		
 	next_control_ply = 80 
 	moves_played = 0
+	opening_till = random.randint(10, 17)
 	
 	with open(archetypes_path) as data_file:
 		data = json.load(data_file)
@@ -59,6 +60,9 @@ def get_durations(pgn: str, initial_time: int, archetypes: tuple[str, str], arch
 				bias_white if current_player == chess.WHITE else bias_black,
 				eng					 
 			)
+
+			if moves_played < opening_till:
+				move_time *= 0.05
 			
 			evaluations.append(evaluation)
 			durations.append(move_time)
@@ -126,18 +130,14 @@ def calculate_move_time(
 		time_left_sec: float,
 		moves_to_control: int,
 		fen: str,
-		bias: tuple[float, float, float, float, float],
+		bias: dict["k":float, "w1":float, "w2":float, "w3":float, "sigma":float],
 		eng: chess.engine.SimpleEngine,
 		engine_depth=16
 	) -> tuple[float, float]:
 		
 	board = chess.Board(fen)
-			
-	conservatism_factor = 4
-	base_time = time_left_sec / (moves_to_control + conservatism_factor)
-
+	base_time = time_left_sec / (moves_to_control + 10)
 	info = eng.analyse(board, chess.engine.Limit(depth=engine_depth), multipv=3)
-
 	vals, stats = normalize_evaluations(info)
 
 	e1, e2 = vals[0], vals[1]
@@ -163,21 +163,15 @@ def calculate_move_time(
 	tactics_factor = tactics / board.legal_moves.count()
 
 	complexity = bias["w1"] * uncertainty_factor + bias["w2"] * sharpness_factor + bias["w3"] * tactics_factor
-	complexity_mult = 0.5 + (complexity * 2.0)
+	complexity_mult = 0.2 + math.log1p(complexity * 5)
 
 	panic_factor = 1.0
 	if moves_to_control <= 3 and time_left_sec < 180:
 		panic_factor = 0.3
 
 	calculated_time = base_time * complexity_mult * panic_factor * random.lognormvariate(0, bias["sigma"])
-
-	max_allowed = time_left_sec - 5
-	if max_allowed < 1:
-		max_allowed = 1
-
-	min_allowed = 3
-
-	final_time = max(min_allowed, min(calculated_time, max_allowed))
+	absolute_max = min(time_left_sec * 0.15, 600) 
+	final_time = max(3.0, min(calculated_time, absolute_max))
 
 	return e1 if board.turn == chess.WHITE else e1 * -1, final_time
 
@@ -198,6 +192,7 @@ def report_analysis(match_id: str, evaluations: list[int], durations: list[float
 		print(f"Ошибка при связи с бэкендом: {e}")
 		return None
 
+
 async def process_job(job, job_token):
 	print(f"Обработка задачи {job.id}")
 
@@ -206,9 +201,11 @@ async def process_job(job, job_token):
 	try:
 		match_id = job.data.get('id')
 		pgn = job.data.get('pgn')
+		time_control = job.data.get('time_control')
+		print(time_control)
 		archetypes = job.data.get('archetypes')
 		print(f"Получена задача для матча {match_id}")
-		evaluations, durations, notation = await loop.run_in_executor(None, get_durations, pgn, 1000, archetypes)
+		evaluations, durations, notation = await loop.run_in_executor(None, get_durations, pgn, time_control, archetypes)
 		report_analysis(match_id, evaluations, durations, notation)
 		
 	except Exception as e:

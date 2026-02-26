@@ -7,7 +7,7 @@ interface StartMatchResponse {
 	message: string;
 }
 
-export async function createMatchAction(pgn: string, archetypes: [string, string], title: string, scheduledAt: string): Promise<StartMatchResponse> {
+export async function createMatchAction(pgn: string, archetypes: [string, string], whitePlayer: string, blackPlayer: string, title: string, timeControl: number, scheduledAt: string): Promise<StartMatchResponse> {
 	const apiUrl = process.env.NEST_API_URL;
 	const cookieStore = await cookies();
 	const token = cookieStore.get('token')?.value;
@@ -23,7 +23,7 @@ export async function createMatchAction(pgn: string, archetypes: [string, string
 				'Content-Type': 'application/json',
 				'Authorization': `Bearer ${token}`,
 			},
-		body: JSON.stringify({ pgn: pgn, archetypes: archetypes, title: title, scheduledAt: scheduledAt }),
+		body: JSON.stringify({ pgn: pgn, archetypes: archetypes, whitePlayer: whitePlayer, blackPlayer: blackPlayer, title: title, timeControl: timeControl, scheduledAt: scheduledAt}),
 			cache: 'no-store'
 		});
 

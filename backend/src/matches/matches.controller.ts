@@ -21,10 +21,13 @@ export class MatchesController {
 	async createBroadcast(@Request() req: userRequest, @Body() body: {
 		pgn: string,
 		archetypes: [string, string],
+		whitePlayer: string,
+		blackPlayer: string,
 		title: string,
-		scheduledAt: string
+		scheduledAt: string,
+		timeControl: number
 	}){
-		return this.matchesService.createBroadcast(req.user.id, req.user.username, body.title, new Date(body.scheduledAt), body.pgn, body.archetypes);
+		return this.matchesService.createBroadcast(req.user.id, req.user.username, body.title, new Date(body.scheduledAt), body.pgn, body.whitePlayer, body.blackPlayer, body.archetypes, body.timeControl);
 	}
 	
 	@Post(':id/report')

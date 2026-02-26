@@ -20,7 +20,7 @@ export class MatchesService {
 		@InjectQueue('timer') private timerQueue: Queue
 	) {}
 
-	async createBroadcast(authorId: number, author: string, title: string, scheduledAt: Date, pgn: string, archetypes: [string, string]) {
+	async createBroadcast(authorId: number, author: string, title: string, scheduledAt: Date, pgn: string, whitePlayer: string, blackPlayer: string, archetypes: [string, string], timeControl: number) {
 		const [analysis] = await this.db
 			.insert(sc.analysis)
 			.values({
@@ -34,11 +34,11 @@ export class MatchesService {
 				id: analysis.id,
 				author: author,
 				title: title,
-				whitePlayer: "Александр Алехин",
-				blackPlayer: "Хосе Рауль Капабланка",
+				whitePlayer: whitePlayer,
+				blackPlayer: blackPlayer,
 				status: 'waiting',
 				history: [],
-				timeControl: 9000,
+				timeControl: timeControl,
 				scheduledAt: scheduledAt
 			});
 		
@@ -50,6 +50,7 @@ export class MatchesService {
 		await this.analysisQueue.add('analyze', {
 			id: analysis.id,	
 			pgn: pgn,
+			time_control: timeControl,
 			archetypes: archetypes
 		}, {
 			attempts: 3, 

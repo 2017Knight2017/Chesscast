@@ -6,16 +6,37 @@ import { useTransition } from 'react';
 interface matchData {
 	pgn: string;
 	archetypes: [string, string];
+	whitePlayer: string;
+	blackPlayer: string;
 	title: string;
+	timeControl: string;
 	scheduledAt: string;
 }
 
-export default function CreateMatchButton({ pgn, archetypes, title, scheduledAt }: matchData) {
+export default function CreateMatchButton({ pgn, archetypes, whitePlayer, blackPlayer, title, timeControl, scheduledAt }: matchData) {
 	const [isPending, startTransition] = useTransition();
+	let errorMessage: string = "";
+
+	const convertTimeControlToSeconds = (timeStr: string): number => {
+		const [hours, minutes] = timeStr.split(':').map(Number);
+		return (hours * 3600) + (minutes * 60);
+	};
 
 	const handleClick = () => {
+		if (!pgn.trim()) errorMessage += "PGN не может быть пустым\n";
+		if (!title.trim()) errorMessage += "Название партии не может быть пустым\n";
+		if (!whitePlayer.trim()) errorMessage += "Имя игрока 1 не может быть пустым\n";
+		if (!blackPlayer.trim()) errorMessage += "Имя игрока 2 не может быть пустым\n";
+		if (!/^([0-9]+:)?[0-5]?[0-9]$/.test(timeControl)) errorMessage += "Неверный формат временного контроля\n";
+		const scheduledDate = new Date(scheduledAt);
+		if (isNaN(scheduledDate.getTime()) || scheduledDate < new Date()) errorMessage += "Неверная дата и время трансляции\n";
+		if (errorMessage != "") {
+			alert(errorMessage);
+			return;
+		}
+
 		startTransition(async () => {
-			const result = await createMatchAction(pgn, archetypes, title, scheduledAt);
+			const result = await createMatchAction(pgn, archetypes, whitePlayer, blackPlayer, title, convertTimeControlToSeconds(timeControl), scheduledAt);
 			
 			if (result.success) {
 				alert('Успех: ' + result.message); 
