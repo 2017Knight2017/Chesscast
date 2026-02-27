@@ -1,0 +1,47 @@
+export const MOCK_LIVE_MATCHES = [
+    {
+        id: "1",
+        title: "Magnus Carlsen vs Hikaru Nakamura - Grand Final",
+        author: "ChessMaster_99",
+        white: { name: "Magnus", time: "03:15" },
+        black: { name: "Hikaru", time: "02:45" },
+		fen: "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3",
+		viewerCount: 1240,
+    },
+	{
+        id: "2",
+        title: "Magnus Carlsen vs Hikaru Nakamura - Grand Final",
+        author: "ChessMaster_99",
+        white: { name: "Magnus", time: "01:03:15" },
+        black: { name: "Hikaru", time: "02:45" },
+		fen: "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3",
+		viewerCount: 1240,
+    },
+	{
+        id: "3",
+        title: "Magnus Carlsen vs Hikaru Nakamura - Grand Final",
+        author: "ChessMaster_99",
+        white: { name: "Magnus", time: "03:15" },
+        black: { name: "Hikaru", time: "02:45" },
+		fen: "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3",
+		viewerCount: 1240,
+    },
+	{
+        id: "4",
+        title: "Magnus Carlsen vs Hikaru Nakamura - Grand Final",
+        author: "ChessMaster_99",
+        white: { name: "Magnus", time: "03:15" },
+        black: { name: "Hikaru", time: "02:45" },
+		fen: "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3",
+		viewerCount: 1240,
+    },
+	{
+        id: "5",
+        title: "Magnus Carlsen vs Hikaru Nakamura - Grand Final",
+        author: "ChessMaster_99",
+        white: { name: "Magnus", time: "03:15" },
+        black: { name: "Hikaru", time: "02:45" },
+		fen: "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3",
+		viewerCount: 1240,
+    }
+];

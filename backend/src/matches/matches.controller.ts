@@ -63,4 +63,9 @@ export class MatchesController {
 	async getPlanned(@Request() req) {
 		return this.matchesService.checkPlannedMatches(req.user.id);
 	}
+
+	@Get('live')
+	async getLiveMatches() {
+		return this.matchesService.getMatchesByStatus('in_progress');
+}
 }

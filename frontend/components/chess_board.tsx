@@ -91,6 +91,7 @@ export default function ChessBoard({ id }: { id: string }) {
 				viewOnly={false}
 				width={"100%"}
 				height={"100%"}
+//				coordinates={false}
 				movable={{
 					free: true,
 					color: "both"

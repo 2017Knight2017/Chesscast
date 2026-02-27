@@ -29,7 +29,8 @@ export default async function RootLayout({ children }: Readonly<{children: React
 	return (
 		<html lang="en">
 			<body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-				<header>
+				<header className="mb-10 text-center">
+					<h1 className="text-4xl font-bold text-slate-200 mb-4">Смотрите шахматы в реальном времени</h1>
 					{token && <ExitButton />}
 				</header>
 				{children}

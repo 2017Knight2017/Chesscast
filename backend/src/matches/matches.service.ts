@@ -2,7 +2,7 @@ import { Injectable, Inject, NotFoundException, Logger } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as sc from '../schema';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
-import { eq, sql, and, lte } from 'drizzle-orm';
+import { eq, sql, and, lte, desc } from 'drizzle-orm';
 import { Queue } from 'bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
 import { PgTableWithColumns } from 'drizzle-orm/pg-core';
@@ -22,6 +22,7 @@ export class MatchesService {
 	) {}
 
 	private readonly logger = new Logger(MatchesService.name);
+
 
 	async createBroadcast(authorId: number, author: string, title: string, scheduledAt: Date, pgn: string, whitePlayer: string, blackPlayer: string, archetypes: [string, string], timeControl: number) {
 		const [analysis] = await this.db
@@ -62,6 +63,7 @@ export class MatchesService {
 		return analysis;
 	}
 
+
 	async handleWorkerReport(id: string, evaluations: number[], durations: number[], notation: string[]) {
 		const [broadcast] = await this.db
 			.update(sc.analysis)
@@ -74,6 +76,7 @@ export class MatchesService {
 			.returning();
 		return broadcast;
 	}
+
 
 	async startBroadcast(id: string) {
 		const [match] = await this.db
@@ -169,6 +172,7 @@ export class MatchesService {
 		return updatedMatch;
 	}
 
+
 	async checkGameState(id: string): Promise<gameState> {
 		const match = await this.db.query.matches.findFirst({
 			where: eq(sc.matches.id, id),
@@ -183,6 +187,7 @@ export class MatchesService {
 		return { isStarted: isStarted, history: match.history };
 	}
 
+
 	async finishGame(id: string) {
 		await this.db
 			.update(sc.matches)
@@ -190,30 +195,46 @@ export class MatchesService {
 			.where(eq(sc.matches.id, id));
 	}
 
+
 	private async getMatchesByJoinTable(
-			joinTable: PgTableWithColumns<any>, 
-			userId: number
-		) {
-			return await this.db
-				.select({
+		joinTable: PgTableWithColumns<any>, 
+		userId: number
+	) {
+		return await this.db
+			.select({
+				id: sc.matches.id,
+				title: sc.matches.title,
+				scheduledAt: sc.matches.createdAt,
+				status: sc.matches.status,
+			})
+			.from(joinTable)
+			.innerJoin(
+				sc.matches, 
+				eq(joinTable.matchId, sc.matches.id)
+			)
+			.where(eq(joinTable.userId, userId));
+	}
+
+	async checkFollowedMatches(userId: number) {
+		return this.getMatchesByJoinTable(sc.followedBroadcasts, userId);
+	}
+
+	async checkPlannedMatches(userId: number) {
+		return this.getMatchesByJoinTable(sc.plannedBroadcasts, userId);
+	}
+
+
+	async getMatchesByStatus(status: "waiting" | "in_progress" | "finished") {
+		return await this.db
+			.select({
 					id: sc.matches.id,
 					title: sc.matches.title,
-					scheduledAt: sc.matches.createdAt,
-					status: sc.matches.status,
-				})
-				.from(joinTable)
-				.innerJoin(
-					sc.matches, 
-					eq(joinTable.matchId, sc.matches.id)
-					)
-				.where(eq(joinTable.userId, userId));
-		}
-
-		async checkFollowedMatches(userId: number) {
-			return this.getMatchesByJoinTable(sc.followedBroadcasts, userId);
-		}
-
-		async checkPlannedMatches(userId: number) {
-			return this.getMatchesByJoinTable(sc.plannedBroadcasts, userId);
-		}
+					author: sc.users.username,
+			})
+			.from(sc.matches)
+			.innerJoin(sc.users, eq(sc.matches.author, sc.users.username))
+			.where(eq(sc.matches.status, status))
+			.orderBy(desc(sc.matches.createdAt))
+			.limit(10);
+	}
 }
