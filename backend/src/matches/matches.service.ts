@@ -1,11 +1,12 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException, Logger } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as sc from '../schema';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
-import { eq, or, sql } from 'drizzle-orm';
+import { eq, sql, and, lte } from 'drizzle-orm';
 import { Queue } from 'bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
 import { PgTableWithColumns } from 'drizzle-orm/pg-core';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 export interface gameState {
 	isStarted: boolean,
@@ -19,6 +20,8 @@ export class MatchesService {
 		@InjectQueue('analysis') private analysisQueue: Queue,
 		@InjectQueue('timer') private timerQueue: Queue
 	) {}
+
+	private readonly logger = new Logger(MatchesService.name);
 
 	async createBroadcast(authorId: number, author: string, title: string, scheduledAt: Date, pgn: string, whitePlayer: string, blackPlayer: string, archetypes: [string, string], timeControl: number) {
 		const [analysis] = await this.db
@@ -75,8 +78,8 @@ export class MatchesService {
 	async startBroadcast(id: string) {
 		const [match] = await this.db
 			.select()
-			.from(sc.analysis)
-			.where(eq(sc.analysis.id, id))
+			.from(sc.matches)
+			.where(eq(sc.matches.id, id))
 			.limit(1);
 
 		if (!match) {
@@ -93,10 +96,40 @@ export class MatchesService {
 				removeOnFail: true
 			}
 		);
-		console.log("Таймер до второго хода создан!")
 
 		return { status: 'in_progress', matchId: id };
 	}
+
+	
+	@Cron(CronExpression.EVERY_MINUTE)
+	async autoCheckAndStartBroadcasts() {
+		const now = new Date();
+
+		const started = await this.db
+			.update(sc.matches)
+			.set({ status: 'in_progress' })
+			.where(
+				and(
+					eq(sc.matches.status, 'waiting'),
+					lte(sc.matches.scheduledAt, now)
+				)
+			)
+			.returning({ id: sc.matches.id });
+
+		for (const match of started) {
+			try {
+				await this.timerQueue.remove(`timer_${match.id}`);
+				await this.timerQueue.add(
+					'nextStep',
+					{ matchId: match.id, moveIndex: 0 },
+					{ removeOnComplete: true, removeOnFail: true }
+				);
+			} catch (err) {
+				this.logger.error(`Ошибка запуска таймера для ${match.id}:`, err);
+			}
+		}
+	}
+
 
 	async updateGameState(id: string, move: string) {
 		const game = await this.db.query.matches.findFirst({

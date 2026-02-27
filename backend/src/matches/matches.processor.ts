@@ -49,7 +49,7 @@ export class MatchesProcessor extends WorkerHost {
 		const nextIndex = moveIndex + 1;
 		
 		if (nextIndex < analysis.notation.length) {
-			const delay = 2000 //analysis.durations[moveIndex] || 1000;
+			const delay = analysis.durations[moveIndex] || 1000;
 
 			await this.timerQueue.add(
 				'nextStep',

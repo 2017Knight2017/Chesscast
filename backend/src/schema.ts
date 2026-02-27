@@ -7,7 +7,8 @@ import {
 	varchar,
 	serial,
 	pgEnum,
-	primaryKey
+	primaryKey,
+	index
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
@@ -42,7 +43,10 @@ export const matches = pgTable('matches', {
 	increment:           integer('increment').default(0),
 	scheduledAt:         timestamp('scheduled_time').notNull(),
 	createdAt:           timestamp('created_at').notNull().defaultNow(),
-});
+},  (table) => [
+	index('scheduled_at_idx').on(table.scheduledAt), // КРИТИЧЕСКИ ВАЖНО
+	index('status_idx').on(table.status),           // Поможет фильтровать только 'scheduled'
+]);
 
 export const plannedBroadcasts = pgTable('planned_broadcasts', {
 	userId:              integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),

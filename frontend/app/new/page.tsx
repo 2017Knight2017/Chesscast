@@ -83,8 +83,8 @@ export default function BroadcastPage() {
 						onChange={(e) => {
 							let value = e.target.value.replace(/\D/g, '');
 							
-							if (value.length > 4) {
-								value = value.slice(0, 4);
+							if (value.length > 3) {
+								value = value.slice(0, 3);
 							}
 							
 							if (value.length <= 2) {
@@ -143,7 +143,7 @@ export default function BroadcastPage() {
 				</div>
 				<textarea
 					className="w-full h-32 p-4 rounded bg-slate-800 border border-slate-700 focus:border-blue-500 outline-none transition-all"
-					placeholder="Вставьте ваш PGN сюда..."
+					placeholder="Вставьте PGN..."
 					value={pgnInput}
 					onChange={(e) => setPgnInput(e.target.value)}
 				/>
