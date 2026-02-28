@@ -8,6 +8,7 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { PgTableWithColumns } from 'drizzle-orm/pg-core';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { requestArchetypes } from "src/matches/utils/archetype";
+import { PlayersService } from 'src/players/players.service';
 
 export interface gameState {
 	isStarted: boolean,
@@ -16,15 +17,15 @@ export interface gameState {
 
 const archetypeOptions = {
 	"Desired archetype. Keep empty if unsure": undefined,
-	"The Calculator": "calculator",
-	"The Intuitive Genius": "intuitive",
+	"Calculator": "calculator",
+	"Intuitive Genius": "intuitive",
 	"Chaos Attacker": "attacker",
 	"Solid Pragmatist": "pragmatic",
 	"Time Trouble Addict": "time_trouble",
-	"The Iron Fortress": "fortress",
-	"The Blunder Prone Gambler": "gambler",
-	"The Perfectionist": "perfectionist",
-	"The Tactical Berserker": "berserker",
+	"Iron Fortress": "fortress",
+	"Blunder Prone Gambler": "gambler",
+	"Perfectionist": "perfectionist",
+	"Tactical Berserker": "berserker",
 	"Speed Demon": "speed_demon",
 	"Psychological Grinder": "grinder",
 };
@@ -33,37 +34,54 @@ const archetypeOptions = {
 export class MatchesService {
 	constructor(
 		@Inject(DrizzleAsyncProvider) private db: NodePgDatabase<typeof sc>,
+		@Inject(PlayersService) private playersService: PlayersService,
 		@InjectQueue('analysis') private analysisQueue: Queue,
 		@InjectQueue('timer') private timerQueue: Queue
 	) {}
 
 	private readonly logger = new Logger(MatchesService.name);
 
+	private getValidArchetype(key: string | undefined): string | undefined {
+		return archetypeOptions[key as keyof typeof archetypeOptions];
+}
 
-	async createBroadcast(authorId: number, author: string, title: string, scheduledAt: Date, pgn: string, whitePlayer: string, blackPlayer: string, archetypes: [string|undefined, string|undefined], timeControl: number) {
+	async createBroadcast(authorId: number, author: string, title: string, scheduledAt: Date, pgn: string, whitePlayer: string, blackPlayer: string, archetypes: [string, string], timeControl: number) {
 		let validatedArchetypes: [string|undefined, string|undefined] = [
-			archetypeOptions[archetypes[0] as keyof typeof archetypeOptions],
-			archetypeOptions[archetypes[1] as keyof typeof archetypeOptions]
+			this.getValidArchetype(archetypes[0]),
+			this.getValidArchetype(archetypes[1])
 		];
+		let isArchetypeAiGenerated: boolean[] = [false, false];
 		const archetypeMask = (validatedArchetypes[0] !== undefined ? 1 : 0) + (validatedArchetypes[1] !== undefined ? 2 : 0);
 		switch (archetypeMask) {
 			case 0:
-				validatedArchetypes = (await requestArchetypes({player1: whitePlayer, player2: blackPlayer}))
-					.map((archetype: string) =>
-						 archetypeOptions[archetype as keyof typeof archetypeOptions]
-					) as [string, string];
+				const { results, isAiGenerated } = await requestArchetypes({player1: whitePlayer, player2: blackPlayer});
+				validatedArchetypes = results.map((archetype: string) => this.getValidArchetype(archetype)) as [string, string];
+				isArchetypeAiGenerated = isAiGenerated;
 				break;
 			case 1:
-				validatedArchetypes[0] = archetypeOptions[(await requestArchetypes({player1: whitePlayer}))[0]];
+				const res1 = await requestArchetypes({player2: blackPlayer});
+				validatedArchetypes[1] = this.getValidArchetype(res1.results[0]);
+				isArchetypeAiGenerated[1] = res1.isAiGenerated[0];
 				break;
 			case 2:
-				validatedArchetypes[1] = archetypeOptions[(await requestArchetypes({player2: blackPlayer}))[0]];
+				const res2 = await requestArchetypes({player1: whitePlayer});
+				validatedArchetypes[0] = this.getValidArchetype(res2.results[0]);
+				isArchetypeAiGenerated[0] = res2.isAiGenerated[0];
 				break;
 			case 3:
 				break;
 		}
+
+		console.log(`Validated archetypes for ${whitePlayer} and ${blackPlayer}:`, validatedArchetypes, "AI Generated Flags:", isArchetypeAiGenerated);
 		
-		
+		if (isArchetypeAiGenerated[0] && whitePlayer) {
+			await this.playersService.updateArchetype(whitePlayer, validatedArchetypes[0]!);
+		}
+
+		if (isArchetypeAiGenerated[1] && blackPlayer) {
+			await this.playersService.updateArchetype(blackPlayer, validatedArchetypes[1]!);
+		}
+
 		const [analysis] = await this.db
 			.insert(sc.analysis)
 			.values({

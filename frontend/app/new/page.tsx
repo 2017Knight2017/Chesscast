@@ -2,15 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import CreateMatchButton from '@/components/match_button';
+import { PlayerInput } from '@/components/player_input';
 
 export default function BroadcastPage() {
 	const [pgnInput, setPgnInput] = useState('');
 	const [title, setTitle] = useState('');
 	const [timeControl, setTimeControl] = useState('0:10');
+	const [whitePlayer, setWhitePlayer] = useState('');
+	const [blackPlayer, setBlackPlayer] = useState('');
 
 	const [scheduledAt, setScheduledAt] = useState("");
-    const [minDate, setMinDate] = useState("");
-    const [maxDate, setMaxDate] = useState("");
+	const [minDate, setMinDate] = useState("");
+	const [maxDate, setMaxDate] = useState("");
 	useEffect(() => {
 		const now = new Date();
 		setMinDate(getLocalDateTime(now));
@@ -18,27 +21,23 @@ export default function BroadcastPage() {
 		maxDateRaw.setMonth(maxDateRaw.getMonth() + 1);
 		setMaxDate(getLocalDateTime(maxDateRaw));
 	}, []);
-	
+
 	const archetypeOptions = [
 		"Desired archetype. Keep empty if unsure",
-		"The Calculator",
-		"The Intuitive Genius",
+		"Calculator",
+		"Intuitive Genius",
 		"Chaos Attacker",
 		"Solid Pragmatist",
 		"Time Trouble Addict",
-		"The Iron Fortress",
-		"The Blunder Prone Gambler",
-		"The Perfectionist",
-		"The Tactical Berserker",
+		"Iron Fortress",
+		"Blunder Prone Gambler",
+		"Perfectionist",
+		"Tactical Berserker",
 		"Speed Demon",
 		"Psychological Grinder",
 	];
-	
-
-	const [playerName1, setPlayerName1] = useState('Игрок 1');
 	const [archetype1, setArchetype1] = useState(archetypeOptions[0]);
-	const [playerName2, setPlayerName2] = useState('Игрок 2');
-	const [archetype2, setArchetype2] = useState(archetypeOptions[1]);
+	const [archetype2, setArchetype2] = useState(archetypeOptions[0]);
 
 	const getLocalDateTime = (date: Date = new Date()): string => {
 		const offset = date.getTimezoneOffset() * 60000;
@@ -106,24 +105,24 @@ export default function BroadcastPage() {
 				</label>
 
 				<div className="grid gap-4 grid-cols-2 grid-rows-2">
-					<label className='block'>
-						<span className="text-sm">White Player</span>
-						<input
-							type="text"
-							className="w-full p-2 rounded bg-slate-800 border border-slate-700 focus:border-blue-500 outline-none"
-							value={playerName1}
-							onChange={(e) => setPlayerName1(e.target.value)}
-						/>
-					</label>
-					<label className='block'>
-						<span className="text-sm">Black Player</span>
-						<input
-							type="text"
-							className="w-full p-2 rounded bg-slate-800 border border-slate-700 focus:border-blue-500 outline-none"
-							value={playerName2}
-							onChange={(e) => setPlayerName2(e.target.value)}
-						/>
-					</label>
+					<PlayerInput
+						label="White"
+						onSelect={(player) => {
+							setWhitePlayer(player.name);
+							if (player.archetype) {
+								setArchetype1(player.archetype);
+							}
+						}} 
+					/>
+					<PlayerInput
+						label="Black"
+						onSelect={(player) => {
+							setBlackPlayer(player.name);
+							if (player.archetype) {
+								setArchetype2(player.archetype);
+							}
+						}} 
+					/>
 					<label className="block">
 						<span className="text-sm">White Archetype</span>
 						<select
@@ -158,8 +157,8 @@ export default function BroadcastPage() {
 				<CreateMatchButton
 					pgn={pgnInput}
 					archetypes={[archetype1, archetype2]}
-					whitePlayer={playerName1}
-					blackPlayer={playerName2}
+					whitePlayer={whitePlayer}
+					blackPlayer={blackPlayer}
 					title={title}
 					timeControl={timeControl}
 					scheduledAt={scheduledAt ? new Date(scheduledAt).toISOString() : new Date().toISOString()}

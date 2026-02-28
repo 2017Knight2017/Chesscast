@@ -4,6 +4,7 @@ import { MatchesModule } from './matches/matches.module';
 import { DrizzleModule } from './drizzle/drizzle.module';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
+import { PlayersModule } from './players/players.module';
 
 @Module({
 	imports: [
@@ -19,6 +20,7 @@ import { AuthModule } from './auth/auth.module';
 		MatchesModule,
 		DrizzleModule,
 		AuthModule,
+		PlayersModule
 	],
 })
 export class AppModule {}

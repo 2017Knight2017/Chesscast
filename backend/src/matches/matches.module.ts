@@ -5,10 +5,12 @@ import { MatchesService } from './matches.service';
 import { MatchesProcessor } from './matches.processor';
 import { MatchesGateway } from './matches.gateway';
 import { DrizzleModule } from 'src/drizzle/drizzle.module';
+import { PlayersModule } from 'src/players/players.module';
 
 @Module({
 	imports: [
 		DrizzleModule,
+		PlayersModule,
 		BullModule.registerQueue({
 			name: 'analysis',
 			defaultJobOptions: {

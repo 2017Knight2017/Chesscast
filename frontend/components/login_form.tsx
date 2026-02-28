@@ -25,7 +25,7 @@ export function LoginForm({ isRegister } : { isRegister: boolean }) {
 		}
 
 		const endpoint = isRegister ? '/auth/register' : '/auth/login';
-		const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+		const apiUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001';
 		
 		try {
 			const url = `${apiUrl}${endpoint}`;

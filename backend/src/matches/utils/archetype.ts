@@ -27,24 +27,24 @@ Low sigma (0.2–0.3) is for "machine-like" players (Pragmatist, Speed ​​Dem
 
 Group 1: Depth and Precision (Slow Archetypes)
 
-The Calculator
+Calculator
 Style: Deep calculation of specific variations. The player distrusts intuition and examines every branch of the tree.
 When to choose: If the chess player is known for a phenomenal memory, a love of complex maneuvers, and ironclad logic.
 Prototypes: Alexander Alekhine, Garry Kasparov.
 
-The Perfectionist
+Perfectionist
 Style: Searching for the "most aesthetic" or objectively best move. Painstakingly chooses when the computer displays two equal lines.
 When to choose: If the player often finds themselves in time trouble due to searching for the ideal in equal positions.
 Prototypes: Vasily Smyslov, Wesley So.
 
-The Iron Fortress
+Iron Fortress
 Style: Maximum concentration while defending. Wastes time precisely when the opponent begins an attack or offers trades.
 When to choose: For "impenetrable" players who thrive under pressure.
 Prototypes: Viktor Korchnoi, Sergey Karjakin.
 
 Group 2: Speed ​​and Flow (Fast Archetypes)
 
-The Intuitive Genius
+Intuitive Genius
 Style: Understanding the harmony of pieces without unnecessary calculation. Moves quickly as long as the position remains within understandable structures.
 When to choose: For positional geniuses who "feel" where to place a piece.
 Prototypes: José Raúl Capablanca, Magnus Carlsen.
@@ -54,7 +54,7 @@ Style: Using time as a weapon. The player deliberately takes risks and simplific
 When to choose: For natural blitz players and those who play "superficially" but with lightning speed.
 Prototypes: Hikaru Nakamura, Viswanathan Anand.
 
-The Blunder Prone Gambler
+Blunder Prone Gambler
 Style: Psychological pressure and bluffing. Moves quickly in chaos, trying to confuse the opponent, but can get stuck in a boring endgame.
 When to choose: For trickster players who enjoy "muddy waters."
 
@@ -65,7 +65,7 @@ Style: Looking for victims and complications. Time is spent searching for combin
 When to choose: For brilliant tacticians who are willing to burn bridges for checkmate.
 Prototypes: Mikhail Tal, Alexey Shirov.
 
-The Tactical Berserker
+Tactical Berserker
 Style: Obsession with material relationships. Spends all their time calculating the consequences of every capture or check on the board.
 When to choose: If the player is prone to forced variations and trades.
 
@@ -98,8 +98,27 @@ Give your answer in the json format: {player1: archetype1, player2: archetype2}.
 
 `
 
+const archetypes = [
+	"Calculator",
+	"Intuitive Genius",
+	"Chaos Attacker",
+	"Solid Pragmatist",
+	"Time Trouble Addict",
+	"Iron Fortress",
+	"Blunder Prone Gambler",
+	"Perfectionist",
+	"Tactical Berserker",
+	"Speed Demon",
+	"Psychological Grinder"
+]
+
 const getBothArchetypesPrompt = (player1: string, player2: string) => instructions + `Which archetype suits ${player1} and ${player2} the best?`
 const getSingleArchetypePrompt = (player: string) => instructions + `Which archetype suits ${player} the best?`
+
+const getRandomArchetype = (): string => {
+    const randomIndex = Math.floor(Math.random() * archetypes.length);
+    return archetypes[randomIndex];
+};
 
 const ai = new GoogleGenAI({
 	apiKey: process.env.GEMINI_KEY || 'api-key',
@@ -110,19 +129,52 @@ interface params {
 	player2?: string;
 }
 
-export const requestArchetypes = async (players: params): Promise<string[]> => {
-	const response = await ai.models.generateContent({
-		model: "gemini-2.5-flash-lite",
-		contents: players.player1 !== undefined && players.player2 !== undefined 
-			? getBothArchetypesPrompt(players.player1, players.player2) 
-			: getSingleArchetypePrompt(players.player1 || players.player2!),
-		config: {
-			responseMimeType: "application/json",
-		}
-	});
-	if (!response.text) {
-		throw new Error("No response from AI");
-	}
-	const parsed = JSON.parse(response.text);
-	return Object.values(parsed);
+interface ArchetypeResponse {
+	results: string[];
+	isAiGenerated: boolean[];
+}
+
+export const requestArchetypes = async (players: params): Promise<ArchetypeResponse> => {
+    const expectedCount = (players.player1 && players.player2) ? 2 : 1;
+	let isAiGenerated = Array(expectedCount).fill(false);
+
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash-lite",
+            contents: players.player1 !== undefined && players.player2 !== undefined 
+                ? getBothArchetypesPrompt(players.player1, players.player2) 
+                : getSingleArchetypePrompt(players.player1 || players.player2!),
+            config: {
+                responseMimeType: "application/json",
+            }
+        });
+
+        const text = response.text;
+		console.log("Raw AI Response:", text);
+        if (!text) throw new Error("Empty AI response");
+
+        const parsed = JSON.parse(text);
+        const values = Object.values(parsed) as string[];
+
+        const validated = values.map((val, index) => {
+            if (archetypes.includes(val)) {
+                isAiGenerated[index] = true;
+                return val;
+            }
+            return getRandomArchetype();
+        });
+
+        while (validated.length < expectedCount) {
+            validated.push(getRandomArchetype());
+        }
+		console.log("AI Archetype Response:", validated, "AI Generated Flags:", isAiGenerated);
+        return { results: validated, isAiGenerated: isAiGenerated };
+
+    } catch (error) {
+        console.error("AI Archetype Request Failed:", error);
+        return { 
+            results: Array.from({ length: expectedCount }, () => getRandomArchetype()), 
+            isAiGenerated: Array(expectedCount).fill(false) 
+        };
+    }
 }

@@ -33,7 +33,7 @@ export default function DashboardPage({ params }: { params: Promise<{ username: 
                 return;
             }
 
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+            const apiUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001';
             const headers = { 
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'

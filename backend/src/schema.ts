@@ -16,11 +16,17 @@ export const statusEnum = pgEnum("status", ['waiting', 'in_progress', 'finished'
 
 export const users = pgTable('users', {
 	id:                serial('id').primaryKey(),
-	email:             varchar('email', { length: 255 }).notNull().unique(),
-	username:          varchar('username', { length: 255 }).notNull().unique(),
+	email:             varchar('email', { length: 32 }).notNull().unique(),
+	username:          varchar('username', { length: 32 }).notNull().unique(),
 	password:          text('password').notNull(),
 	createdAt: timestamp('created_at').defaultNow().notNull()
 });
+
+export const players = pgTable('players', {
+	id:               serial('id').primaryKey(),
+	name:             varchar('name', { length: 255 }).notNull().unique(),
+	archetype:        text('archetype'),
+}, (t) => [index('name_idx').on(t.name)] );
 
 export const analysis = pgTable('analysis', {
 	id:               uuid('id').defaultRandom().primaryKey(),
@@ -35,17 +41,17 @@ export const matches = pgTable('matches', {
 	id:                  uuid('id').primaryKey().references(() => analysis.id, { onDelete: 'cascade' }),
 	author:              text('author').notNull().references(() => users.username, { onDelete: 'cascade' }),
 	title:               text('title').notNull().default(sql`'Без названия'`),
-	whitePlayer:         text('white_player').notNull(),
-	blackPlayer:         text('black_player').notNull(),
+	whitePlayer:         text('white_player').notNull().references(() => players.name, { onDelete: 'cascade' }),
+	blackPlayer:         text('black_player').notNull().references(() => players.name, { onDelete: 'cascade' }),
 	history:             text('history').array().notNull().default(sql`'{}'::text[]`),
 	status:              statusEnum().default('waiting'),
 	timeControl:         integer('time_control').notNull(), 
 	increment:           integer('increment').default(0),
 	scheduledAt:         timestamp('scheduled_time').notNull(),
 	createdAt:           timestamp('created_at').notNull().defaultNow(),
-},  (table) => [
-	index('scheduled_at_idx').on(table.scheduledAt), 
-	index('status_idx').on(table.status),           
+},  (t) => [
+	index('scheduled_at_idx').on(t.scheduledAt), 
+	index('status_idx').on(t.status),           
 ]);
 
 export const plannedBroadcasts = pgTable('planned_broadcasts', {
