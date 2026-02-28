@@ -18,7 +18,7 @@ import { AuthModule } from './auth/auth.module';
 		}),
 		MatchesModule,
 		DrizzleModule,
-		AuthModule
+		AuthModule,
 	],
 })
 export class AppModule {}

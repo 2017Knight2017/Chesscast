@@ -44,8 +44,8 @@ export const matches = pgTable('matches', {
 	scheduledAt:         timestamp('scheduled_time').notNull(),
 	createdAt:           timestamp('created_at').notNull().defaultNow(),
 },  (table) => [
-	index('scheduled_at_idx').on(table.scheduledAt), // КРИТИЧЕСКИ ВАЖНО
-	index('status_idx').on(table.status),           // Поможет фильтровать только 'scheduled'
+	index('scheduled_at_idx').on(table.scheduledAt), 
+	index('status_idx').on(table.status),           
 ]);
 
 export const plannedBroadcasts = pgTable('planned_broadcasts', {

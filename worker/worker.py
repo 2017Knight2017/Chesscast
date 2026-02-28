@@ -202,9 +202,8 @@ async def process_job(job, job_token):
 		match_id = job.data.get('id')
 		pgn = job.data.get('pgn')
 		time_control = job.data.get('time_control')
-		print(time_control)
 		archetypes = job.data.get('archetypes')
-		print(f"Получена задача для матча {match_id}")
+		print(archetypes)
 		evaluations, durations, notation = await loop.run_in_executor(None, get_durations, pgn, time_control, archetypes)
 		report_analysis(match_id, evaluations, durations, notation)
 		

@@ -9,6 +9,8 @@ services:
       - DATABASE_URL=postgresql://admin:BtoiKe22dLq00N78@db:5432/chess_platform?schema=public
       - REDIS_HOST=redis
       - PORT=3000
+      - KEY=8Gs6MfIK9JE0CT22
+      - GEMINI_KEY=AIzaSyCqKK67QHLslTaSQkWygaMMJB2-nqEeajw
     depends_on:
       db:
         condition: service_healthy

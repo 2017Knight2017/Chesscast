@@ -7,11 +7,27 @@ import { Queue } from 'bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
 import { PgTableWithColumns } from 'drizzle-orm/pg-core';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { requestArchetypes } from "src/matches/utils/archetype";
 
 export interface gameState {
 	isStarted: boolean,
 	history: string[]
 }
+
+const archetypeOptions = {
+	"Desired archetype. Keep empty if unsure": undefined,
+	"The Calculator": "calculator",
+	"The Intuitive Genius": "intuitive",
+	"Chaos Attacker": "attacker",
+	"Solid Pragmatist": "pragmatic",
+	"Time Trouble Addict": "time_trouble",
+	"The Iron Fortress": "fortress",
+	"The Blunder Prone Gambler": "gambler",
+	"The Perfectionist": "perfectionist",
+	"The Tactical Berserker": "berserker",
+	"Speed Demon": "speed_demon",
+	"Psychological Grinder": "grinder",
+};
 
 @Injectable()
 export class MatchesService {
@@ -24,7 +40,30 @@ export class MatchesService {
 	private readonly logger = new Logger(MatchesService.name);
 
 
-	async createBroadcast(authorId: number, author: string, title: string, scheduledAt: Date, pgn: string, whitePlayer: string, blackPlayer: string, archetypes: [string, string], timeControl: number) {
+	async createBroadcast(authorId: number, author: string, title: string, scheduledAt: Date, pgn: string, whitePlayer: string, blackPlayer: string, archetypes: [string|undefined, string|undefined], timeControl: number) {
+		let validatedArchetypes: [string|undefined, string|undefined] = [
+			archetypeOptions[archetypes[0] as keyof typeof archetypeOptions],
+			archetypeOptions[archetypes[1] as keyof typeof archetypeOptions]
+		];
+		const archetypeMask = (validatedArchetypes[0] !== undefined ? 1 : 0) + (validatedArchetypes[1] !== undefined ? 2 : 0);
+		switch (archetypeMask) {
+			case 0:
+				validatedArchetypes = (await requestArchetypes({player1: whitePlayer, player2: blackPlayer}))
+					.map((archetype: string) =>
+						 archetypeOptions[archetype as keyof typeof archetypeOptions]
+					) as [string, string];
+				break;
+			case 1:
+				validatedArchetypes[0] = archetypeOptions[(await requestArchetypes({player1: whitePlayer}))[0]];
+				break;
+			case 2:
+				validatedArchetypes[1] = archetypeOptions[(await requestArchetypes({player2: blackPlayer}))[0]];
+				break;
+			case 3:
+				break;
+		}
+		
+		
 		const [analysis] = await this.db
 			.insert(sc.analysis)
 			.values({
@@ -55,7 +94,7 @@ export class MatchesService {
 			id: analysis.id,	
 			pgn: pgn,
 			time_control: timeControl,
-			archetypes: archetypes
+			archetypes: validatedArchetypes
 		}, {
 			attempts: 3, 
 			backoff: 5000 

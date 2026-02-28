@@ -20,12 +20,20 @@ export default function BroadcastPage() {
 	}, []);
 	
 	const archetypeOptions = [
-		'Calculator',
-		'Intuitive',
-		'Attacker',
-		'Pragmatic',
-		'Time Trouble',
+		"Desired archetype. Keep empty if unsure",
+		"The Calculator",
+		"The Intuitive Genius",
+		"Chaos Attacker",
+		"Solid Pragmatist",
+		"Time Trouble Addict",
+		"The Iron Fortress",
+		"The Blunder Prone Gambler",
+		"The Perfectionist",
+		"The Tactical Berserker",
+		"Speed Demon",
+		"Psychological Grinder",
 	];
+	
 
 	const [playerName1, setPlayerName1] = useState('Игрок 1');
 	const [archetype1, setArchetype1] = useState(archetypeOptions[0]);
@@ -40,11 +48,11 @@ export default function BroadcastPage() {
 
 	return (
 		<div className="flex flex-col items-center p-8 bg-slate-900 min-h-screen text-white">
-			<h1 className="text-2xl font-bold mb-6">Создание трансляции</h1>
+			<h1 className="text-2xl font-bold mb-6">Creating a broadcast</h1>
 			
 			<div className="w-full max-w-2xl mb-10 space-y-4">
 				<label className="block">
-					<span className="text-sm">Заголовок</span>
+					<span className="text-sm">Title</span>
 					<input
 						type="text"
 						className="w-full p-2 rounded bg-slate-800 border border-slate-700 focus:border-blue-500 outline-none"
@@ -55,7 +63,7 @@ export default function BroadcastPage() {
 				</label>
 
 				<label className="block">
-					<span className="text-sm">Дата и время</span>
+					<span className="text-sm">Date</span>
 					<input
 						type="datetime-local"
 						className="w-full p-2 rounded bg-slate-800 border border-slate-700 focus:border-blue-500 outline-none"
@@ -74,10 +82,10 @@ export default function BroadcastPage() {
 				</label>
 
 				<label className="block">
-					<span className="text-sm">Временной контроль (Ч:ММ, от 0:10 до 9:59)</span>
+					<span className="text-sm">Time Control (H:MM, from 0:10 to 9:59)</span>
 					<input
 						type="text"
-						placeholder="Ч:ММ"
+						placeholder="H:MM"
 						className="w-full p-2 rounded bg-slate-800 border border-slate-700 focus:border-blue-500 outline-none"
 						value={timeControl}
 						onChange={(e) => {
@@ -99,7 +107,7 @@ export default function BroadcastPage() {
 
 				<div className="grid gap-4 grid-cols-2 grid-rows-2">
 					<label className='block'>
-						<span className="text-sm">Игрок белыми</span>
+						<span className="text-sm">White Player</span>
 						<input
 							type="text"
 							className="w-full p-2 rounded bg-slate-800 border border-slate-700 focus:border-blue-500 outline-none"
@@ -108,7 +116,7 @@ export default function BroadcastPage() {
 						/>
 					</label>
 					<label className='block'>
-						<span className="text-sm">Игрок чёрными</span>
+						<span className="text-sm">Black Player</span>
 						<input
 							type="text"
 							className="w-full p-2 rounded bg-slate-800 border border-slate-700 focus:border-blue-500 outline-none"
@@ -117,7 +125,7 @@ export default function BroadcastPage() {
 						/>
 					</label>
 					<label className="block">
-						<span className="text-sm">Архетип белых</span>
+						<span className="text-sm">White Archetype</span>
 						<select
 							className="w-full p-2 rounded bg-slate-800 border border-slate-700 focus:border-blue-500 outline-none"
 							value={archetype1}
@@ -129,27 +137,27 @@ export default function BroadcastPage() {
 						</select>
 					</label>
 					<label className="block">
-						<span className="text-sm">Архетип чёрных</span>
+						<span className="text-sm">Black Archetype</span>
 						<select
 							className="w-full p-2 rounded bg-slate-800 border border-slate-700 focus:border-blue-500 outline-none"
 							value={archetype2}
 							onChange={(e) => setArchetype2(e.target.value)}
 						>
 							{archetypeOptions.map(opt => (
-								<option key={opt} value={opt}>{opt}</option>
+								<option key={opt} value={opt} title="fff">{opt}</option>
 							))}
 						</select>
 					</label>
-				</div>
+				</div>		
 				<textarea
 					className="w-full h-32 p-4 rounded bg-slate-800 border border-slate-700 focus:border-blue-500 outline-none transition-all"
-					placeholder="Вставьте PGN..."
+					placeholder="Paste the PGN"
 					value={pgnInput}
 					onChange={(e) => setPgnInput(e.target.value)}
 				/>
 				<CreateMatchButton
 					pgn={pgnInput}
-					archetypes={[archetype1.toLowerCase(), archetype2.toLowerCase()]}
+					archetypes={[archetype1, archetype2]}
 					whitePlayer={playerName1}
 					blackPlayer={playerName2}
 					title={title}
