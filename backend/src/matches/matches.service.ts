@@ -9,6 +9,7 @@ import { PgTableWithColumns } from 'drizzle-orm/pg-core';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { requestArchetypes } from "src/matches/utils/archetype";
 import { PlayersService } from 'src/players/players.service';
+import { RedisService } from 'src/redis/redis.service';
 
 export interface gameState {
 	isStarted: boolean,
@@ -36,7 +37,9 @@ export class MatchesService {
 		@Inject(DrizzleAsyncProvider) private db: NodePgDatabase<typeof sc>,
 		@Inject(PlayersService) private playersService: PlayersService,
 		@InjectQueue('analysis') private analysisQueue: Queue,
-		@InjectQueue('timer') private timerQueue: Queue
+		@InjectQueue('timer') private timerQueue: Queue,
+		@Inject(RedisService) private redisService: RedisService
+		
 	) {}
 
 	private readonly logger = new Logger(MatchesService.name);
@@ -282,16 +285,25 @@ export class MatchesService {
 
 
 	async getMatchesByStatus(status: "waiting" | "in_progress" | "finished") {
-		return await this.db
+		const matches = await this.db
 			.select({
-					id: sc.matches.id,
-					title: sc.matches.title,
-					author: sc.users.username,
+				id: sc.matches.id,
+				title: sc.matches.title,
+				author: sc.users.username,
 			})
 			.from(sc.matches)
 			.innerJoin(sc.users, eq(sc.matches.author, sc.users.username))
 			.where(eq(sc.matches.status, status))
 			.orderBy(desc(sc.matches.createdAt))
 			.limit(10);
+		const viewerCounts = await Promise.all(matches.map(match => this.redisService.getViewerCount(match.id)));
+
+		return matches.map((match, index) => ({
+			...match,
+			viewers: viewerCounts[index] || 0,
+		}));
 	}
+
+
+
 }

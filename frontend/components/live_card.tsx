@@ -1,17 +1,9 @@
-// components/LiveCard.tsx
+'use client';
+
+import { Match } from '@/types/types';
 import { ChessPreview } from './chess_preview';
 
-export interface Match {
-	id: string;
-    title: string;
-    author: string;
-    white: { name: string; time: string };
-    black: { name: string; time: string };
-	fen: string;
-	viewerCount: number;
-}
-
-export const LiveCard = ({ match }: { match: Match }) => {
+export const LiveCard = ({ match, viewerCount }: { match: Match, viewerCount?: number }) => {
 	return (
 		<div className="group bg-[#161512] rounded-md overflow-hidden transition-all hover:bg-[#1e1c18] cursor-pointer">
 			{/* Секция с доской */}
@@ -26,7 +18,7 @@ export const LiveCard = ({ match }: { match: Match }) => {
 					<span className="text-[11px] text-slate-500">@{match.author}</span>
 					<div className="flex items-center gap-1 text-[11px] text-slate-500">
 						 <span className="w-2 h-2 bg-slate-600 rounded-full"></span>
-						 {match.viewerCount || 0}
+						 {viewerCount || match.viewerCount}
 					</div>
 				</div>
 			</div>

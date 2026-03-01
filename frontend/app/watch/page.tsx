@@ -1,5 +1,3 @@
-'use client';
-
 import ChessBoard from "@/components/chess_board";
 import Image from 'next/image';
 import background from '@/public/bg-watch.png';
@@ -7,13 +5,8 @@ import MoveList from "@/components/move_list";
 import SpectatorList from "@/components/spectator_list";
 
 export default function WatchPage() {
+
 	return (
-		<>
-		<header className="absolute top-0 left-0 w-full h-[6%] flex items-center justify-center z-20">
-			<a href="#">
-				<h1 className="text-3xl font-serif text-[#3e2b1d] opacity-80">Chesscast</h1>
-			</a>
-		</header>
 		<main className="h-screen w-screen bg-vintage-paper bg-size-[100%_100%] overflow-hidden">
 			<Image
 				src={background}
@@ -51,6 +44,5 @@ export default function WatchPage() {
 
 			</div>
 		</main>
-		</>
 	);
 }

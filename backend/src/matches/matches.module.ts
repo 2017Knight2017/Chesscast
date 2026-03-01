@@ -6,11 +6,13 @@ import { MatchesProcessor } from './matches.processor';
 import { MatchesGateway } from './matches.gateway';
 import { DrizzleModule } from 'src/drizzle/drizzle.module';
 import { PlayersModule } from 'src/players/players.module';
+import { RedisModule } from 'src/redis/redis.module';
 
 @Module({
 	imports: [
 		DrizzleModule,
 		PlayersModule,
+		RedisModule,
 		BullModule.registerQueue({
 			name: 'analysis',
 			defaultJobOptions: {
