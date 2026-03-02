@@ -16,6 +16,18 @@ export interface gameState {
 	history: string[]
 }
 
+// DTO used by frontend; mirrors `Match` interface in
+// frontend/types/types.ts
+export interface Match {
+	id: string;
+	title: string;
+	author: string;
+	white: { name: string; time: string };
+	black: { name: string; time: string };
+	fen: string;
+	viewerCount: number;
+}
+
 const archetypeOptions = {
 	"Desired archetype. Keep empty if unsure": undefined,
 	"Calculator": "calculator",
@@ -258,7 +270,8 @@ export class MatchesService {
 
 	private async getMatchesByJoinTable(
 		joinTable: PgTableWithColumns<any>, 
-		userId: number
+		userId: number,
+		limit?: number
 	) {
 		return await this.db
 			.select({
@@ -275,35 +288,57 @@ export class MatchesService {
 			.where(eq(joinTable.userId, userId));
 	}
 
-	async checkFollowedMatches(userId: number) {
+	async checkMyFollowedMatches(userId: number) {
 		return this.getMatchesByJoinTable(sc.followedBroadcasts, userId);
 	}
 
-	async checkPlannedMatches(userId: number) {
+	async checkMyPlannedMatches(userId: number) {
 		return this.getMatchesByJoinTable(sc.plannedBroadcasts, userId);
 	}
 
 
-	async getMatchesByStatus(status: "waiting" | "in_progress" | "finished") {
-		const matches = await this.db
+	async getMatchesByStatus(status: "waiting" | "in_progress" | "finished"): Promise<Match[]> {
+		const raw = await this.db
 			.select({
 				id: sc.matches.id,
-				title: sc.matches.title,
 				author: sc.users.username,
+				title: sc.matches.title,
+				whitePlayer: sc.matches.whitePlayer,
+				blackPlayer: sc.matches.blackPlayer,
+				timeControl: sc.matches.timeControl,
+				fen: sc.matches.fen
 			})
 			.from(sc.matches)
 			.innerJoin(sc.users, eq(sc.matches.author, sc.users.username))
 			.where(eq(sc.matches.status, status))
 			.orderBy(desc(sc.matches.createdAt))
 			.limit(10);
-		const viewerCounts = await Promise.all(matches.map(match => this.redisService.getViewerCount(match.id)));
 
-		return matches.map((match, index) => ({
-			...match,
-			viewers: viewerCounts[index] || 0,
-		}));
+		const viewerCounts = await Promise.all(raw.map(match => this.redisService.getViewerData(match.id)));
+
+		const formatTime = (seconds: number): string => {
+			const h = Math.floor(seconds / 3600);
+			const m = Math.floor((seconds % 3600) / 60);
+			const s = seconds % 60;
+			const mm = m.toString().padStart(2, '0');
+			const ss = s.toString().padStart(2, '0');
+			
+			if (h < 1) return `${mm}:${ss}`;
+			else return `${h}:${mm}:${ss}`;
+		};
+
+		return raw.map((match, index) => {
+			const viewers = viewerCounts[index].count + viewerCounts[index].guestCount || 0;
+			const dto: Match = {
+				id: match.id,
+				title: match.title,
+				author: match.author,
+				white: { name: match.whitePlayer, time: formatTime(match.timeControl) },
+				black: { name: match.blackPlayer, time: formatTime(match.timeControl) },
+				fen: match.fen,
+				viewerCount: viewers,
+			};
+			return dto;
+		});
 	}
-
-
-
 }

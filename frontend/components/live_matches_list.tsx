@@ -4,12 +4,12 @@ import { useViewerCounts } from '@/hooks/use_viewer_counts';
 import { LiveCard } from "@/components/live_card";
 import { Match } from '@/types/types';
 
-export default function LiveMatchesList({ liveMatches }: { liveMatches: Match[] }) {
+export function LiveMatchesList({ liveMatches, styles }: { liveMatches: Match[], styles: string }) {
 	const matchIds = liveMatches.map(m => m.id);
 	const viewerCounts = useViewerCounts(matchIds);
 
 	return (
-		<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+		<div className={styles}>
 			{liveMatches.map((match: Match) => (
 				<LiveCard key={match.id} match={match} viewerCount={viewerCounts[match.id] ?? match.viewerCount} />
 			))}

@@ -40,10 +40,11 @@ export const analysis = pgTable('analysis', {
 export const matches = pgTable('matches', {
 	id:                  uuid('id').primaryKey().references(() => analysis.id, { onDelete: 'cascade' }),
 	author:              text('author').notNull().references(() => users.username, { onDelete: 'cascade' }),
-	title:               text('title').notNull().default(sql`'Без названия'`),
+	title:               text('title').notNull().default('Без названия'),
 	whitePlayer:         text('white_player').notNull().references(() => players.name, { onDelete: 'cascade' }),
 	blackPlayer:         text('black_player').notNull().references(() => players.name, { onDelete: 'cascade' }),
 	history:             text('history').array().notNull().default(sql`'{}'::text[]`),
+	fen:                 text('fen').notNull().default('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'),
 	status:              statusEnum().default('waiting'),
 	timeControl:         integer('time_control').notNull(), 
 	increment:           integer('increment').default(0),

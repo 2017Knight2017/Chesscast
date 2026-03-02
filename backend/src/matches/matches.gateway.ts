@@ -16,7 +16,6 @@ import { RedisService } from 'src/redis/redis.service';
 export class MatchesGateway implements OnGatewayConnection {
 	@WebSocketServer() server: Server;
 
-
 	constructor(
 		@InjectQueue('timer') private readonly timerQueue: Queue,
 		private readonly redisService: RedisService
@@ -24,7 +23,6 @@ export class MatchesGateway implements OnGatewayConnection {
 
 	handleConnection(client: Socket) {
 		console.log(`[Socket] Client connected: ${client.id}`);
-		
 	}
 
 	handleDisconnect(client: Socket) {
@@ -33,13 +31,21 @@ export class MatchesGateway implements OnGatewayConnection {
 
 	@SubscribeMessage('joinMatch')
 	async handleJoinMatch(
-		@MessageBody() data: { matchId: string },
+		@MessageBody() data: { matchId: string; username?: string },
 		@ConnectedSocket() client: Socket,
 	) {
 		client.join(data.matchId);
 		console.log(`Client ${client.id} joined room: ${data.matchId}`);
 
-		await this.redisService.addViewer(data.matchId);
+		if (data.username) {
+			await this.redisService.addViewer(data.matchId, data.username);
+		}
+		else {
+			await this.redisService.addGuestViewer(data.matchId);
+		}
+
+		const counts = await this.redisService.getViewerData(data.matchId);
+		client.emit('viewer_count_update', { matchId: data.matchId, ...counts });
 	}
 
 	@SubscribeMessage('startBroadcast')
@@ -53,21 +59,34 @@ export class MatchesGateway implements OnGatewayConnection {
 
 	@SubscribeMessage('leaveMatch')
 	async handleLeaveMatch(
-		@MessageBody('matchId') matchId: string,
+		@MessageBody() data: { matchId: string; username?: string },
 		@ConnectedSocket() client: Socket,
 	) {
-		client.leave(matchId);
-		console.log(`[Socket] Client ${client.id} left match ${matchId}`);
+		client.leave(data.matchId);
+		console.log(`[Socket] Client ${client.id} left match ${data.matchId}`);
 
-		await this.redisService.removeViewer(matchId);
+		if (data.username) {
+			await this.redisService.removeViewer(data.matchId, data.username);
+		}
+		else {
+			await this.redisService.removeGuestViewer(data.matchId);
+		}
 		
-		return { status: 'left', matchId };
+		const counts = await this.redisService.getViewerData(data.matchId);
+		client.emit('viewer_count_update', { matchId: data.matchId, ...counts });
 	}
 
-	@SubscribeMessage('subscribe_to_counts')
+	@SubscribeMessage('subscribeToCounts')
 	handleSubscribe(client: Socket, data: { matchIds: string[] }) {
 		data.matchIds.forEach(id => {
 			client.join(`counter:${id}`);
+		});
+	}
+
+	@SubscribeMessage('unsubscribeFromCounts')
+	handleUnsubscribe(client: Socket, data: { matchIds: string[] }) {
+		data.matchIds.forEach(id => {
+			client.leave(`counter:${id}`);
 		});
 	}
 }

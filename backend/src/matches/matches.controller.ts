@@ -1,5 +1,5 @@
 import { Controller, Post, Get, Param, HttpCode, HttpStatus, Body, Inject, NotFoundException, UseGuards, Request } from '@nestjs/common';
-import { MatchesService } from './matches.service';
+import { MatchesService, Match } from './matches.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 interface userRequest extends Request {
@@ -52,20 +52,25 @@ export class MatchesController {
 		return await this.matchesService.checkGameState(id);
 	}
 
-	@Get('followed')
+	@Get('my_followed')
 	@UseGuards(JwtAuthGuard)
-	async getFollowed(@Request() req) {
-		return this.matchesService.checkFollowedMatches(req.user.id);
+	async getMyFollowed(@Request() req) {
+		return this.matchesService.checkMyFollowedMatches(req.user.id);
 	}
 	
-	@Get('planned')
+	@Get('my_planned')
 	@UseGuards(JwtAuthGuard)
-	async getPlanned(@Request() req) {
-		return this.matchesService.checkPlannedMatches(req.user.id);
+	async getMyPlanned(@Request() req) {
+		return this.matchesService.checkMyPlannedMatches(req.user.id);
+	}
+
+	@Get('planned')
+	async getPlanned(@Request() req): Promise<Match[]> {
+		return this.matchesService.getMatchesByStatus('waiting');
 	}
 
 	@Get('live')
-	async getLiveMatches() {
+	async getLiveMatches(): Promise<Match[]> {
 		return this.matchesService.getMatchesByStatus('in_progress');
-}
+	}
 }

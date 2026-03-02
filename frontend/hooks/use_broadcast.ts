@@ -16,13 +16,16 @@ export const useBroadcast = (matchId: string) => {
 	const [history, setHistory] = useState<string[]>([]);
 
 	useEffect(() => {
+        const stored = localStorage.getItem('user');
+        const username = stored ? JSON.parse(stored).username : undefined;
+
         const socket: Socket = io(process.env.NEXT_PUBLIC_SOCKET_URL, {
-            transports: ['websocket', 'polling'],
+            transports: ['websocket'],
         });
 
         socket.on('connect', () => {
             console.log('Сокет подключен, ID:', socket.id);
-            socket.emit('joinMatch', { matchId });
+            socket.emit('joinMatch', { matchId, username });
         });
 
         socket.on('newMove', (data: moveData) => {
@@ -42,7 +45,7 @@ export const useBroadcast = (matchId: string) => {
         });
 
         return () => {
-            socket.emit('leaveMatch', { matchId });
+            socket.emit('leaveMatch', { matchId, username });
             
             socket.off('connect');
             socket.off('newMove');
@@ -53,5 +56,5 @@ export const useBroadcast = (matchId: string) => {
         };
     }, [matchId]);
 
-	return { currentMove, isEnded, history,  };
+	return { currentMove, isEnded, history };
 };

@@ -1,8 +1,9 @@
 "use client";
 
 import Chessground from '@bezalel6/react-chessground';
+import { Match } from '@/types/types'
 
-export const ChessPreview = ({ match }: { match: any }) => {
+export const ChessPreview = ({ match }: { match: Match }) => {
 	return (
 		<div className="relative aspect-square w-full bg-[#262421] p-2 flex flex-col justify-between">
 			

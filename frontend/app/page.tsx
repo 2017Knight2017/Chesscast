@@ -1,12 +1,13 @@
 import { MOCK_LIVE_MATCHES } from '@/mocks/matches';
-import LiveMatchesList from "@/components/live_matches_list";
-import { Match } from "@/types/types";
-import { useViewerCounts } from '@/hooks/use_viewer_counts';
+import { LiveMatchesList } from "@/components/live_matches_list";
 
 export default async function HomePage() {
-	const res = await fetch(`${process.env.NEST_API_URL}/matches/live`, { next: { revalidate: 30 } });
-	const liveMatches = await res.json();
-	const matchIds = liveMatches.map((match: Match) => match.id);
+	const [liveRes, plannedRes] = await Promise.all([
+					fetch(`${process.env.NEST_API_URL}/matches/live`, { headers: { 'Content-Type': 'application/json' } }),
+                    fetch(`${process.env.NEST_API_URL}/matches/planned`, { headers: { 'Content-Type': 'application/json' } })
+                ]);
+	const [liveMatches, plannedMatches]  = await Promise.all([ liveRes.json(), plannedRes.json() ]);
+	const styles = 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6'
 
 	return (
 		<main className="max-w-7xl mx-auto px-6 py-12">
@@ -15,9 +16,14 @@ export default async function HomePage() {
 						<h2 className="text-xl font-semibold text-slate-200 uppercase tracking-widest">Live</h2>
 						<button className="text-blue-400 text-sm hover:underline">See All</button>
 				</div>
-
-				{/* СЕТКА КАРТОЧЕК */}
-				<LiveMatchesList liveMatches={liveMatches} />
+				<LiveMatchesList liveMatches={liveMatches} styles={styles} />
+			</section>
+			<section>
+				<div className="flex justify-between items-end mb-6">
+						<h2 className="text-xl font-semibold text-slate-200 uppercase tracking-widest">Planned</h2>
+						<button className="text-blue-400 text-sm hover:underline">See All</button>
+				</div>
+				<LiveMatchesList liveMatches={plannedMatches} styles={styles} />
 			</section>
 		</main>
 	);

@@ -12,17 +12,34 @@ export class RedisService {
 		});
 	}
 
-	async addViewer(matchId: string) {
-		await this.redis.incr(`match:${matchId}:viewers`);
+	async addViewer(matchId: string, username: string) {
+		const key = `match:${matchId}:viewers_list`;
+		await this.redis.sadd(key, username);
 	}
 
-	async removeViewer(matchId: string) {
-		const count = await this.redis.decr(`match:${matchId}:viewers`);
-		if (count < 0) await this.redis.set(`match:${matchId}:viewers`, 0);
+	async addGuestViewer(matchId: string) {
+		const key = `match:${matchId}:guest_viewers_list`;
+		await this.redis.incr(key);
 	}
 
-	async getViewerCount(matchId: string): Promise<number> {
-		const count = await this.redis.get(`match:${matchId}:viewers`);
-		return parseInt(count || '0', 10);
+	async removeGuestViewer(matchId: string) {
+		const key = `match:${matchId}:guest_viewers_list`;
+		await this.redis.decr(key);
+	}
+
+	async removeViewer(matchId: string, username: string) {
+		const key = `match:${matchId}:viewers_list`;
+		await this.redis.srem(key, username);
+	}
+
+	async getViewerData(matchId: string) {
+		const authorizedKey = `match:${matchId}:viewers_list`;
+		const guestKey = `match:${matchId}:guest_viewers_list`;
+		const [count, usernames, guestCount] = await Promise.all([
+			this.redis.scard(authorizedKey),		
+			this.redis.smembers(authorizedKey),
+			this.redis.get(guestKey)
+		]);
+		return { count, usernames, guestCount: parseInt(guestCount || '0') };
 	}
 }

@@ -10,14 +10,18 @@ export const useViewerCounts = (matchIds: string[]) => {
 		const socket: Socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001');
 
 		socket.on('connect', () => {
-			socket.emit('subscribe_to_counts', { matchIds });
+			socket.emit('subscribeToCounts', { matchIds });
 		});
 
-		socket.on('viewer_count_update', ({ matchId, count }) => {
-			setCounts((prev) => ({ ...prev, [matchId]: count }));
+		socket.on('viewer_count_update', ({ matchId, count, guestCount }) => {
+			setCounts((prev) => ({ ...prev, [matchId]: count + guestCount }));
 		});
 
 		return () => {
+			socket.emit('unsubscribeFromCounts');
+			socket.off('connect');
+			socket.off('viewer_count_update');
+
 			socket.disconnect();
 		};
 	}, [matchIds.join(',')]);

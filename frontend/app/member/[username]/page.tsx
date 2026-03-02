@@ -17,11 +17,9 @@ export default function DashboardPage({ params }: { params: Promise<{ username: 
     const resolvedParams = use(params);
     const decodedUsername = decodeURIComponent(resolvedParams.username);
     
-    // Состояния для списков
     const [planned, setPlanned] = useState<Broadcast[]>([]);
     const [followed, setFollowed] = useState<Broadcast[]>([]);
     
-    // Состояния UI
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -29,7 +27,7 @@ export default function DashboardPage({ params }: { params: Promise<{ username: 
         const fetchDashboardData = async () => {
             const token = localStorage.getItem('token');
             if (!token) {
-                router.push('/login'); // Если нет токена — отправляем на вход
+                router.push('/login');
                 return;
             }
 
@@ -40,10 +38,9 @@ export default function DashboardPage({ params }: { params: Promise<{ username: 
             };
 
             try {
-                // Запускаем оба запроса параллельно для скорости
                 const [plannedRes, followedRes] = await Promise.all([
-                    fetch(`${apiUrl}/matches/planned`, { headers }),
-                    fetch(`${apiUrl}/matches/followed`, { headers })
+                    fetch(`${apiUrl}/matches/my_planned`, { headers }),
+                    fetch(`${apiUrl}/matches/my_followed`, { headers })
                 ]);
 
                 if (!plannedRes.ok || !followedRes.ok) {

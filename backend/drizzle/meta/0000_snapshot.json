@@ -1,5 +1,5 @@
 {
-  "id": "f64a9f15-ecbb-4425-a3c7-ae2a3d6b73da",
+  "id": "ad740e2e-a6c2-427d-ac53-4d2146b3781d",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -159,6 +159,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'{}'::text[]"
+        },
+        "fen": {
+          "name": "fen",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'"
         },
         "status": {
           "name": "status",
