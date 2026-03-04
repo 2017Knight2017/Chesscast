@@ -39,7 +39,7 @@ export const ChessPreview = ({ match }: { match: Match }) => {
 				<div className="w-full aspect-square max-h-full bg-[#b58863] relative rounded-sm overflow-hidden border border-[#3c3a37]">
 					<div className="absolute inset-0">
 						<Chessground
-							fen={match.fen}
+							fen={currentMoveData?.fen ?? match.fen}
 							viewOnly={true}
 							coordinates={false}
 							width={"100%"}
