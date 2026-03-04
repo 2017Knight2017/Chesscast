@@ -18,7 +18,7 @@ export const useViewerCounts = (matchIds: string[]) => {
 		});
 
 		return () => {
-			socket.emit('unsubscribeFromCounts');
+			socket.emit('unsubscribeFromCounts', { matchIds });
 			socket.off('connect');
 			socket.off('viewer_count_update');
 

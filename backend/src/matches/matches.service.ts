@@ -10,22 +10,23 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { requestArchetypes } from "src/matches/utils/archetype";
 import { PlayersService } from 'src/players/players.service';
 import { RedisService } from 'src/redis/redis.service';
+import { Chess } from 'chess.js';
 
 export interface gameState {
 	isStarted: boolean,
 	history: string[]
 }
 
-// DTO used by frontend; mirrors `Match` interface in
-// frontend/types/types.ts
 export interface Match {
-	id: string;
-	title: string;
-	author: string;
-	white: { name: string; time: string };
-	black: { name: string; time: string };
-	fen: string;
-	viewerCount: number;
+	id: string,
+	title: string,
+	author: string,
+	white: { name: string; time: string; timeMs?: number },
+	black: { name: string; time: string; timeMs?: number },
+	status: "waiting"|"in_progress"|"finished",
+	timeControl: number,
+	fen: string,
+	viewerCount: number,
 }
 
 const archetypeOptions = {
@@ -41,6 +42,17 @@ const archetypeOptions = {
 	"Tactical Berserker": "berserker",
 	"Speed Demon": "speed_demon",
 	"Psychological Grinder": "grinder",
+};
+
+const formatTime = (seconds: number): string => {
+	const h = Math.floor(seconds / 3600);
+	const m = Math.floor((seconds % 3600) / 60);
+	const s = seconds % 60;
+	const mm = m.toString().padStart(2, '0');
+	const ss = s.toString().padStart(2, '0');
+	
+	if (h < 1) return `${mm}:${ss}`;
+	else return `${h}:${mm}:${ss}`;
 };
 
 @Injectable()
@@ -112,6 +124,8 @@ export class MatchesService {
 				title: title,
 				whitePlayer: whitePlayer,
 				blackPlayer: blackPlayer,
+				whitePlayerTime: timeControl*1000,
+				blackPlayerTime: timeControl*1000,
 				status: 'waiting',
 				history: [],
 				timeControl: timeControl,
@@ -152,17 +166,12 @@ export class MatchesService {
 
 	async startBroadcast(id: string) {
 		const [match] = await this.db
-			.select()
-			.from(sc.matches)
+			.update(sc.matches)
+			.set({status:"in_progress"})
 			.where(eq(sc.matches.id, id))
-			.limit(1);
-
-		if (!match) {
-			throw new NotFoundException('Broadcast not found');
-		}
+			.returning();
 
 		await this.timerQueue.remove(`timer_${id}`);
-
 		await this.timerQueue.add(
 			'nextStep',
 			{ matchId: id, moveIndex: 0 },
@@ -205,58 +214,105 @@ export class MatchesService {
 		}
 	}
 
-
 	async updateGameState(id: string, move: string) {
 		const game = await this.db.query.matches.findFirst({
 			where: eq(sc.matches.id, id),
 		});
+		
+		const analysis = await this.db.query.analysis.findFirst({
+			where: eq(sc.analysis.id, id),
+		});
 
 		if (!game) throw new Error('Match not found');
+		if (!analysis) throw new Error('Analysis not found');
 
+		const chess = new Chess(game.fen);
+
+		chess.move(move);
+
+		const newFen = chess.fen();
 		let updatedMatch;
 
-		switch (game.status) {
-			case "waiting":
-				[updatedMatch] = await this.db
-					.update(sc.matches)
-					.set({
-						status: 'in_progress',
-						history: [move],
-					})
-					.where(eq(sc.matches.id, id))
-					.returning();
-				break;
+		const moveIndex = game.history ? game.history.length : 0;
+		const moveDuration = analysis.durations[moveIndex] || 0;
+		const isWhiteMove = moveIndex % 2 === 0;
 
-			case "in_progress":
-				[updatedMatch] = await this.db
-					.update(sc.matches)
-					.set({
-						history: sql`array_append(${sc.matches.history}, ${move})`,
-					})
-					.where(eq(sc.matches.id, id))
-					.returning();
-				break;
-				
-				default:
-					return game;
+		const commonUpdate = {
+		    fen: newFen,
+		    history: sql`array_append(${sc.matches.history}, ${move})`,
+		    whitePlayerTime: isWhiteMove 
+		        ? game.whitePlayerTime - moveDuration 
+		        : game.whitePlayerTime,
+		    blackPlayerTime: !isWhiteMove 
+		        ? game.blackPlayerTime - moveDuration 
+		        : game.blackPlayerTime,
+		};
+
+		if (game.status === 'waiting') {
+			[updatedMatch] = await this.db
+				.update(sc.matches)
+				.set({
+					...commonUpdate,
+					status: 'in_progress',
+					history: [move],
+				})
+				.where(eq(sc.matches.id, id))
+				.returning();
+		} else if (game.status === 'in_progress') {
+			[updatedMatch] = await this.db
+				.update(sc.matches)
+				.set(commonUpdate)
+				.where(eq(sc.matches.id, id))
+				.returning();
+		} else {
+			return game;
 		}
 
 		return updatedMatch;
 	}
 
 
-	async checkGameState(id: string): Promise<gameState> {
+	async checkGameState(id: string) {
 		const match = await this.db.query.matches.findFirst({
 			where: eq(sc.matches.id, id),
 		});
 
 		if (!match) {
-			return { isStarted: false, history: [] };
+			return null;
 		}
 
-		const isStarted = !(match.status === 'waiting')
+		const user = await this.db.query.users.findFirst({
+			where: eq(sc.users.username, match.author),
+		});
 
-		return { isStarted: isStarted, history: match.history };
+		if (!user) {
+			return null;
+		}
+
+		const viewerData = await this.redisService.getViewerData(id);
+		const viewers = viewerData.count + viewerData.guestCount || 0;
+
+		const dto: Match = {
+			id: match.id,
+			title: match.title,
+			author: match.author,
+			timeControl: match.timeControl,
+			status: match.status,
+			white: { 
+				name: match.whitePlayer, 
+				time: formatTime(Math.floor(match.whitePlayerTime / 1000)),
+				timeMs: match.whitePlayerTime,
+			},
+			black: { 
+				name: match.blackPlayer, 
+				time: formatTime(Math.floor(match.blackPlayerTime / 1000)),
+				timeMs: match.blackPlayerTime,
+			},
+			fen: match.fen,
+			viewerCount: viewers,
+		};
+
+		return dto;
 	}
 
 
@@ -303,8 +359,11 @@ export class MatchesService {
 				id: sc.matches.id,
 				author: sc.users.username,
 				title: sc.matches.title,
+				status: sc.matches.status,
 				whitePlayer: sc.matches.whitePlayer,
 				blackPlayer: sc.matches.blackPlayer,
+				whitePlayerTime: sc.matches.whitePlayerTime,
+				blackPlayerTime: sc.matches.blackPlayerTime,
 				timeControl: sc.matches.timeControl,
 				fen: sc.matches.fen
 			})
@@ -316,25 +375,16 @@ export class MatchesService {
 
 		const viewerCounts = await Promise.all(raw.map(match => this.redisService.getViewerData(match.id)));
 
-		const formatTime = (seconds: number): string => {
-			const h = Math.floor(seconds / 3600);
-			const m = Math.floor((seconds % 3600) / 60);
-			const s = seconds % 60;
-			const mm = m.toString().padStart(2, '0');
-			const ss = s.toString().padStart(2, '0');
-			
-			if (h < 1) return `${mm}:${ss}`;
-			else return `${h}:${mm}:${ss}`;
-		};
-
 		return raw.map((match, index) => {
 			const viewers = viewerCounts[index].count + viewerCounts[index].guestCount || 0;
 			const dto: Match = {
 				id: match.id,
 				title: match.title,
 				author: match.author,
-				white: { name: match.whitePlayer, time: formatTime(match.timeControl) },
-				black: { name: match.blackPlayer, time: formatTime(match.timeControl) },
+				timeControl: match.timeControl,
+				status: match.status,
+				white: { name: match.whitePlayer, time: formatTime(match.whitePlayerTime), timeMs: match.whitePlayerTime },
+				black: { name: match.blackPlayer, time: formatTime(match.blackPlayerTime), timeMs: match.blackPlayerTime },
 				fen: match.fen,
 				viewerCount: viewers,
 			};

@@ -21,49 +21,44 @@ export class MatchesProcessor extends WorkerHost {
 	}
 
 	async process(job: Job<{ matchId: string; moveIndex: number }>): Promise<void> {
-		const { matchId, moveIndex } = job.data;
+	    const { matchId, moveIndex } = job.data;
 
-		const [analysis] = await this.db
-			.select()
-			.from(sc.analysis)
-			.where(eq(sc.analysis.id, matchId))
-			.limit(1);
+	    const [analysis] = await this.db
+	        .select()
+	        .from(sc.analysis)
+	        .where(eq(sc.analysis.id, matchId))
+	        .limit(1);
+
+	    const currentMoveNotation = analysis.notation[moveIndex];
 		
-		if (!analysis) {
-			console.error(`analysis ${matchId} not found`);
-			return;
-		}
+	    const updatedMatch = await this.matchesService.updateGameState(matchId, currentMoveNotation);
 
-		console.log(moveIndex, analysis.notation.length)
+	    this.gateway.server.to(matchId).emit('newMove', {
+	        move: currentMoveNotation,
+	        evaluation: analysis.evaluations[moveIndex],
+	        nextMoveDelay: analysis.durations[moveIndex],
+	        moveIndex: moveIndex,
+	        history: updatedMatch.history, 
+	        fen: updatedMatch.fen,
+	        whiteTimeMs: updatedMatch.whitePlayerTime,
+	        blackTimeMs: updatedMatch.blackPlayerTime,
+	    });
 
-		const currentMoveNotation = analysis.notation[moveIndex];
-		await this.matchesService.updateGameState(matchId, currentMoveNotation);
+	    const nextIndex = moveIndex + 1;
+	    if (nextIndex < analysis.notation.length) {
+	        const delay = analysis.durations[moveIndex] || 1000;
 
-		this.gateway.server.to(matchId).emit('newMove', {
-			move: analysis.notation[moveIndex],
-			evaluation: analysis.evaluations[moveIndex],
-			nextMoveDelay: analysis.durations[moveIndex],
-			moveIndex: moveIndex,
-		});
-
-		const nextIndex = moveIndex + 1;
-		
-		if (nextIndex < analysis.notation.length) {
-			const delay = analysis.durations[moveIndex] || 1000;
-
-			await this.timerQueue.add(
-				'nextStep',
-				{ matchId, moveIndex: nextIndex },
-				{
-					delay: delay,
-					jobId: `timer_${matchId}_${nextIndex}`,
-					removeOnComplete: true,
-				},
-			);
-		} else {
-			console.log("Партия завершилась");
-			this.gateway.server.to(matchId).emit('analysisEnded', { matchId });
-			await this.matchesService.finishGame(matchId);
-		}
+	        await this.timerQueue.add(
+	            'nextStep',
+	            { matchId, moveIndex: nextIndex },
+	            {
+	                delay: delay,
+	                jobId: `timer_${matchId}_${nextIndex}`,
+	                removeOnComplete: true,
+	            },
+	        );
+	    } else {
+	        await this.matchesService.finishGame(matchId);
+	    }
 	}
 }

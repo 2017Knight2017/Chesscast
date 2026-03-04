@@ -1,0 +1,1 @@
+export const getTurnFromFen = (fen: string): 'w' | 'b' => fen.split(' ')[1] === "w" ? "w" : "b";

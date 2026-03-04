@@ -2,8 +2,24 @@
 
 import Chessground from '@bezalel6/react-chessground';
 import { Match } from '@/types/types'
+import { useBroadcast } from '@/hooks/use_broadcast';
+import { useChessClock } from '@/hooks/use_chess_clocks';
 
 export const ChessPreview = ({ match }: { match: Match }) => {
+	const {currentMoveData, isEnded} = useBroadcast(match.id);
+	// only start ticking when the match is officially in progress
+	const isLive = match.status === "in_progress";
+	const initialClockState = isLive
+		? { 
+			fen: match.fen, 
+			whiteTimeMs: match.white.timeMs ?? match.timeControl * 1000, 
+			blackTimeMs: match.black.timeMs ?? match.timeControl * 1000 
+		}
+		: null;
+	const {whiteTimeFormatted, blackTimeFormatted} = useChessClock(
+		isLive ? (currentMoveData ?? initialClockState) : null,
+		match.timeControl*1000
+	)
 	return (
 		<div className="relative aspect-square w-full bg-[#262421] p-2 flex flex-col justify-between">
 			
@@ -14,7 +30,7 @@ export const ChessPreview = ({ match }: { match: Match }) => {
 					<span className="text-[11px] font-medium text-slate-300">{match.black.name}</span>
 				</div>
 				<div className="bg-[#161512] px-2 py-0.5 rounded text-[12px] font-mono text-slate-400">
-					{match.black.time}
+					{blackTimeFormatted}
 				</div>
 			</div>
 
@@ -40,7 +56,7 @@ export const ChessPreview = ({ match }: { match: Match }) => {
 					<span className="text-[11px] font-medium text-white">{match.white.name}</span>
 				</div>
 				<div className="bg-white px-2 py-0.5 rounded text-[12px] font-mono text-black font-bold">
-					{match.white.time}
+					{whiteTimeFormatted}
 				</div>
 			</div>
 		</div>

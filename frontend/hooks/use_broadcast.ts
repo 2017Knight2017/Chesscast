@@ -1,21 +1,58 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
-
-interface moveData {
-	move: string,
-	evaluation: number,
-	nextMoveDelay: number,
-	moveIndex: number,
-}
+import { Move } from '@/types/types'
+import { getTurnFromFen } from '@/utils/get_turn_from_fen';
 
 export const useBroadcast = (matchId: string) => {
-	const [currentMove, setCurrentMove] = useState<moveData | null>(null);
-	const [isEnded, setIsEnded] = useState<boolean>(false);
-	const [history, setHistory] = useState<string[]>([]);
+    const [currentMoveData, setcurrentMoveData] = useState<Move | null>(null);
+    const [isEnded, setIsEnded] = useState<boolean>(false);
+    
+    // Используем ref, чтобы знать, прилетал ли уже ход от сокета
+    const hasLiveMove = useRef(false);
 
-	useEffect(() => {
+    // 1. Fetch начального состояния
+    useEffect(() => {
+        const controller = new AbortController();
+        hasLiveMove.current = false; // Сброс при смене матча
+
+        (async () => {
+            try {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_SOCKET_URL}/matches/${matchId}/state`, {
+                    signal: controller.signal,
+                });
+                
+                if (!res.ok) return;
+                
+                const text = await res.text();
+                if (!text) return; // Защита от "Unexpected end of JSON input"
+                
+                const data = JSON.parse(text);
+
+                // ВАЖНО: Если сокет УЖЕ прислал новый ход, игнорируем старые данные из API
+                if (data?.fen && !hasLiveMove.current) {
+                    setcurrentMoveData({
+                        fen: data.fen,
+                        whiteTimeMs: data.white?.timeMs ?? 0,
+                        blackTimeMs: data.black?.timeMs ?? 0,
+                        turn: data.fen.split(' ')[1], // Упрощенно
+                        move: '',
+                        evaluation: 0,
+                        nextMoveDelay: 0,
+                        moveIndex: 0,
+                        history: data.history || [],
+                    } as Move);
+                }
+            } catch (err: any) {
+                if (err.name !== 'AbortError') console.error('Failed to fetch match state', err);
+            }
+        })();
+
+        return () => controller.abort();
+    }, [matchId]);
+
+useEffect(() => {
         const stored = localStorage.getItem('user');
         const username = stored ? JSON.parse(stored).username : undefined;
 
@@ -28,11 +65,10 @@ export const useBroadcast = (matchId: string) => {
             socket.emit('joinMatch', { matchId, username });
         });
 
-        socket.on('newMove', (data: moveData) => {
+        socket.on('newMove', (data: Move) => {
             console.log('Новый ход:', data);
 			
-			setCurrentMove(data)
-            setHistory((prev) => [...prev, data.move]);
+			setcurrentMoveData(data)
         });
 
         socket.on('analysisEnded', (data: { matchId: string }) => {
@@ -56,5 +92,5 @@ export const useBroadcast = (matchId: string) => {
         };
     }, [matchId]);
 
-	return { currentMove, isEnded, history };
+	return { currentMoveData, isEnded };
 };

@@ -1,4 +1,3 @@
-import { MOCK_LIVE_MATCHES } from '@/mocks/matches';
 import { LiveMatchesList } from "@/components/live_matches_list";
 
 export default async function HomePage() {
