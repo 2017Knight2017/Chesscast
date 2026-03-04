@@ -5,6 +5,7 @@ import { DrizzleModule } from './drizzle/drizzle.module';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { PlayersModule } from './players/players.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
 	imports: [
@@ -20,7 +21,8 @@ import { PlayersModule } from './players/players.module';
 		MatchesModule,
 		DrizzleModule,
 		AuthModule,
-		PlayersModule
+		PlayersModule,
+		ScheduleModule.forRoot()
 	],
 })
 export class AppModule {}
