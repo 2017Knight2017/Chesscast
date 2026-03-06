@@ -1,0 +1,530 @@
+package main
+
+import (
+	"bufio"
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
+	"log"
+	"math"
+	"math/rand"
+	"net/http"
+	"os"
+	"os/exec"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/notnil/chess"
+)
+
+// Структуры для архетипов
+type Archetype struct {
+	K       float64   `json:"k"`
+	Weights []float64 `json:"weights"`
+	Sigma   float64   `json:"sigma"`
+}
+
+type Bias struct {
+	K     float64
+	W1    float64
+	W2    float64
+	W3    float64
+	Sigma float64
+}
+
+// Глобальный кэш архетипов (чтобы не читать файл каждый раз)
+var archetypesCache map[string]Archetype
+
+// Структуры для отправки отчета
+type ReportPayload struct {
+	Evaluations []int    `json:"evaluations"`
+	Durations   []int    `json:"durations"`
+	Notation    []string `json:"notation"`
+}
+
+type MateStats struct {
+	WinningLines int
+	LosingLines  int
+	ClosestWin   int
+	ClosestLoss  int
+}
+
+var logger *log.Logger
+
+func init() {
+	// Инициализируем логгер с выводом в файл
+	logFile, err := os.OpenFile("worker.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Ошибка при открытии файла логов: %v\n", err)
+		logger = log.New(os.Stdout, "[WORKER] ", log.LstdFlags|log.Lshortfile)
+	} else {
+		logger = log.New(logFile, "[WORKER] ", log.LstdFlags|log.Lshortfile)
+	}
+
+	logger.Println("=== Запуск worker ===")
+	loadArchetypes("archetypes.json")
+}
+
+func loadArchetypes(path string) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		logger.Printf("Внимание: не удалось загрузить %s: %v", path, err)
+		return
+	}
+	err = json.Unmarshal(data, &archetypesCache)
+	if err != nil {
+		logger.Fatalf("Ошибка парсинга архетипов: %v", err)
+	}
+	logger.Printf("Архетипы загружены успешно (всего: %d)", len(archetypesCache))
+}
+
+func getBias(name string) Bias {
+	arch, ok := archetypesCache[name]
+	if !ok {
+		// Значения по умолчанию, если архетип не найден
+		return Bias{K: 1.0, W1: 1.0, W2: 1.0, W3: 1.0, Sigma: 0.5}
+	}
+	return Bias{
+		K:     arch.K,
+		W1:    arch.Weights[0],
+		W2:    arch.Weights[1],
+		W3:    arch.Weights[2],
+		Sigma: arch.Sigma,
+	}
+}
+
+// Главная функция обработки одной игры
+func ProcessGame(matchID, pgn string, initialTime int, archNames []string) error {
+	logger.Printf("Начинаем обработку матча %s с архетипами %v", matchID, archNames)
+
+	biasWhite := getBias(archNames[0])
+	biasBlack := getBias(archNames[1])
+
+	scanner := chess.NewScanner(strings.NewReader(pgn))
+	if !scanner.Scan() {
+		return fmt.Errorf("не удалось прочитать PGN или файл пуст")
+	}
+
+	game := scanner.Next()
+	board := chess.NewGame(chess.UseNotation(chess.UCINotation{}))
+	moves := game.Moves()
+
+	durations := make([]float64, 0, len(moves))
+	evaluations := make([]int, 0, len(moves))
+	notation := make([]string, 0, len(moves))
+
+	clocks := map[chess.Color]float64{
+		chess.White: float64(initialTime),
+		chess.Black: float64(initialTime),
+	}
+
+	nextControlPly := 80
+	movesPlayed := 0
+	openingTill := rand.Intn(8) + 10 // от 10 до 17
+
+	// В продакшене лучше использовать пул процессов (Worker Pool), чтобы не запускать движок каждый раз
+	engPath := "/usr/games/stockfish"
+
+	// Создаем long-lived движок
+	eng, err := NewLongLivedEngine(engPath)
+	if err != nil {
+		return fmt.Errorf("не удалось запустить движок: %v", err)
+	}
+	defer eng.Close()
+
+	logger.Printf("Начинаем обработку %d полуходов. EngPath: %s", len(moves), engPath)
+
+	for _, move := range moves {
+		currentPlayer := board.Position().Turn()
+		notation = append(notation, move.String())
+
+		movesToControl := (nextControlPly - movesPlayed) / 2
+		if movesToControl <= 0 {
+			nextControlPly += 32
+			movesToControl = 16
+		}
+
+		fen := board.Position().String()
+		currentBias := biasWhite
+		if currentPlayer == chess.Black {
+			currentBias = biasBlack
+		}
+
+		eval, moveTime, err := calculateMoveTimeWithEngine(eng, clocks[currentPlayer], movesToControl, fen, currentBias)
+		if err != nil {
+			return err
+		}
+
+		if movesPlayed < openingTill {
+			moveTime *= 0.05
+		}
+
+		evaluations = append(evaluations, eval)
+		durations = append(durations, moveTime)
+
+		clocks[currentPlayer] -= moveTime
+		if clocks[currentPlayer] < 0 {
+			clocks[currentPlayer] = 0
+		}
+
+		movesPlayed++
+		colorStr := "белых"
+		if currentPlayer == chess.Black {
+			colorStr = "черных"
+		}
+		logger.Printf("Полуход %d. Ход %s: %.1f сек (оценка: %d)", movesPlayed, colorStr, moveTime, eval)
+
+		board.Move(move)
+	}
+
+	reportAnalysis(matchID, evaluations, durations, notation)
+	logger.Printf("Игра %s обработана: %d полуходов", matchID, len(evaluations))
+	return nil
+}
+
+func parseEngineOutput(output string) ([]int, MateStats) {
+	lines := strings.Split(output, "\n")
+	cpValues := []int{}
+	stats := MateStats{ClosestWin: math.MaxInt32, ClosestLoss: math.MaxInt32}
+	mateCeiling := 30000
+
+	// Собираем все multipv линии с максимальной глубины
+	maxDepth := 0
+	multipvLines := make(map[int][]int) // multipv -> scores
+
+	for _, line := range lines {
+		if strings.Contains(line, "info") && strings.Contains(line, "score") {
+			parts := strings.Fields(line)
+			depth := 0
+			multipv := 1
+			score := 0
+			scoreKind := ""
+
+			for i, p := range parts {
+				switch p {
+				case "depth":
+					if i+1 < len(parts) {
+						depth, _ = strconv.Atoi(parts[i+1])
+					}
+				case "multipv":
+					if i+1 < len(parts) {
+						multipv, _ = strconv.Atoi(parts[i+1])
+					}
+				case "score":
+					if i+2 < len(parts) {
+						scoreKind = parts[i+1]
+						score, _ = strconv.Atoi(parts[i+2])
+					}
+				}
+			}
+
+			if depth > maxDepth {
+				maxDepth = depth
+			}
+
+			if scoreKind != "" {
+				var cpVal int
+				switch scoreKind {
+				case "mate":
+					if score > 0 {
+						cpVal = mateCeiling - (score * 100)
+						stats.WinningLines++
+						if score < stats.ClosestWin {
+							stats.ClosestWin = score
+						}
+					} else {
+						absScore := int(math.Abs(float64(score)))
+						cpVal = -mateCeiling + (absScore * 100)
+						stats.LosingLines++
+						if absScore < stats.ClosestLoss {
+							stats.ClosestLoss = absScore
+						}
+					}
+				case "cp":
+					cpVal = score
+					if cpVal > 1500 {
+						cpVal = 1500
+					}
+					if cpVal < -1500 {
+						cpVal = -1500
+					}
+				}
+
+				if multipvLines[multipv] == nil {
+					multipvLines[multipv] = make([]int, 0)
+				}
+				multipvLines[multipv] = append(multipvLines[multipv], cpVal)
+			}
+		}
+	}
+
+	// Берем последние значения для каждого multipv (самые глубокие)
+	for multipv := 1; multipv <= 3; multipv++ {
+		if scores, ok := multipvLines[multipv]; ok && len(scores) > 0 {
+			cpValues = append(cpValues, scores[len(scores)-1])
+		}
+	}
+
+	// Паддинг, если линий меньше 3
+	for len(cpValues) < 3 {
+		lastVal := 0
+		if len(cpValues) > 0 {
+			lastVal = cpValues[len(cpValues)-1]
+		}
+		padding := lastVal
+		if lastVal > -29000 {
+			padding -= 100
+		}
+		cpValues = append(cpValues, padding)
+	}
+
+	return cpValues, stats
+}
+
+// Структура для long-lived движка
+type LongLivedEngine struct {
+	cmd     *exec.Cmd
+	stdin   io.WriteCloser
+	stdout  io.ReadCloser
+	reader  *bufio.Reader
+	running bool
+}
+
+// Создаем long-lived движок
+func NewLongLivedEngine(path string) (*LongLivedEngine, error) {
+	logger.Printf("Создаем движок: %s", path)
+	cmd := exec.Command(path)
+
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		return nil, err
+	}
+
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, err
+	}
+
+	logger.Println("Запускаем движок...")
+	err = cmd.Start()
+	if err != nil {
+		return nil, err
+	}
+
+	eng := &LongLivedEngine{
+		cmd:     cmd,
+		stdin:   stdin,
+		stdout:  stdout,
+		reader:  bufio.NewReader(stdout),
+		running: true,
+	}
+
+	// Инициализируем UCI
+	logger.Println("Отправляем команду uci")
+	fmt.Fprintln(eng.stdin, "uci")
+
+	// Ждем uciok
+	logger.Println("Ждем uciok...")
+	if err := eng.waitFor("uciok", 5*time.Second); err != nil {
+		logger.Printf("Ошибка ожидания uciok: %v", err)
+		eng.Close()
+		return nil, err
+	}
+	logger.Println("Получен uciok")
+
+	// Настраиваем MultiPV
+	logger.Println("Настраиваем MultiPV")
+	fmt.Fprintf(eng.stdin, "setoption name MultiPV value 3\n")
+
+	logger.Println("Движок успешно инициализирован")
+	return eng, nil
+}
+
+func (eng *LongLivedEngine) Close() error {
+	eng.running = false
+	fmt.Fprintln(eng.stdin, "quit")
+	eng.stdin.Close()
+	eng.stdout.Close()
+	return eng.cmd.Wait()
+}
+
+func (eng *LongLivedEngine) readLineWithTimeout(timeout time.Duration) (string, error) {
+	done := make(chan string, 1)
+	errChan := make(chan error, 1)
+
+	go func() {
+		line, err := eng.reader.ReadString('\n')
+		if err != nil {
+			errChan <- err
+		} else {
+			done <- strings.TrimSpace(line)
+		}
+	}()
+
+	select {
+	case line := <-done:
+		return line, nil
+	case err := <-errChan:
+		return "", err
+	case <-time.After(timeout):
+		return "", fmt.Errorf("timeout reading from engine")
+	}
+}
+
+func (eng *LongLivedEngine) waitFor(marker string, timeout time.Duration) error {
+	logger.Printf("Ждем маркер: %s", marker)
+	deadline := time.Now().Add(timeout)
+
+	for {
+		remaining := time.Until(deadline)
+		if remaining <= 0 {
+			return fmt.Errorf("timeout waiting for %s", marker)
+		}
+
+		line, err := eng.readLineWithTimeout(remaining)
+		if err != nil {
+			logger.Printf("Ошибка чтения при ожидании маркера: %v", err)
+			return err
+		}
+
+		logger.Printf("Получена строка при ожидании: %s", line)
+		if strings.Contains(line, marker) {
+			logger.Printf("Найден маркер: %s", marker)
+			return nil
+		}
+	}
+}
+
+func (eng *LongLivedEngine) analyzePosition(fen string) ([]int, MateStats, error) {
+	fmt.Fprintf(eng.stdin, "position fen %s\n", fen)
+	fmt.Fprintln(eng.stdin, "go depth 16")
+
+	var lines []string
+	deadline := time.Now().Add(10 * time.Second)
+
+	for {
+		remaining := time.Until(deadline)
+		if remaining <= 0 {
+			return nil, MateStats{}, fmt.Errorf("timeout waiting for bestmove")
+		}
+
+		line, err := eng.readLineWithTimeout(remaining)
+		if err != nil {
+			return nil, MateStats{}, err
+		}
+
+		lines = append(lines, line)
+		if strings.Contains(line, "bestmove") {
+			vals, stats := parseEngineOutput(strings.Join(lines, "\n"))
+			return vals, stats, nil
+		}
+	}
+}
+
+// Новая функция для работы с long-lived движком
+func calculateMoveTimeWithEngine(eng *LongLivedEngine, timeLeftSec float64, movesToControl int, fen string, bias Bias) (int, float64, error) {
+	baseTime := timeLeftSec / float64(movesToControl+10)
+
+	vals, stats, err := eng.analyzePosition(fen)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	e1, e2 := float64(vals[0]), float64(vals[1])
+	delta := math.Abs(e1 - e2)
+	uncertaintyFactor := 1.0 - math.Tanh(bias.K*delta)
+
+	if stats.WinningLines >= 2 {
+		uncertaintyFactor *= 0.1
+	}
+	if stats.ClosestWin == 1 {
+		uncertaintyFactor = 0
+	}
+
+	sumVals := float64(vals[0] + vals[1] + vals[2])
+	sharpnessFactor := math.Abs(e1-(sumVals/3.0)) / 100.0
+
+	// ОПТИМИЗАЦИЯ ТАКТИКИ: Никаких board.push/pop!
+	fenFunc, err := chess.FEN(fen)
+	if err != nil {
+		return 0, 0, fmt.Errorf("ошибка парсинга FEN: %v", err)
+	}
+
+	// Создаем игру с конкретной позицией
+	game := chess.NewGame(fenFunc)
+	validMoves := game.ValidMoves()
+	tactics := 0
+
+	for _, m := range validMoves {
+		// В notnil/chess флаги взятия и шаха вычисляются при генерации ходов
+		if m.HasTag(chess.Capture) || m.HasTag(chess.Check) {
+			tactics++
+		}
+	}
+	logger.Printf("Анализ позиции: %d тактических ходов из %d возможных", tactics, len(validMoves))
+
+	tacticsFactor := 0.0
+	if len(validMoves) > 0 {
+		tacticsFactor = float64(tactics) / float64(len(validMoves))
+	}
+
+	complexity := bias.W1*uncertaintyFactor + bias.W2*sharpnessFactor + bias.W3*tacticsFactor
+	complexityMult := 0.2 + math.Log1p(complexity*5)
+
+	panicFactor := 1.0
+	if movesToControl <= 3 && timeLeftSec < 180 {
+		panicFactor = 0.3
+	}
+
+	// Lognormal распределение в Go
+	logNorm := math.Exp(rand.NormFloat64() * bias.Sigma) // Эквивалент random.lognormvariate(0, sigma)
+
+	calculatedTime := baseTime * complexityMult * panicFactor * logNorm
+	absoluteMax := math.Min(timeLeftSec*0.15, 600)
+	finalTime := math.Max(3.0, math.Min(calculatedTime, absoluteMax))
+
+	evalRet := vals[0]
+	if game.Position().Turn() == chess.Black {
+		evalRet = -evalRet
+	}
+
+	return evalRet, finalTime, nil
+}
+
+func reportAnalysis(matchID string, evaluations []int, durations []float64, notation []string) {
+	url := fmt.Sprintf("%s/matches/%s/report", os.Getenv("BACKEND_URL"), matchID)
+	logger.Printf("Отправляем отчет для матча %s на URL: %s", matchID, url)
+
+	durationsMs := make([]int, len(durations))
+	for i, d := range durations {
+		durationsMs[i] = int(d * 1000)
+	}
+
+	payload := ReportPayload{
+		Evaluations: evaluations,
+		Durations:   durationsMs,
+		Notation:    notation,
+	}
+
+	data, err := json.Marshal(payload)
+	if err != nil {
+		logger.Printf("Ошибка маршалинга: %v", err)
+		return
+	}
+
+	client := &http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Post(url, "application/json", bytes.NewBuffer(data))
+	if err != nil {
+		logger.Printf("Ошибка при связи с бэкендом: %v", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		logger.Printf("Бэкенд вернул ошибку: %s", resp.Status)
+	} else {
+		logger.Printf("Отчет успешно отправлен! (%d полуходов обработано)", len(evaluations))
+	}
+}

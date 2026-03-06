@@ -73,9 +73,13 @@ export class MatchesService {
 }
 
 	async createBroadcast(authorId: number, author: string, title: string, scheduledAt: Date, pgn: string, whitePlayer: string, blackPlayer: string, archetypes: [string, string], timeControl: number) {
+		const [whiteDB, blackDB] = await Promise.all([
+			this.playersService.getArchetypeFromDB(whitePlayer),
+			this.playersService.getArchetypeFromDB(blackPlayer)
+		]);
 		let validatedArchetypes: [string|undefined, string|undefined] = [
-			this.getValidArchetype(archetypes[0]),
-			this.getValidArchetype(archetypes[1])
+			whiteDB || this.getValidArchetype(archetypes[0]),
+			blackDB || this.getValidArchetype(archetypes[1])
 		];
 		let isArchetypeAiGenerated: boolean[] = [false, false];
 		const archetypeMask = (validatedArchetypes[0] !== undefined ? 1 : 0) + (validatedArchetypes[1] !== undefined ? 2 : 0);
@@ -96,6 +100,7 @@ export class MatchesService {
 				isArchetypeAiGenerated[0] = res2.isAiGenerated[0];
 				break;
 			case 3:
+				console.log(`Both archetypes were taken from DB or from user input: ${validatedArchetypes}`)
 				break;
 		}
 
@@ -151,6 +156,7 @@ export class MatchesService {
 
 
 	async handleWorkerReport(id: string, evaluations: number[], durations: number[], notation: string[]) {
+		console.log(id, evaluations, durations, notation)
 		const [broadcast] = await this.db
 			.update(sc.analysis)
 			.set({
@@ -238,14 +244,14 @@ export class MatchesService {
 		const isWhiteMove = moveIndex % 2 === 0;
 
 		const commonUpdate = {
-		    fen: newFen,
-		    history: sql`array_append(${sc.matches.history}, ${move})`,
-		    whitePlayerTime: isWhiteMove 
-		        ? game.whitePlayerTime - moveDuration 
-		        : game.whitePlayerTime,
-		    blackPlayerTime: !isWhiteMove 
-		        ? game.blackPlayerTime - moveDuration 
-		        : game.blackPlayerTime,
+			fen: newFen,
+			history: sql`array_append(${sc.matches.history}, ${move})`,
+			whitePlayerTime: isWhiteMove 
+				? game.whitePlayerTime - moveDuration 
+				: game.whitePlayerTime,
+			blackPlayerTime: !isWhiteMove 
+				? game.blackPlayerTime - moveDuration 
+				: game.blackPlayerTime,
 		};
 
 		if (game.status === 'waiting') {

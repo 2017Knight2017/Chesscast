@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as sc from '../schema';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
-import { eq, ilike } from 'drizzle-orm';
+import { and, eq, ilike, isNotNull } from 'drizzle-orm';
 
 @Injectable()
 export class PlayersService {
@@ -27,5 +27,19 @@ export class PlayersService {
 			.execute();
 
 		console.log(`Successfully cached archetype for ${name}: ${archetype}`);
+	}
+
+	async getArchetypeFromDB(name: string) {
+		const result = await this.db
+			.select()
+			.from(sc.players)
+			.where(
+				and(
+					eq(sc.players.name, name),
+					isNotNull(sc.players.archetype)
+				)
+			);
+		if (!result || !result[0].archetype) return undefined;
+		else return result[0].archetype;
 	}
 }

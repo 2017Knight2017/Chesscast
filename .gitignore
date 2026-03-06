@@ -1,2 +1,4 @@
 docker-compose.yml
-worker_go
+worker
+main.rs
+Cargo.toml

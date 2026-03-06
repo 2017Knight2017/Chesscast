@@ -34,17 +34,28 @@ services:
       - NEST_API_URL=http://backend:3000
       - NEXT_PUBLIC_SOCKET_URL=http://localhost:3001
 
+  #worker:
+  #  build: ./worker
+  #  depends_on:
+  #    - redis
+  #  deploy:
+  #    resources:
+  #      limits:
+  #        cpus: '2.0'
+  #        memory: 512M
+  #  environment:
+  #    - BACKEND_URL=http://backend:3000
+  
   worker:
-    build: ./worker
+    build: ./worker_go
+    restart: always
+    environment:
+      - REDIS_URL=redis:6379
+      - BACKEND_URL=http://backend:3000
+    volumes:
+      - ./logs:/root/logs
     depends_on:
       - redis
-    deploy:
-      resources:
-        limits:
-          cpus: '2.0'
-          memory: 512M
-    environment:
-      - BACKEND_URL=http://backend:3000
 
   db:
     image: postgres:17-alpine 
