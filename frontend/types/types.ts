@@ -22,6 +22,13 @@ export interface Move {
 	blackTimeMs: number,
 }
 
+export interface Broadcast {
+	id: string;
+	title: string;
+	scheduledAt: string;
+	status: 'in_progress' | 'waiting' | 'finished';
+}
+
 export interface MoveRecord {
 	num: number,
 	white: string,

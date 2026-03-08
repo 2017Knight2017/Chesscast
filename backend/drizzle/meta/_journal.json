@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1772459361455,
-      "tag": "0000_known_norman_osborn",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1772528301721,
-      "tag": "0001_mean_firebrand",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1772612217564,
-      "tag": "0002_breezy_pet_avengers",
+      "when": 1772902107375,
+      "tag": "0000_closed_mastermind",
       "breakpoints": true
     }
   ]

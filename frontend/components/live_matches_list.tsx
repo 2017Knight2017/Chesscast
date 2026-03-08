@@ -16,7 +16,7 @@ export function LiveMatchesList({ liveMatches, styles }: { liveMatches: Match[],
 			
 			{liveMatches.length === 0 && (
 				<div className="col-span-full py-20 text-center border-2 border-dashed border-slate-800 rounded-2xl text-slate-500">
-					 No active broadcasts yet. Create <a href="/new">your own</a>!
+					 No broadcasts yet!
 				</div>
 			)}
 		</div>

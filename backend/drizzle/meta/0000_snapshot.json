@@ -1,5 +1,5 @@
 {
-  "id": "ad740e2e-a6c2-427d-ac53-4d2146b3781d",
+  "id": "fb7adca0-00d9-429f-b786-6a4b7116442e",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -153,6 +153,20 @@
           "primaryKey": false,
           "notNull": true
         },
+        "white_player_time": {
+          "name": "white_player_time",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 600000
+        },
+        "black_player_time": {
+          "name": "black_player_time",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 600000
+        },
         "history": {
           "name": "history",
           "type": "text[]",
@@ -172,7 +186,7 @@
           "type": "status",
           "typeSchema": "public",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "default": "'waiting'"
         },
         "time_control": {

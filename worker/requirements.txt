@@ -1,3 +1,0 @@
-bullmq
-requests
-chess
