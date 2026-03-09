@@ -39,7 +39,8 @@ export class PlayersService {
 					isNotNull(sc.players.archetype)
 				)
 			);
-		if (!result || !result[0].archetype) return undefined;
-		else return result[0].archetype;
+		if (!result || !result[0]?.archetype) return undefined;
+		else return result[0]?.archetype;
 	}
 }
+

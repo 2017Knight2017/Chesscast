@@ -7,7 +7,7 @@ interface Viewer {
 	name: string;
 }
 
-export default function SpectatorList({ spectators }: { spectators: Viewer[]; }) {
+export function SpectatorList({ spectators }: { spectators: Viewer[]; }) {
 	const [selectedSpectator, setSelectedSpectator] = useState<Viewer | null>(null);
 	
 	return (

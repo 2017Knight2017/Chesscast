@@ -36,9 +36,6 @@ export class MatchesProcessor extends WorkerHost {
 	    this.gateway.server.to(matchId).emit('newMove', {
 	        move: currentMoveNotation,
 	        evaluation: analysis.evaluations[moveIndex],
-	        nextMoveDelay: analysis.durations[moveIndex],
-	        moveIndex: moveIndex,
-	        history: updatedMatch.history, 
 	        fen: updatedMatch.fen,
 	        whiteTimeMs: updatedMatch.whitePlayerTime,
 	        blackTimeMs: updatedMatch.blackPlayerTime,

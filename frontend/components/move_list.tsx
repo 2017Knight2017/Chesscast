@@ -2,22 +2,29 @@
 
 import { useBroadcast } from "@/hooks/use_broadcast";
 import { MoveRecord } from "@/types/types"
-import { parseMove } from "@/utils/parse_move"
+import { useMemo } from "react";
 
-export default function MoveList({ id }: { id: string }) {
+export function MoveList({ id }: { id: string }) {
 	const { currentMoveData } = useBroadcast(id);
-	const pairs: MoveRecord[] = [];
-	if (currentMoveData) {
-		for (let i = 0; i < currentMoveData.history.length; i += 2) {
-			pairs.push({
-				num: Math.floor(i / 2) + 1,
-				white: currentMoveData.history[i],
-				black: currentMoveData.history[i + 1] || '...',
-			});
-		}
-	}
-	else 
-		
+	const history = currentMoveData?.history || [];
+    
+    const pairs = useMemo(() => {
+        const p: MoveRecord[] = [];
+        for (let i = 0; i < history.length; i += 2) {
+            p.push({
+                num: Math.floor(i / 2) + 1,
+                white: history[i] || "...",
+                black: history[i + 1] || "...",
+            });
+        }
+        return p;
+    }, [history]);
+
+	console.log(currentMoveData);
+	console.log(history);
+	console.log(pairs);
+
+    if (!currentMoveData) return <div>Loading...</div>;
 	
 	return (
 		<div className="bg-[#f4ead5] text-[#3e2b1d] shadow-inner p-6 border-l-4 border-[#8b5e34] font-mono">
@@ -27,8 +34,8 @@ export default function MoveList({ id }: { id: string }) {
 				{pairs.map((pair) => (
 					<div key={pair.num} className="flex justify-between mb-1 text-sm border-b border-dotted border-black/10">
 						<span className="w-6 opacity-50">{pair.num}.</span>
-						<span className="flex-1 font-bold transform-[rotate(0.1deg)]">{pair.white}</span>
-						<span className="flex-1 font-bold transform-[rotate(-0.1deg)] text-right">{pair.black}</span>
+						<span className="flex-1 font-bold">{pair.white}</span>
+						<span className="flex-1 font-bold text-right">{pair.black}</span>
 					</div>
 				))}
 			</div>

@@ -1,6 +1,6 @@
 import { ChessBoard } from "@/components/chess_board";
-import MoveList from "@/components/move_list";
-import SpectatorList from "@/components/spectator_list";
+import { MoveList } from "@/components/move_list";
+import { SpectatorList } from "@/components/spectator_list";
 import { notFound } from "next/navigation";
 import { Match } from '@/types/types';
 
@@ -44,7 +44,7 @@ export default async function WatchPage({ params }: { params: Promise<{ id: stri
 				{/* ПРАВАЯ КОЛОНКА */}
 				<aside className="h-[75vh] flex flex-col justify-center">
 					<div className="bg-[#f4ead5]/20 backdrop-blur-sm p-4 h-full border border-[#8b5e34]/20 shadow-lg">
-						<MoveList id="bb438ab2-51b8-4e53-a81a-297474fe6c4b"/>
+						<MoveList id={match.id}/>
 					</div>
 				</aside>
 

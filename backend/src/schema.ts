@@ -45,7 +45,7 @@ export const matches = pgTable('matches', {
 	blackPlayer:         text('black_player').notNull().references(() => players.name, { onDelete: 'cascade' }),
 	whitePlayerTime:     integer('white_player_time').notNull().default(600000),
 	blackPlayerTime:     integer('black_player_time').notNull().default(600000),
-	history:             text('history').array().notNull().default(sql`'{}'::text[]`),
+	moveIndex:           integer('move_index').notNull().default(0),
 	fen:                 text('fen').notNull().default('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'),
 	status:              statusEnum().notNull().default('waiting'),
 	timeControl:         integer('time_control').notNull(), 

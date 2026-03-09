@@ -11,22 +11,12 @@ export interface Match {
 }
 
 export interface Move {
-	move: string,
-	evaluation: number,
-	nextMoveDelay: number,
-	moveIndex: number,
+	evaluations: number[],
 	turn: "w"|"b",
 	history: string[],
 	fen: string,
 	whiteTimeMs: number,
 	blackTimeMs: number,
-}
-
-export interface Broadcast {
-	id: string;
-	title: string;
-	scheduledAt: string;
-	status: 'in_progress' | 'waiting' | 'finished';
 }
 
 export interface MoveRecord {

@@ -11,13 +11,9 @@ export function ChessBoard({ match }: { match: Match }) {
 
 	const { currentMoveData, isEnded } = useBroadcast(match.id);
 	const [isManualStarted, setIsManualStarted] = useState<boolean>(false);
-	// determine if the broadcast should be considered running at the moment
-	// (either the match is already in progress or user manually kicked it off).
+
 	const isBroadcastActive = match.status === "in_progress" || isManualStarted;
 
-	// if we don’t yet have a move from the socket but the broadcast is active,
-	// start the clocks from the initial position/time control so time appears
-	// to tick immediately. otherwise leave state null to keep clocks frozen.
 	const initialClockState = isBroadcastActive
 		? {
 			fen: match.fen,

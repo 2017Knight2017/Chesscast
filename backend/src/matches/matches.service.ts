@@ -27,6 +27,8 @@ export interface Match {
 	timeControl: number,
 	fen: string,
 	viewerCount: number,
+	history?: string[] | null,
+	evaluations?: number[] | null
 }
 
 const archetypeOptions = {
@@ -132,7 +134,7 @@ export class MatchesService {
 				whitePlayerTime: timeControl*1000,
 				blackPlayerTime: timeControl*1000,
 				status: 'waiting',
-				history: [],
+				moveIndex: 0,
 				timeControl: timeControl,
 				scheduledAt: scheduledAt
 			});
@@ -173,7 +175,10 @@ export class MatchesService {
 	async startBroadcast(id: string) {
 		const [match] = await this.db
 			.update(sc.matches)
-			.set({status:"in_progress"})
+			.set({
+				status: "in_progress",
+				moveIndex: 1
+			})
 			.where(eq(sc.matches.id, id))
 			.returning();
 
@@ -197,7 +202,10 @@ export class MatchesService {
 
 		const started = await this.db
 			.update(sc.matches)
-			.set({ status: 'in_progress' })
+			.set({
+				status: 'in_progress',
+				moveIndex: 1 
+			})
 			.where(
 				and(
 					eq(sc.matches.status, 'waiting'),
@@ -237,42 +245,24 @@ export class MatchesService {
 		chess.move(move);
 
 		const newFen = chess.fen();
-		let updatedMatch;
 
-		const moveIndex = game.history ? game.history.length : 0;
-		const moveDuration = analysis.durations[moveIndex] || 0;
-		const isWhiteMove = moveIndex % 2 === 0;
-
-		const commonUpdate = {
-			fen: newFen,
-			history: sql`array_append(${sc.matches.history}, ${move})`,
-			whitePlayerTime: isWhiteMove 
-				? game.whitePlayerTime - moveDuration 
-				: game.whitePlayerTime,
-			blackPlayerTime: !isWhiteMove 
-				? game.blackPlayerTime - moveDuration 
-				: game.blackPlayerTime,
-		};
-
-		if (game.status === 'waiting') {
-			[updatedMatch] = await this.db
-				.update(sc.matches)
-				.set({
-					...commonUpdate,
-					status: 'in_progress',
-					history: [move],
-				})
-				.where(eq(sc.matches.id, id))
-				.returning();
-		} else if (game.status === 'in_progress') {
-			[updatedMatch] = await this.db
-				.update(sc.matches)
-				.set(commonUpdate)
-				.where(eq(sc.matches.id, id))
-				.returning();
-		} else {
-			return game;
-		}
+		const moveDuration = analysis.durations[game.moveIndex] || 0;
+		const isWhiteMove = game.moveIndex % 2 === 0;
+		 
+		const [updatedMatch] = await this.db
+			.update(sc.matches)
+			.set({
+				fen: newFen,
+				moveIndex: game.moveIndex+1,
+				whitePlayerTime: isWhiteMove 
+					? game.whitePlayerTime - moveDuration 
+					: game.whitePlayerTime,
+				blackPlayerTime: !isWhiteMove 
+					? game.blackPlayerTime - moveDuration 
+					: game.blackPlayerTime,
+			})
+			.where(eq(sc.matches.id, id))
+			.returning();
 
 		return updatedMatch;
 	}
@@ -283,8 +273,12 @@ export class MatchesService {
 			where: eq(sc.matches.id, id),
 		});
 
-		if (!match) {
-			return null;
+		const analysis = await this.db.query.analysis.findFirst({
+			where: eq(sc.analysis.id, id),
+		});
+
+		if (!match || !analysis) {
+			return null
 		}
 
 		const user = await this.db.query.users.findFirst({
@@ -304,6 +298,7 @@ export class MatchesService {
 			author: match.author,
 			timeControl: match.timeControl,
 			status: match.status,
+			evaluations: analysis.evaluations.slice(0, match.moveIndex),
 			white: { 
 				name: match.whitePlayer, 
 				time: formatTime(Math.floor(match.whitePlayerTime / 1000)),
@@ -314,8 +309,9 @@ export class MatchesService {
 				time: formatTime(Math.floor(match.blackPlayerTime / 1000)),
 				timeMs: match.blackPlayerTime,
 			},
-			fen: match.fen,
+			fen: match.fen || '',
 			viewerCount: viewers,
+			history: analysis.notation.slice(0, match.moveIndex) || [],
 		};
 
 		return dto;
