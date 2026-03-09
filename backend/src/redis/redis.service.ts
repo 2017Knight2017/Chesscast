@@ -17,14 +17,14 @@ export class RedisService {
 		await this.redis.sadd(key, username);
 	}
 
-	async addGuestViewer(matchId: string) {
+	async addGuestViewer(matchId: string, guestId: string) {
 		const key = `match:${matchId}:guest_viewers_list`;
-		await this.redis.incr(key);
+		await this.redis.sadd(key, guestId);
 	}
 
-	async removeGuestViewer(matchId: string) {
+	async removeGuestViewer(matchId: string, guestId: string) {
 		const key = `match:${matchId}:guest_viewers_list`;
-		await this.redis.decr(key);
+		await this.redis.srem(key, guestId);
 	}
 
 	async removeViewer(matchId: string, username: string) {
@@ -38,8 +38,8 @@ export class RedisService {
 		const [count, usernames, guestCount] = await Promise.all([
 			this.redis.scard(authorizedKey),		
 			this.redis.smembers(authorizedKey),
-			this.redis.get(guestKey)
+			this.redis.scard(guestKey)
 		]);
-		return { count, usernames, guestCount: parseInt(guestCount || '0') };
+		return { count, usernames, guestCount };
 	}
 }

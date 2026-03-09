@@ -7,7 +7,6 @@ import { useChessClock } from '@/hooks/use_chess_clocks';
 
 export const ChessPreview = ({ match }: { match: Match }) => {
 	const {currentMoveData, isEnded} = useBroadcast(match.id);
-	// only start ticking when the match is officially in progress
 	const isLive = match.status === "in_progress";
 	const initialClockState = isLive
 		? { 

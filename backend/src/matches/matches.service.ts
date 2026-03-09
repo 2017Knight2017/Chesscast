@@ -298,7 +298,7 @@ export class MatchesService {
 			author: match.author,
 			timeControl: match.timeControl,
 			status: match.status,
-			evaluations: analysis.evaluations.slice(0, match.moveIndex-1),
+			evaluations: analysis.evaluations.slice(0, Math.max(match.moveIndex-1, 0)),
 			white: { 
 				name: match.whitePlayer, 
 				time: formatTime(Math.floor(match.whitePlayerTime / 1000)),
@@ -311,7 +311,7 @@ export class MatchesService {
 			},
 			fen: match.fen || '',
 			viewerCount: viewers,
-			history: analysis.notation.slice(0, match.moveIndex-1) || [],
+			history: analysis.notation.slice(0, Math.max(match.moveIndex-1, 0)) || [],
 		};
 
 		return dto;

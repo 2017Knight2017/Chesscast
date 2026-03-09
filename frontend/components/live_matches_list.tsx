@@ -6,12 +6,12 @@ import { Match } from '@/types/types';
 
 export function LiveMatchesList({ liveMatches, styles }: { liveMatches: Match[], styles: string }) {
 	const matchIds = liveMatches.map(m => m.id);
-	const viewerCounts = useViewerCounts(matchIds);
+	const {cumulativeCounts} = useViewerCounts(matchIds);
 
 	return (
 		<div className={styles}>
 			{liveMatches.map((match: Match) => (
-				<LiveCard key={match.id} match={match} viewerCount={viewerCounts[match.id] ?? match.viewerCount} />
+				<LiveCard key={match.id} match={match} viewerCount={cumulativeCounts[match.id] ?? match.viewerCount} />
 			))}
 			
 			{liveMatches.length === 0 && (

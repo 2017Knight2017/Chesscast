@@ -20,10 +20,6 @@ export function MoveList({ id }: { id: string }) {
         return p;
     }, [history]);
 
-	console.log(currentMoveData);
-	console.log(history);
-	console.log(pairs);
-
     if (!currentMoveData) return <div>Loading...</div>;
 	
 	return (

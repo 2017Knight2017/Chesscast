@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 
 export const useViewerCounts = (matchIds: string[]) => {
-	const [counts, setCounts] = useState<Record<string, number>>({});
+	const [cumulativeCounts, setCumulativeCounts] = useState<Record<string, number>>({});
+	const [usernames, setUsernames] = useState<Record<string, string[]>>({});
+	const [guestCount, setGuestCount] = useState<Record<string, number>>({});
 
 	useEffect(() => {
 		const socket: Socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001');
@@ -13,8 +15,11 @@ export const useViewerCounts = (matchIds: string[]) => {
 			socket.emit('subscribeToCounts', { matchIds });
 		});
 
-		socket.on('viewer_count_update', ({ matchId, count, guestCount }) => {
-			setCounts((prev) => ({ ...prev, [matchId]: count + guestCount }));
+		socket.on('viewer_count_update', ({ matchId, count, guestCount, usernames }) => {
+			console.log(matchId, count, guestCount, usernames);
+			setCumulativeCounts((prev) => ({ ...prev, [matchId]: count + guestCount }));
+			setGuestCount((prev) => ({ ...prev, [matchId]: guestCount }))
+			setUsernames((prev) => ({ ...prev, [matchId]: usernames }));
 		});
 
 		return () => {
@@ -26,5 +31,5 @@ export const useViewerCounts = (matchIds: string[]) => {
 		};
 	}, [matchIds.join(',')]);
 
-	return counts;
+	return {cumulativeCounts: cumulativeCounts, usernames: usernames, guestCount: guestCount};
 };

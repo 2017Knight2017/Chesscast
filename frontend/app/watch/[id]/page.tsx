@@ -28,7 +28,7 @@ export default async function WatchPage({ params }: { params: Promise<{ id: stri
 				{/* ЛЕВАЯ КОЛОНКА */}
 				<aside className="h-[75vh] flex flex-col justify-center">
 					<div className="bg-[#f4ead5]/20 backdrop-blur-sm p-4 h-full border border-[#8b5e34]/20 shadow-lg">
-						<SpectatorList spectators={[{id:"ds", name: "Иван Петров"}]} />
+						<SpectatorList id={match.id} />
 					</div>
 				</aside>
 

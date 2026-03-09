@@ -4,11 +4,13 @@ import { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { Move } from '@/types/types'
 import { getTurnFromFen } from '@/utils/get_turn_from_fen';
+import { useGuestId } from './use_guest_id';
 
 export const useBroadcast = (matchId: string) => {
 	const [currentMoveData, setcurrentMoveData] = useState<Move | null>(null);
 	const [isEnded, setIsEnded] = useState<boolean>(false);
-		
+	const guestId = useGuestId();
+	
 	const hasLiveMove = useRef(false);
 
 	useEffect(() => {
@@ -48,7 +50,8 @@ export const useBroadcast = (matchId: string) => {
 
 useEffect(() => {
 		const stored = localStorage.getItem('user');
-		const username = stored ? JSON.parse(stored).username : undefined;
+		const user = stored ? JSON.parse(stored) : null;
+		const username = user?.username;
 
 		const socket: Socket = io(process.env.NEXT_PUBLIC_SOCKET_URL, {
 			transports: ['websocket'],
@@ -56,7 +59,7 @@ useEffect(() => {
 
 		socket.on('connect', () => {
 			console.log('Сокет подключен, ID:', socket.id);
-			socket.emit('joinMatch', { matchId, username });
+			socket.emit('joinMatch', { matchId, username, guestId });
 		});
 
 		socket.on('newMove', (data: any) => {
@@ -87,7 +90,7 @@ useEffect(() => {
 		});
 
 		return () => {
-			socket.emit('leaveMatch', { matchId, username });
+			socket.emit('leaveMatch', { matchId, username, guestId });
 			
 			socket.off('connect');
 			socket.off('newMove');
@@ -96,7 +99,7 @@ useEffect(() => {
 			
 			socket.disconnect();
 		};
-	}, [matchId]);
+	}, [matchId, guestId]);
 
 	return { currentMoveData, isEnded };
 };
