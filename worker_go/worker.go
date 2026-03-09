@@ -108,7 +108,7 @@ func ProcessGame(matchID, pgn string, initialTime int, archNames []string) error
 	}
 
 	game := scanner.Next()
-	board := chess.NewGame(chess.UseNotation(chess.UCINotation{}))
+	board := chess.NewGame(chess.UseNotation(chess.AlgebraicNotation{}))
 	moves := game.Moves()
 
 	durations := make([]float64, 0, len(moves))
@@ -138,7 +138,8 @@ func ProcessGame(matchID, pgn string, initialTime int, archNames []string) error
 
 	for _, move := range moves {
 		currentPlayer := board.Position().Turn()
-		notation = append(notation, move.String())
+		moveText := chess.AlgebraicNotation{}.Encode(board.Position(), move)
+		notation = append(notation, moveText)
 
 		movesToControl := (nextControlPly - movesPlayed) / 2
 		if movesToControl <= 0 {
