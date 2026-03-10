@@ -2,11 +2,10 @@
 
 import { useBroadcast } from "@/hooks/use_broadcast";
 import { MoveRecord } from "@/types/types"
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useMemo } from "react";
+import { BackToLiveButton } from "./back_to_live_button";
 
-export function MoveList({ id }: { id: string}) {
-	const router = useRouter();
+export function MoveList({ id }: { id: string }) {
 	const { currentMoveData } = useBroadcast(id);
 	const history = currentMoveData?.history || [];
 		
@@ -48,6 +47,7 @@ export function MoveList({ id }: { id: string}) {
 					</div>
 				))}
 			</div>
+			<BackToLiveButton />
 		</div>
 	);
 }
