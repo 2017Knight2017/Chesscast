@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo, memo } from 'react';
+import { useState, useRef, useMemo, memo } from 'react';
 import { useBroadcast } from '@/hooks/use_broadcast';
 import { useChessClock } from '@/hooks/use_chess_clocks';
+import { useKeyboardNavigation } from '@/hooks/use_keyboard_navigation';
 import Chessground from '@bezalel6/react-chessground';
 import { Match } from '@/types/types';
 import { useSearchParams } from 'next/navigation';
@@ -41,6 +42,9 @@ export function ChessBoard({ match }: { match: Match }) {
 	const containerRef = useRef<HTMLDivElement>(null);
 
 	const { currentMoveData, isEnded } = useBroadcast(match.id);
+	const totalMoves = currentMoveData?.history?.length || 0;
+    useKeyboardNavigation(totalMoves);
+
 	const [isManualStarted, setIsManualStarted] = useState<boolean>(false);
 	const isBroadcastActive = match.status === "in_progress" || isManualStarted;
 	const finalIsEnded = match.status === "finished" || isEnded;
