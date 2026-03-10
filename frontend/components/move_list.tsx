@@ -2,25 +2,38 @@
 
 import { useBroadcast } from "@/hooks/use_broadcast";
 import { MoveRecord } from "@/types/types"
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
-export function MoveList({ id }: { id: string }) {
+export function MoveList({ id }: { id: string}) {
+	const router = useRouter();
 	const { currentMoveData } = useBroadcast(id);
 	const history = currentMoveData?.history || [];
-    
-    const pairs = useMemo(() => {
-        const p: MoveRecord[] = [];
-        for (let i = 0; i < history.length; i += 2) {
-            p.push({
-                num: Math.floor(i / 2) + 1,
-                white: history[i] || "...",
-                black: history[i + 1] || "...",
-            });
-        }
-        return p;
-    }, [history]);
+		
+	const pairs = useMemo(() => {
+		const p: MoveRecord[] = [];
+		for (let i = 0; i < history.length; i += 2) {
+			p.push({
+				num: Math.floor(i / 2) + 1,
+				white: history[i] || "...",
+				black: history[i + 1] || "...",
+			});
+		}
+		return p;
+	}, [history]);
 
-    if (!currentMoveData) return <div>Loading...</div>;
+	if (!currentMoveData) return <div>Loading...</div>;
+
+	const handleMoveClick = (moveIndex: number) => {
+		const params = new URLSearchParams(window.location.search);
+		params.set('move', moveIndex.toString());
+		const newUrl = `${window.location.pathname}?${params.toString()}`;
+
+		window.history.replaceState(null, '', newUrl);
+
+		const event = new PopStateEvent('popstate');
+		window.dispatchEvent(event);
+	};
 	
 	return (
 		<div className="bg-[#f4ead5] text-[#3e2b1d] shadow-inner p-6 border-l-4 border-[#8b5e34] font-mono">
@@ -30,8 +43,8 @@ export function MoveList({ id }: { id: string }) {
 				{pairs.map((pair) => (
 					<div key={pair.num} className="flex justify-between mb-1 text-sm border-b border-dotted border-black/10">
 						<span className="w-6 opacity-50">{pair.num}.</span>
-						<span className="flex-1 font-bold">{pair.white}</span>
-						<span className="flex-1 font-bold text-right">{pair.black}</span>
+						<button onClick={() => handleMoveClick(pair.num * 2 - 2)}><span className="flex-1 font-bold">{pair.white}</span></button>
+						<button onClick={() => handleMoveClick(pair.num * 2 - 1)}><span className="flex-1 font-bold text-right">{pair.black}</span></button>
 					</div>
 				))}
 			</div>

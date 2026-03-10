@@ -8,15 +8,8 @@ import { useChessClock } from '@/hooks/use_chess_clocks';
 export const ChessPreview = ({ match }: { match: Match }) => {
 	const {currentMoveData, isEnded} = useBroadcast(match.id);
 	const isLive = match.status === "in_progress";
-	const initialClockState = isLive
-		? { 
-			fen: match.fen, 
-			whiteTimeMs: match.white.timeMs ?? match.timeControl * 1000, 
-			blackTimeMs: match.black.timeMs ?? match.timeControl * 1000 
-		}
-		: null;
 	const {whiteTimeFormatted, blackTimeFormatted} = useChessClock(
-		isLive ? (currentMoveData ?? initialClockState) : null,
+		isLive ? currentMoveData : null,
 		match.timeControl*1000
 	)
 	return (

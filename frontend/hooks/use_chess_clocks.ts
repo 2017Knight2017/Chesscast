@@ -2,12 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { getTurnFromFen } from '@/utils/get_turn_from_fen';
-
-interface SyncPayload {
-	fen: string;
-	whiteTimeMs: number;
-	blackTimeMs: number;
-}
+import { SyncPayload } from '@/types/types';
 
 export const useChessClock = (serverState: SyncPayload | null, initialTimeMs: number) => {
 	const [displayWhite, setDisplayWhite] = useState(initialTimeMs || 0);
@@ -37,8 +32,6 @@ export const useChessClock = (serverState: SyncPayload | null, initialTimeMs: nu
 		const tick = () => {
 			const currentServerState = stateRef.current;
 			if (!currentServerState) {
-				// still waiting for real data; continue polling so we can start as soon as
-				// a server update arrives.
 				animationFrameId = requestAnimationFrame(tick);
 				return;
 			}
@@ -61,10 +54,8 @@ export const useChessClock = (serverState: SyncPayload | null, initialTimeMs: nu
 			animationFrameId = requestAnimationFrame(tick);
 		};
 
-		// kick off the loop immediately
 		tick();
 
-		// cleanup when component unmounts
 		return () => cancelAnimationFrame(animationFrameId);
 	}, []);
 

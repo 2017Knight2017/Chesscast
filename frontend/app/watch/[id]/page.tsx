@@ -3,24 +3,21 @@ import { MoveList } from "@/components/move_list";
 import { SpectatorList } from "@/components/spectator_list";
 import { notFound } from "next/navigation";
 import { Match } from '@/types/types';
+import { Suspense } from "react";
 
-export default async function WatchPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function WatchPage({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ move?: string }> }) {
 	const { id } = await params;
 	const res = await fetch(`${process.env.NEST_API_URL}/matches/${id}/state`);
-	
 	if (!res.ok) {
-		console.log(await res.json())
+		console.log(await res.json());
 		notFound();
 	}
-	
     const match: Match = await res.json();
-	
 	if (!match) {
 		console.log(match)
 		notFound();
 	}
 	
-	console.log(match)
 	return (
 		<main className="h-screen w-screen bg-size-[100%_100%] overflow-hidden">
 			<div className="grid grid-cols-[300px_1fr_300px] size-full items-center px-10 gap-0 relative z-10">
@@ -35,8 +32,10 @@ export default async function WatchPage({ params }: { params: Promise<{ id: stri
 				{/* ЦЕНТР (Доска) */}
 				<section className="flex justify-center items-center">
 					<div className="board-frame w-full max-w-[70vh] aspect-square shadow-2xl flex items-center justify-center">
-						<div className="w-[83.5%] h-[83.5%]"> 
-							<ChessBoard match={match} />
+						<div className="w-[83.5%] h-[83.5%]">
+							<Suspense fallback={<div>Loading board...</div>}>
+								<ChessBoard match={match} />
+							</Suspense>
 						</div>
 					</div>
 				</section>
