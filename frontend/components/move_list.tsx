@@ -18,14 +18,22 @@ export function MoveList({ id }: { id: string }) {
 	const activeRef = useRef<HTMLDivElement | null>(null);
 
 	useEffect(() => {
-		if (activeRef.current) {
-			activeRef.current.scrollIntoView({
-				behavior: 'smooth',
-				block: 'nearest',
-				inline: 'center'
-			});
-		}
-	}, [activeMoveIndex]);
+    let rafId: number;
+
+    if (activeRef.current) {
+        rafId = requestAnimationFrame(() => {
+            activeRef.current?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+                inline: 'center' 
+            });
+        });
+    }
+
+    return () => {
+        if (rafId) cancelAnimationFrame(rafId);
+    };
+}, [activeMoveIndex]);
 		
 	const pairs = useMemo(() => {
 		const p: MoveRecord[] = [];
@@ -84,6 +92,7 @@ export function MoveList({ id }: { id: string }) {
 
 								<button 
 									onClick={() => handleMoveClick(whiteIndex)}
+									onMouseDown={(e) => e.preventDefault()}
 									className={`flex-1 text-sm rounded px-1 transition-colors text-left whitespace-nowrap ${
 										isWhiteActive ? 'bg-amber-300/60 font-bold' : 'hover:bg-black/5'
 									}`}
@@ -94,6 +103,7 @@ export function MoveList({ id }: { id: string }) {
 								{pair.black && (
 									<button 
 										onClick={() => handleMoveClick(blackIndex)}
+										onMouseDown={(e) => e.preventDefault()}
 										className={`flex-1 text-sm rounded px-1 transition-colors text-left whitespace-nowrap ${
 											isBlackActive ? 'bg-amber-300/60 font-bold' : 'hover:bg-black/5'
 										}`}
