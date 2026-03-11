@@ -1,6 +1,9 @@
 import { Controller, Post, Get, Param, HttpCode, HttpStatus, Body, Inject, NotFoundException, UseGuards, Request } from '@nestjs/common';
 import { MatchesService, Match } from './matches.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { DrizzleAsyncProvider } from 'src/drizzle/drizzle.provider';
+import * as sc from '../schema';
 
 interface userRequest extends Request {
 	user: {
@@ -13,6 +16,7 @@ interface userRequest extends Request {
 export class MatchesController {
 	constructor(
 		private readonly matchesService: MatchesService,
+		@Inject(DrizzleAsyncProvider) private db: NodePgDatabase<typeof sc>,
 	) {}
 
 	@Post('create')
@@ -55,22 +59,38 @@ export class MatchesController {
 	@Get('my_followed')
 	@UseGuards(JwtAuthGuard)
 	async getMyFollowed(@Request() req) {
-		return this.matchesService.checkMyFollowedMatches(req.user.id);
+		return this.matchesService.getMatchesByTable({
+			table: sc.followedBroadcasts,
+			isJoinTable: true, 
+			userId: req.user.id
+		});
 	}
 	
 	@Get('my_planned')
 	@UseGuards(JwtAuthGuard)
 	async getMyPlanned(@Request() req) {
-		return this.matchesService.checkMyPlannedMatches(req.user.id);
+		return this.matchesService.getMatchesByTable({
+			table: sc.plannedBroadcasts,
+			isJoinTable: true, 
+			userId: req.user.id
+		});
 	}
 
 	@Get('planned')
 	async getPlanned(@Request() req): Promise<Match[]> {
-		return this.matchesService.getMatchesByStatus('waiting');
+		return this.matchesService.getMatchesByTable({
+			table: sc.followedBroadcasts,
+			isJoinTable: false, 
+			status: 'waiting'
+		});
 	}
 
 	@Get('live')
 	async getLiveMatches(): Promise<Match[]> {
-		return this.matchesService.getMatchesByStatus('in_progress');
+		return this.matchesService.getMatchesByTable({
+			table: sc.followedBroadcasts,
+			isJoinTable: false, 
+			status: 'in_progress'
+		});
 	}
 }

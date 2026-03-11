@@ -80,8 +80,8 @@ export class MatchesService {
 			this.playersService.getArchetypeFromDB(blackPlayer)
 		]);
 		let validatedArchetypes: [string|undefined, string|undefined] = [
-			whiteDB || this.getValidArchetype(archetypes[0]),
-			blackDB || this.getValidArchetype(archetypes[1])
+			this.getValidArchetype(archetypes[0]) || whiteDB ,
+			this.getValidArchetype(archetypes[1]) || blackDB 
 		];
 		let isArchetypeAiGenerated: boolean[] = [false, false];
 		const archetypeMask = (validatedArchetypes[0] !== undefined ? 1 : 0) + (validatedArchetypes[1] !== undefined ? 2 : 0);
@@ -156,7 +156,6 @@ export class MatchesService {
 		return analysis;
 	}
 
-
 	async handleWorkerReport(id: string, evaluations: number[], durations: number[], notation: string[]) {
 		console.log(id, evaluations, durations, notation)
 		const [broadcast] = await this.db
@@ -170,7 +169,6 @@ export class MatchesService {
 			.returning();
 		return broadcast;
 	}
-
 
 	async startBroadcast(id: string) {
 		const [match] = await this.db
@@ -194,7 +192,6 @@ export class MatchesService {
 
 		return { status: 'in_progress', matchId: id };
 	}
-
 	
 	@Cron(CronExpression.EVERY_MINUTE)
 	async autoCheckAndStartBroadcasts() {
@@ -267,7 +264,6 @@ export class MatchesService {
 		return updatedMatch;
 	}
 
-
 	async checkGameState(id: string) {
 		const match = await this.db.query.matches.findFirst({
 			where: eq(sc.matches.id, id),
@@ -317,7 +313,6 @@ export class MatchesService {
 		return dto;
 	}
 
-
 	async finishGame(id: string) {
 		await this.db
 			.update(sc.matches)
@@ -325,38 +320,18 @@ export class MatchesService {
 			.where(eq(sc.matches.id, id));
 	}
 
-
-	private async getMatchesByJoinTable(
-		joinTable: PgTableWithColumns<any>, 
-		userId: number,
-		limit?: number
-	) {
-		return await this.db
-			.select({
-				id: sc.matches.id,
-				title: sc.matches.title,
-				scheduledAt: sc.matches.createdAt,
-				status: sc.matches.status,
-			})
-			.from(joinTable)
-			.innerJoin(
-				sc.matches, 
-				eq(joinTable.matchId, sc.matches.id)
-			)
-			.where(eq(joinTable.userId, userId));
-	}
-
-	async checkMyFollowedMatches(userId: number) {
-		return this.getMatchesByJoinTable(sc.followedBroadcasts, userId);
-	}
-
-	async checkMyPlannedMatches(userId: number) {
-		return this.getMatchesByJoinTable(sc.plannedBroadcasts, userId);
-	}
-
-
-	async getMatchesByStatus(status: "waiting" | "in_progress" | "finished"): Promise<Match[]> {
-		const raw = await this.db
+	async getMatchesByTable({
+		table,
+		isJoinTable,
+		userId,
+		status
+	}: {
+		table: PgTableWithColumns<any>, 
+		isJoinTable: boolean,
+		userId?: number,
+		status?: "waiting"|"in_progress"|"finished"
+	}) {
+		let query = this.db
 			.select({
 				id: sc.matches.id,
 				author: sc.users.username,
@@ -369,12 +344,20 @@ export class MatchesService {
 				timeControl: sc.matches.timeControl,
 				fen: sc.matches.fen
 			})
-			.from(sc.matches)
-			.innerJoin(sc.users, eq(sc.matches.author, sc.users.username))
-			.where(eq(sc.matches.status, status))
-			.orderBy(desc(sc.matches.createdAt))
-			.limit(10);
+			.from(table);
+			
+		if (isJoinTable) {
+			query.innerJoin(sc.matches, eq(table.matchId, sc.matches.id));
+			query.innerJoin(sc.users, eq(sc.matches.author, sc.users.username));
+			query.where(eq(table.userId, userId!));
+		} else {
+			query.innerJoin(sc.users, eq(sc.matches.author, sc.users.username));
+			query.where(eq(sc.matches.status, status!));
+		}
+		query.orderBy(desc(sc.matches.createdAt));
+		query.limit(10);
 
+		const raw = await query;
 		const viewerCounts = await Promise.all(raw.map(match => this.redisService.getViewerData(match.id)));
 
 		return raw.map((match, index) => {
