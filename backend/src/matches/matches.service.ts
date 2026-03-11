@@ -344,14 +344,13 @@ export class MatchesService {
 				timeControl: sc.matches.timeControl,
 				fen: sc.matches.fen
 			})
-			.from(table);
+			.from(sc.matches)
+        	.innerJoin(sc.users, eq(sc.matches.author, sc.users.username));
 			
 		if (isJoinTable) {
-			query.innerJoin(sc.matches, eq(table.matchId, sc.matches.id));
-			query.innerJoin(sc.users, eq(sc.matches.author, sc.users.username));
+			query.innerJoin(table, eq(sc.matches.id, table.matchId));
 			query.where(eq(table.userId, userId!));
 		} else {
-			query.innerJoin(sc.users, eq(sc.matches.author, sc.users.username));
 			query.where(eq(sc.matches.status, status!));
 		}
 		query.orderBy(desc(sc.matches.createdAt));
