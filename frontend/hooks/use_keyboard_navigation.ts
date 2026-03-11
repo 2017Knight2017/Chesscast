@@ -18,10 +18,10 @@ export function useKeyboardNavigation(totalMoves: number) {
 
 			switch (event.key) {
 				case "ArrowLeft":
-					if (currentIndex > 0) {
+					if (currentIndex > -1) {
 						updateUrl(currentIndex - 1);
-						break;
 					}
+					break;
 				case "ArrowRight":
 					if (currentIndex < totalMoves - 1) {
 						updateUrl(currentIndex + 1);
@@ -30,10 +30,10 @@ export function useKeyboardNavigation(totalMoves: number) {
 					}
 					break;
 				case "ArrowUp":
-					updateUrl(0);
+					updateUrl(-1);
 					break;
 				case "ArrowDown":
-					updateUrl(null);
+					updateUrl(totalMoves - 1);
 					break;
 			}
 		};

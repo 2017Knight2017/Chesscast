@@ -72,8 +72,14 @@ export function ChessBoard({ match }: { match: Match }) {
 	}, [currentMoveData?.history]);
 
 	const previewFen = useMemo(() => {
-		if (previewMove !== null && previewMove !== undefined && fenHistory[previewMove]) {
-			return fenHistory[previewMove];
+		if (previewMove !== null && previewMove !== undefined) {
+			if (previewMove === -1) {
+				return "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+			}
+		
+			if (fenHistory[previewMove]) {
+				return fenHistory[previewMove];
+			}
 		}
 		return null;
 	}, [previewMove, fenHistory]);
