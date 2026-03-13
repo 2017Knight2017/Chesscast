@@ -6,6 +6,7 @@ import 'chessground/assets/chessground.brown.css';
 import 'chessground/assets/chessground.cburnett.css';
 import { ExitButton } from "@/components/exit_button";
 import { cookies } from "next/dist/server/request/cookies";
+import { Providers } from "@/components/providers";
 
 
 const geistSans = Geist({
@@ -23,19 +24,21 @@ export const metadata: Metadata = {
 	description: "Chesscast — это платформа для трансляций шахматных партий мастеров прошлого. Думайте над следующим ходом вместе с гроссмейстером!",
 };
 
-export default async function RootLayout({ children }: Readonly<{children: React.ReactNode;}>) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
 	const cookieStore = await cookies();
 	const token = cookieStore.get('token');
 	return (
 		<html lang="en">
 			<body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-				<header className="absolute top-0 left-0 w-full h-[6%] flex items-center justify-center z-20">
-					<a href="/">
-						<h1 className="text-3xl font-serif text-[#3e2b1d] opacity-80">Chesscast</h1>
-					</a>
-					{token && <ExitButton />}
-				</header>
-				{children}
+				<Providers>
+					<header className="absolute top-0 left-0 w-full h-[6%] flex items-center justify-center z-20">
+						<a href="/">
+							<h1 className="text-3xl font-serif text-[#3e2b1d] opacity-80">Chesscast</h1>
+						</a>
+						{token && <ExitButton />}
+					</header>
+					{children}
+				</Providers>
 			</body>
 		</html>
 	);

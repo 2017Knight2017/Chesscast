@@ -34,7 +34,7 @@ const ChessTimer = memo(({ data, initial, label }: { data: SyncPayload|null, ini
 	);
 });
 
-export function ChessBoard({ match }: { match: Match }) {
+export function ChessBoard({ onInteraction, match, isOnMove=false }: { onInteraction: () => void, match: Match, isOnMove?: boolean }) {
 	const searchParams = useSearchParams();
 	const rawPreviewMove = searchParams.get('move');
 	const previewMove = rawPreviewMove !== null ? parseInt(rawPreviewMove) : undefined;
@@ -108,6 +108,8 @@ export function ChessBoard({ match }: { match: Match }) {
 				</div>
 			)}
 			<Chessground
+				onSelect={isOnMove ? ()=>{} : onInteraction}
+				onMove={isOnMove ? onInteraction : ()=>{}}
 				key={match.id}
 				fen={previewFen || activeFen}
 				viewOnly={false}

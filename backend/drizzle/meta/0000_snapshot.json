@@ -1,5 +1,5 @@
 {
-  "id": "fb7adca0-00d9-429f-b786-6a4b7116442e",
+  "id": "e35c5e0d-6777-4539-8842-111bdd623df5",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -167,12 +167,12 @@
           "notNull": true,
           "default": 600000
         },
-        "history": {
-          "name": "history",
-          "type": "text[]",
+        "move_index": {
+          "name": "move_index",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "default": "'{}'::text[]"
+          "default": 0
         },
         "fen": {
           "name": "fen",
@@ -416,6 +416,86 @@
           "nullsNotDistinct": false,
           "columns": [
             "name"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.user_analysis": {
+      "name": "user_analysis",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "match_id": {
+          "name": "match_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "data": {
+          "name": "data",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_updated": {
+          "name": "last_updated",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "user_analysis_match_id_matches_id_fk": {
+          "name": "user_analysis_match_id_matches_id_fk",
+          "tableFrom": "user_analysis",
+          "tableTo": "matches",
+          "columnsFrom": [
+            "match_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "user_analysis_user_id_users_id_fk": {
+          "name": "user_analysis_user_id_users_id_fk",
+          "tableFrom": "user_analysis",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "unique_user_match_analysis": {
+          "name": "unique_user_match_analysis",
+          "nullsNotDistinct": false,
+          "columns": [
+            "match_id",
+            "user_id"
           ]
         }
       },

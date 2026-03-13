@@ -30,3 +30,16 @@ export interface SyncPayload {
 	whiteTimeMs: number;
 	blackTimeMs: number;
 }
+
+export interface MoveTreeNode {
+	m: string;
+	s?: MoveTreeNode[];
+}
+
+export interface AnalysisState {
+	isAnalysisMode: boolean;
+	inspectedUserId: number | null;
+	analysisTree: MoveTreeNode[];
+	currentPath: number[];
+	matchId: string | null;
+}

@@ -1,14 +1,16 @@
 import {
-	pgTable,
-	timestamp,
-	text,
-	integer,
-	uuid,
-	varchar,
-	serial,
-	pgEnum,
-	primaryKey,
-	index
+  pgTable,
+  timestamp,
+  text,
+  integer,
+  uuid,
+  varchar,
+  serial,
+  pgEnum,
+  primaryKey,
+  index,
+  jsonb,
+  unique,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
@@ -53,8 +55,8 @@ export const matches = pgTable('matches', {
 	scheduledAt:         timestamp('scheduled_time').notNull(),
 	createdAt:           timestamp('created_at').notNull().defaultNow(),
 },  (t) => [
-	index('scheduled_at_idx').on(t.scheduledAt), 
-	index('status_idx').on(t.status),           
+    index('scheduled_at_idx').on(t.scheduledAt),
+    index('status_idx').on(t.status),
 ]);
 
 export const plannedBroadcasts = pgTable('planned_broadcasts', {
@@ -63,8 +65,31 @@ export const plannedBroadcasts = pgTable('planned_broadcasts', {
 	}, (t) => [ primaryKey({ columns: [t.userId, t.matchId] }) ]
 );
 
-export const followedBroadcasts = pgTable('followed_broadcasts', {
-	userId:              integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-	matchId:             uuid('match_id').notNull().references(() => matches.id, { onDelete: 'cascade' }),
-	}, (t) => [ primaryKey({ columns: [t.userId, t.matchId] }) ]
+export const followedBroadcasts = pgTable(
+  'followed_broadcasts',
+  {
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    matchId: uuid('match_id')
+      .notNull()
+      .references(() => matches.id, { onDelete: 'cascade' }),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.matchId] })],
+);
+
+export const userAnalysis = pgTable(
+  'user_analysis',
+  {
+    id: serial('id').primaryKey(),
+    matchId: uuid('match_id')
+      .references(() => matches.id)
+      .notNull(),
+    userId: integer('user_id')
+      .references(() => users.id)
+      .notNull(),
+    data: jsonb('data').notNull(),
+    lastUpdated: timestamp('last_updated').defaultNow(),
+  },
+  (t) => [unique('unique_user_match_analysis').on(t.matchId, t.userId)],
 );
