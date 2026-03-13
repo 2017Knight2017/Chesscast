@@ -32,7 +32,7 @@ export const UserAnalysisBoard = forwardRef<UserAnalysisBoardRef, UserAnalysisBo
 		const [fen, setFen] = useState(currentFen);
 		const chessRef = useRef(new Chess(currentFen));
 
-		const isReadOnly = inspectedUserId !== userId;
+		const isReadOnly = inspectedUserId === null;
 
 		useEffect(() => {
 			chessRef.current = new Chess(currentFen);

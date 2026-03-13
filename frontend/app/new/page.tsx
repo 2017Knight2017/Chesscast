@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import CreateMatchButton from '@/components/match_button';
-import { PlayerInput } from '@/components/player_input';
+import CreateMatchButton from '@/app/new/match_button';
+import { PlayerInput } from '@/app/new/player_input';
 
 export default function BroadcastPage() {
 	const [pgnInput, setPgnInput] = useState('');

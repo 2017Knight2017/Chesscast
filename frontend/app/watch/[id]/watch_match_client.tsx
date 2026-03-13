@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { ChessBoard } from '@/components/chess_board';
-import { UserAnalysisBoard, UserAnalysisBoardRef } from '@/components/user_analysis_board';
-import { MoveList } from '@/components/move_list';
-import { SpectatorList } from '@/components/spectator_list';
-import { AnalysisPrompt, SavePrompt } from '@/components/analysis_prompts';
+import { ChessBoard } from '@/app/watch/[id]/chess_board';
+import { UserAnalysisBoard, UserAnalysisBoardRef } from '@/app/watch/[id]/user_analysis_board';
+import { MoveList } from '@/app/watch/[id]/move_list';
+import { SpectatorList } from '@/app/watch/[id]/spectator_list';
+import { AnalysisPrompt, SavePrompt } from '@/app/watch/[id]/analysis_prompts';
 import { Match } from '@/types/types';
 import { useBroadcast } from '@/hooks/use_broadcast';
 import { useAnalysis } from '@/context/analysis_context';
@@ -90,7 +90,7 @@ export default function WatchMatchClient({ matchId, initialMatch }: WatchMatchCl
 	const handleBeginAnalysis = async () => {
 		setShowBeginPrompt(false);
 		setAnalysisMode(true);
-		setInspectedUserId(userId);
+		setInspectedUserId(null);
 
 		if (hasExistingAnalysis && matchId && userId) {
 			await loadAnalysis(matchId, userId);

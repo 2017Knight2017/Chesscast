@@ -1,6 +1,6 @@
 'use client'
 
-import { LiveMatchesList } from "./live_matches_list";
+import { LiveMatchesList } from "@/components/live_matches_list";
 import { Match } from "@/types/types";
 
 export function MemberSection({matches, styles}: {matches: Match[], styles: string}) { 

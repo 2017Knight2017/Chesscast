@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
-import { MemberSection } from '@/components/member_section';
+import { MemberSection } from './member_section';
 
 export default async function DashboardPage({ params }: { params: Promise<{ username: string }> }) {
 	const resolvedParams = await params;
