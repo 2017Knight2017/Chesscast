@@ -78,7 +78,7 @@ export function MoveList({ id, matchHistory: propMatchHistory }: MoveListProps) 
 	const socketHistory = currentMoveData?.history || [];
 	const matchHistory = propMatchHistory || socketHistory;
 	
-	const activeMoveIndex = selectedMoveIndex;
+	const selectedHistoryIndex = selectedMoveIndex;
 	
 	const activeRef = useRef<HTMLDivElement | null>(null);
 
@@ -98,12 +98,12 @@ export function MoveList({ id, matchHistory: propMatchHistory }: MoveListProps) 
 		return () => {
 			if (rafId) cancelAnimationFrame(rafId);
 		};
-	}, [activeMoveIndex, currentPath]);
+	}, [selectedHistoryIndex, currentPath]);
 
 	const handleMoveClick = (moveIndex: number) => {
 		if (isAnalysisMode) {
-			const newPath = Array.from({ length: moveIndex + 1 }, (_, i) => i);
-			setCurrentPath(newPath);
+			setCurrentPath([]); 
+			setSelectedMoveIndex(moveIndex);
 		} else {
 			setSelectedMoveIndex(moveIndex);
 		}
@@ -124,13 +124,6 @@ export function MoveList({ id, matchHistory: propMatchHistory }: MoveListProps) 
 		}
 		return p;
 	}, [matchHistory]);
-
-	const activeMoveNumber: number | null = (() => {
-		if (isAnalysisMode && currentPath.length > 0) {
-			return currentPath.length - 1;
-		}
-		return null;
-	})();
 
 	const displayPairs = useMemo(() => {
 		if (!isAnalysisMode || analysisTree.length === 0) {
@@ -160,92 +153,12 @@ export function MoveList({ id, matchHistory: propMatchHistory }: MoveListProps) 
 
 	if (!isAnalysisMode && !currentMoveData) return <div>Loading...</div>;
 
-	if (isAnalysisMode) {
-		return (
-			<div className="bg-[#f4ead5] text-[#3e2b1d] shadow-inner p-6 border-l-4 border-[#8b5e34] font-mono">
-				<h3 className="text-center border-b mb-2 sepia">Analysis</h3>
-				<div className="col-span-3 border-b border-black/10 pb-1 mb-2 italic"># — White — Black</div>
-
-				<div className="h-120 overflow-x-auto overflow-y-hidden">
-					<div 
-						style={{
-							display: 'flex',
-							flexFlow: 'column wrap',
-							height: '100%',
-							alignContent: 'flex-start',
-							overscrollBehaviorX: 'contain',
-						}}
-					>
-						{displayPairs.map((pair, i) => {
-							const isWhiteActive = activeMoveNumber !== null && activeMoveNumber === i * 2;
-							const isBlackActive = activeMoveNumber !== null && activeMoveNumber === i * 2 + 1;
-
-							return (
-								<div 
-									key={i}
-									className="flex items-center mr-2 gap-1 w-32 h-8 border-r border-dotted border-black/5 break-inside-avoid"
-									ref={isWhiteActive || isBlackActive ? activeRef : null}
-								>
-									<span className="text-[10px] text-slate-500 w-5">{pair.num}.</span>
-
-									<button 
-										onClick={() => handleMoveClick(i * 2)}
-										onMouseDown={(e) => e.preventDefault()}
-										className={`flex-1 text-sm rounded px-1 transition-colors text-left whitespace-nowrap ${
-											isWhiteActive ? 'bg-amber-400 font-bold' : 'hover:bg-black/5'
-										}`}
-									>
-										{pair.white}
-									</button>
-									
-									{pair.black && (
-										<button 
-											onClick={() => handleMoveClick(i * 2 + 1)}
-											onMouseDown={(e) => e.preventDefault()}
-											className={`flex-1 text-sm rounded px-1 transition-colors text-left whitespace-nowrap ${
-												isBlackActive ? 'bg-amber-400 font-bold' : 'hover:bg-black/5'
-											}`}
-										>
-											{pair.black}
-										</button>
-									)}
-								</div>
-							);
-						})}
-						
-						{variationNodes.length > 0 && (
-							<div className="mt-2 pt-2 border-t border-black/20 w-full">
-								<span className="text-xs text-slate-500">Variations</span>
-								<div className="flex flex-col gap-1 mt-1">
-									{variationNodes.map(({ node, rootIdx }) => (
-										<MoveNode
-											key={rootIdx}
-											node={node}
-											path={[rootIdx]}
-											level={1}
-											currentPath={currentPath}
-											onPathClick={handlePathClick}
-										/>
-									))}
-								</div>
-							</div>
-						)}
-					</div>
-				</div>
-					
-				<div className="mt-4">
-					<BackToLiveButton />
-				</div>
-			</div>
-		);
-	}
-
 	return (
 		<div className="bg-[#f4ead5] text-[#3e2b1d] shadow-inner p-6 border-l-4 border-[#8b5e34] font-mono">
 			<h3 className="text-center border-b mb-2 sepia">Moves Record</h3>
 			<div className="col-span-3 border-b border-black/10 pb-1 mb-2 italic"># — White — Black</div>
 
-			<div className="h-120 overflow-x-auto overflow-y-hidden">
+			<div className={`${isAnalysisMode ? 'h-40' : 'h-100'} overflow-x-auto overflow-y-hidden`}>
 				<div 
 					style={{
 						display: 'flex',
@@ -255,12 +168,21 @@ export function MoveList({ id, matchHistory: propMatchHistory }: MoveListProps) 
 						overscrollBehaviorX: 'contain',
 					}}
 				>
-					{pairs.map((pair, i) => {
+					{displayPairs.map((pair, i) => {
 						const whiteIndex = i * 2;
 						const blackIndex = i * 2 + 1;
-						const isWhiteActive = activeMoveIndex === whiteIndex ? activeMoveIndex > -1 : false;
-						const isBlackActive = activeMoveIndex === blackIndex ? activeMoveIndex > -1 : false;
 
+						let isWhiteActive, isBlackActive;
+
+						if (isAnalysisMode) {
+							const isAtMainline = currentPath.length === 0;
+							isWhiteActive = isAtMainline && selectedMoveIndex === whiteIndex;
+							isBlackActive = isAtMainline && selectedMoveIndex === blackIndex;
+						} else {
+							isWhiteActive = selectedMoveIndex === whiteIndex;
+							isBlackActive = selectedMoveIndex === blackIndex;
+						}
+					
 						return (
 							<div 
 								key={i}
@@ -268,12 +190,12 @@ export function MoveList({ id, matchHistory: propMatchHistory }: MoveListProps) 
 								ref={isWhiteActive || isBlackActive ? activeRef : null}
 							>
 								<span className="text-[10px] text-slate-500 w-5">{pair.num}.</span>
-
+						
 								<button 
 									onClick={() => handleMoveClick(whiteIndex)}
 									onMouseDown={(e) => e.preventDefault()}
 									className={`flex-1 text-sm rounded px-1 transition-colors text-left whitespace-nowrap ${
-										isWhiteActive ? 'bg-amber-300/60 font-bold' : 'hover:bg-black/5'
+										isWhiteActive ? 'bg-amber-400 font-bold text-black' : 'hover:bg-black/5'
 									}`}
 								>
 									{pair.white}
@@ -284,7 +206,7 @@ export function MoveList({ id, matchHistory: propMatchHistory }: MoveListProps) 
 										onClick={() => handleMoveClick(blackIndex)}
 										onMouseDown={(e) => e.preventDefault()}
 										className={`flex-1 text-sm rounded px-1 transition-colors text-left whitespace-nowrap ${
-											isBlackActive ? 'bg-amber-300/60 font-bold' : 'hover:bg-black/5'
+											isBlackActive ? 'bg-amber-400 font-bold text-black' : 'hover:bg-black/5'
 										}`}
 									>
 										{pair.black}
@@ -293,6 +215,26 @@ export function MoveList({ id, matchHistory: propMatchHistory }: MoveListProps) 
 							</div>
 						);
 					})}
+
+					{variationNodes.length > 0 && isAnalysisMode && (
+						<div className="mt-2 pt-2 border-t border-black/20 w-full">
+							<div className="flex items-center justify-between mb-2">
+								<span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Variations</span>
+							</div>
+							<div className="flex flex-col gap-1">
+								{variationNodes.map(({ node, rootIdx }) => (
+									<MoveNode
+										key={rootIdx}
+										node={node}
+										path={[rootIdx]}
+										level={1}
+										currentPath={currentPath}
+										onPathClick={handlePathClick}
+									/>
+								))}
+							</div>
+						</div>
+					)}
 				</div>
 			</div>
 				

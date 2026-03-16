@@ -34,7 +34,7 @@ export const UserAnalysisBoard = forwardRef<UserAnalysisBoardRef, UserAnalysisBo
 		const [fen, setFen] = useState(currentFen);
 		const chessRef = useRef(new Chess(currentFen));
 
-		const isReadOnly = inspectedUserId === null;
+		const isReadOnly = inspectedUserId !== null;
 
 		useEffect(() => {
 			chessRef.current = new Chess(currentFen);
@@ -55,89 +55,92 @@ export const UserAnalysisBoard = forwardRef<UserAnalysisBoardRef, UserAnalysisBo
 			}
 		}, [selectedMoveIndex, matchHistory, currentFen]);
 
-		useImperativeHandle(ref, () => ({
-			getCurrentFen: () => fen,
-		}));
-
-		const getPositionFromTree = (tree: MoveTreeNode[], path: number[]): { fen: string; chess: Chess } => {
+		const computedChess = useMemo(() => {
 			const chess = new Chess();
-			let currentLevel = tree;
 
-			for (let i = 0; i < path.length; i++) {
-				const idx = path[i];
-				if (currentLevel[idx]) {
-					chess.move(currentLevel[idx].m);
-					if (currentLevel[idx].s) {
-						currentLevel = currentLevel[idx].s!;
+			if (currentPath.length > 0 && analysisTree.length > 0) {
+				let currentLevel = analysisTree;
+				for (const idx of currentPath) {
+					if (currentLevel && currentLevel[idx]) {
+						try {
+							chess.move(currentLevel[idx].m);
+							currentLevel = currentLevel[idx].s || [];
+						} catch (e) {
+							break; 
+						}
+					} else {
+						break;
 					}
 				}
+			} else if (selectedMoveIndex !== null) {
+				if (selectedMoveIndex == -1) return chess;
+				for (let i = 0; i <= selectedMoveIndex; i++) {
+					if (matchHistory[i]) {
+						chess.move(matchHistory[i]);
+					}
+				}
+			} else {
+				for (const m of matchHistory) {
+					chess.move(m);
+				}
+				if (chess.fen() !== currentFen) {
+					chess.load(currentFen);
+				}
 			}
+			
+			return chess;
+		}, [analysisTree, currentPath, selectedMoveIndex, matchHistory, currentFen]);
 
-			return { fen: chess.fen(), chess };
-		};
+		const computedFen = computedChess.fen();
 
-		const computedFen = useMemo(() => {
-			if (analysisTree.length === 0) {
-				return currentFen;
-			}
-			const { fen: treeFen } = getPositionFromTree(analysisTree, currentPath);
-			return treeFen;
-		}, [analysisTree, currentPath, currentFen]);
+		useImperativeHandle(ref, () => ({
+			getCurrentFen: () => computedFen,
+		}));
 		
 		const handleMove = (orig: string, dest: string) => {
 			if (isReadOnly) return;
 
 			const chess = new Chess(computedFen);
 			const move = chess.move({ from: orig, to: dest, promotion: 'q' });
-			
+
 			if (move) {
-				setFen(chess.fen());
-				setSelectedMoveIndex(null);
-				
-				const newPath = [...currentPath];
-				const nextIndex = matchHistory.length;
-				const expectedMove = matchHistory[nextIndex];
+				if (currentPath.length === 0) {
+					const targetIndex = selectedMoveIndex !== null ? selectedMoveIndex : matchHistory.length - 1;
+					const historyPath = Array.from({ length: targetIndex + 1 }, () => 0);
 
-				if (move.san !== expectedMove) {
-					const lastNode = analysisTree[newPath.length - 1];
-					if (lastNode && lastNode.s) {
-						newPath.push(lastNode.s.length);
-					}
+					addMoveToTree(move.san, matchHistory, historyPath);
+					setCurrentPath([...historyPath, 0]);
 				} else {
-					newPath.push(newPath.length);
+					addMoveToTree(move.san, matchHistory, currentPath);
+					setCurrentPath(prev => [...prev, 0]);
 				}
-
-				addMoveToTree(move.san, matchHistory, currentPath);
-				setCurrentPath(newPath);
-				
-				if (inspectedUserId) {
-					syncAnalysisToServer(matchId, inspectedUserId);
-				}
-
+			
+				setSelectedMoveIndex(null);
+				if (userId) syncAnalysisToServer(matchId, userId);
 				onMove?.(move.san);
 			}
 		};
 
-		const calcMovable = () => {
-			const chess = new Chess(computedFen);
+		const movableObj = useMemo(() => {
 			const dests = new Map();
-
-			const board = chess.board().flat();
+			const board = computedChess.board().flat();
 
 			board.forEach((piece) => {
-				if (piece && piece.color === chess.turn()) {
-					const moves = chess.moves({ square: piece.square, verbose: true });
+				if (piece && piece.color === computedChess.turn()) {
+					const moves = computedChess.moves({ square: piece.square, verbose: true });
 					if (moves.length) {
 						dests.set(piece.square, moves.map(m => m.to));
 					}
 				}
 			});
-			return { free: false,
+
+			return {
+				free: false,
 				showDests: true,
 				dests: dests,
-				color: (chess.turn() === 'w' ? 'white' : 'black') as 'white'|'black'
+				color: "both" as const
 			};
-		};
+		}, [computedChess]);
 
 		return (
 			<div className="w-full h-full flex justify-center items-center">
@@ -148,7 +151,8 @@ export const UserAnalysisBoard = forwardRef<UserAnalysisBoardRef, UserAnalysisBo
 					width="100%"
 					height="100%"
 					coordinates={true}
-					movable={calcMovable()}
+					movable={movableObj}
+					premovable={{ enabled: false }}
 					animation={{
 						enabled: true,
 						duration: 300,

@@ -35,21 +35,22 @@ const ChessTimer = memo(({ data, initial, label }: { data: SyncPayload|null, ini
 });
 
 export function ChessBoard({ onInteraction, match, isOnMove=false }: { onInteraction: () => void, match: Match, isOnMove?: boolean }) {
-	const { selectedMoveIndex } = useAnalysis();
-	const previewMove = selectedMoveIndex ?? undefined;
+	const { selectedMoveIndex, isAnalysisMode } = useAnalysis();
+	const previewMove = isAnalysisMode ? undefined : (selectedMoveIndex ?? undefined);
 
 	const containerRef = useRef<HTMLDivElement>(null);
 
 	const { currentMoveData, isEnded } = useBroadcast(match.id);
 	const totalMoves = currentMoveData?.history?.length || 0;
-    useKeyboardNavigation(totalMoves);
+		
+	useKeyboardNavigation(totalMoves);
 
 	const [isManualStarted, setIsManualStarted] = useState<boolean>(false);
 	const isBroadcastActive = match.status === "in_progress" || isManualStarted;
 	const finalIsEnded = match.status === "finished" || isEnded;
 
 	const activeFen = (currentMoveData && currentMoveData.fen) || match.fen;
-	const fenCache = useRef<string[]>([]);
+	const fenCache = useRef<string[]>([]);		
 	const fenHistory = useMemo(() => {
 		const history = currentMoveData?.history || [];
 		const cache = fenCache.current;
@@ -62,8 +63,12 @@ export function ChessBoard({ onInteraction, match, isOnMove=false }: { onInterac
 		}
 
 		const newHistory = history.map((move) => {
-			tempChess.move(move);
-			return tempChess.fen();
+			try {
+				tempChess.move(move);
+				return tempChess.fen();
+			} catch (e) {
+				return tempChess.fen();
+			}
 		});
 		
 		fenCache.current = newHistory;
