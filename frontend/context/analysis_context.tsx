@@ -17,12 +17,14 @@ interface AnalysisContextType {
 	analysisTree: MoveTreeNode[];
 	currentPath: number[];
 	matchId: string | null;
+	selectedMoveIndex: number | null;
 	setAnalysisMode: (mode: boolean) => void;
 	setInspectedUserId: (userId: number | null) => void;
 	setAnalysisTree: (tree: MoveTreeNode[]) => void;
 	setMatchId: (id: string | null) => void;
 	addMoveToTree: (move: string, matchHistory: string[], parentPath?: number[]) => void;
 	setCurrentPath: (path: number[]) => void;
+	setSelectedMoveIndex: (index: number | null) => void;
 	resetAnalysis: () => void;
 	syncAnalysisToServer: (matchId: string, userId: number) => void;
 	saveAnalysis: (matchId: string, userId: number) => Promise<void>;
@@ -39,6 +41,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
     const [analysisTree, setAnalysisTree] = useState<MoveTreeNode[]>([]);
     const [currentPath, setCurrentPath] = useState<number[]>([]);
     const [matchId, setMatchId] = useState<string | null>(null);
+    const [selectedMoveIndex, setSelectedMoveIndex] = useState<number | null>(null);
 
     const socketRef = useRef<Socket | null>(null);
     const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -118,6 +121,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
         setAnalysisTree([]);
         setCurrentPath([]);
         setMatchId(null);
+        setSelectedMoveIndex(null);
     }, []);
 
     const saveAnalysis = useCallback(async (currentMatchId: string, userId: number) => {
@@ -172,12 +176,14 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
                 analysisTree,
                 currentPath,
                 matchId,
+                selectedMoveIndex,
                 setAnalysisMode,
                 setInspectedUserId,
                 setAnalysisTree,
                 setMatchId,
                 addMoveToTree,
                 setCurrentPath,
+                setSelectedMoveIndex,
                 resetAnalysis,
                 syncAnalysisToServer,
                 saveAnalysis,

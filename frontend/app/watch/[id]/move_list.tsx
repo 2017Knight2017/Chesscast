@@ -5,7 +5,6 @@ import { MoveTreeNode, MoveRecord } from "@/types/types"
 import { useEffect, useMemo, useRef } from "react";
 import { BackToLiveButton } from "./back_to_live_button";
 import { useAnalysis } from "@/context/analysis_context";
-import { useSearchParams } from "next/navigation";
 
 interface MoveListProps {
 	id: string;
@@ -74,15 +73,12 @@ function MoveNode({
 
 export function MoveList({ id, matchHistory: propMatchHistory }: MoveListProps) {
 	const { currentMoveData } = useBroadcast(id);
-	const { isAnalysisMode, analysisTree, currentPath, setCurrentPath } = useAnalysis();
+	const { isAnalysisMode, analysisTree, currentPath, setCurrentPath, selectedMoveIndex, setSelectedMoveIndex } = useAnalysis();
 	
 	const socketHistory = currentMoveData?.history || [];
 	const matchHistory = propMatchHistory || socketHistory;
 	
-	const searchParams = useSearchParams();
-	const activeMoveIndex = searchParams.get('move') !== null 
-		? parseInt(searchParams.get('move')!) 
-		: null;
+	const activeMoveIndex = selectedMoveIndex;
 	
 	const activeRef = useRef<HTMLDivElement | null>(null);
 
@@ -109,12 +105,7 @@ export function MoveList({ id, matchHistory: propMatchHistory }: MoveListProps) 
 			const newPath = Array.from({ length: moveIndex + 1 }, (_, i) => i);
 			setCurrentPath(newPath);
 		} else {
-			const params = new URLSearchParams(window.location.search);
-			params.set('move', moveIndex.toString());
-			const newUrl = `${window.location.pathname}?${params.toString()}`;
-			window.history.replaceState(null, '', newUrl);
-			const event = new PopStateEvent('popstate');
-			window.dispatchEvent(event);
+			setSelectedMoveIndex(moveIndex);
 		}
 	};
 

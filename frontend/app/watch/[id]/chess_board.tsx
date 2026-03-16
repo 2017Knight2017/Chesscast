@@ -6,7 +6,7 @@ import { useChessClock } from '@/hooks/use_chess_clocks';
 import { useKeyboardNavigation } from '@/hooks/use_keyboard_navigation';
 import Chessground from '@bezalel6/react-chessground';
 import { Match } from '@/types/types';
-import { useSearchParams } from 'next/navigation';
+import { useAnalysis } from '@/context/analysis_context';
 import { Chess } from 'chess.js'
 import { SyncPayload } from '@/types/types';
 
@@ -35,9 +35,8 @@ const ChessTimer = memo(({ data, initial, label }: { data: SyncPayload|null, ini
 });
 
 export function ChessBoard({ onInteraction, match, isOnMove=false }: { onInteraction: () => void, match: Match, isOnMove?: boolean }) {
-	const searchParams = useSearchParams();
-	const rawPreviewMove = searchParams.get('move');
-	const previewMove = rawPreviewMove !== null ? parseInt(rawPreviewMove) : undefined;
+	const { selectedMoveIndex } = useAnalysis();
+	const previewMove = selectedMoveIndex ?? undefined;
 
 	const containerRef = useRef<HTMLDivElement>(null);
 

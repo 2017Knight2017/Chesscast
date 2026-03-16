@@ -1,57 +1,44 @@
 'use client';
 
 import { useEffect } from 'react';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { useAnalysis } from '@/context/analysis_context';
 
 export function useKeyboardNavigation(totalMoves: number) {
-	const pathname = usePathname();
-	const searchParams = useSearchParams();
+	const { selectedMoveIndex, setSelectedMoveIndex, isAnalysisMode } = useAnalysis();
 
 	useEffect(() => {
+		if (isAnalysisMode) return;
+
 		const handleKeyDown = (event: KeyboardEvent) => {
 			if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
 				return;
 			}
 
-			const currentRaw = searchParams.get('move');
-			const currentIndex = currentRaw !== null ? parseInt(currentRaw) : totalMoves - 1;
+			const currentIndex = selectedMoveIndex ?? totalMoves - 1;
 
 			switch (event.key) {
 				case "ArrowLeft":
 					if (currentIndex > -1) {
-						updateUrl(currentIndex - 1);
+						setSelectedMoveIndex(currentIndex - 1);
 					}
 					break;
 				case "ArrowRight":
 					if (currentIndex < totalMoves - 1) {
-						updateUrl(currentIndex + 1);
+						setSelectedMoveIndex(currentIndex + 1);
 					} else if (currentIndex === totalMoves - 1) {
-						updateUrl(null);
+						setSelectedMoveIndex(null);
 					}
 					break;
 				case "ArrowUp":
-					updateUrl(-1);
+					setSelectedMoveIndex(-1);
 					break;
 				case "ArrowDown":
-					updateUrl(totalMoves - 1);
+					setSelectedMoveIndex(totalMoves - 1);
 					break;
 			}
-		};
-
-		const updateUrl = (index: number | null) => {
-			const params = new URLSearchParams(window.location.search);
-			if (index === null) {
-				params.delete('move');
-			} else {
-				params.set('move', index.toString());
-			}
-			
-			const newUrl = index === null ? pathname : `${pathname}?${params.toString()}`;
-			window.history.replaceState(null, '', newUrl);
-			window.dispatchEvent(new PopStateEvent('popstate'));
 		};
 
 		window.addEventListener('keydown', handleKeyDown);
 		return () => window.removeEventListener('keydown', handleKeyDown);
-	}, [totalMoves, searchParams, pathname]);
+	}, [totalMoves, selectedMoveIndex, setSelectedMoveIndex, isAnalysisMode]);
 }

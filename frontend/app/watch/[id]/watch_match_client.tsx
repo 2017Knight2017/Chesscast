@@ -32,6 +32,7 @@ export default function WatchMatchClient({ matchId, initialMatch }: WatchMatchCl
 		checkExistingAnalysis,
 		loadAnalysis,
 		syncAnalysisToServer,
+		setSelectedMoveIndex,
 	} = useAnalysis();
 
 	const [showBeginPrompt, setShowBeginPrompt] = useState(false);
@@ -82,10 +83,11 @@ export default function WatchMatchClient({ matchId, initialMatch }: WatchMatchCl
 
 	// Обработчики
 	const handleMoveOnMainBoard = useCallback(() => {
+		setSelectedMoveIndex(null);
 		if (!isAnalysisMode && !showBeginPrompt && match && userId) {
 			setShowBeginPrompt(true);
 		}
-	}, [isAnalysisMode, showBeginPrompt, match, userId]);
+	}, [isAnalysisMode, showBeginPrompt, match, userId, setSelectedMoveIndex]);
 
 	const handleBeginAnalysis = async () => {
 		setShowBeginPrompt(false);
@@ -129,6 +131,7 @@ export default function WatchMatchClient({ matchId, initialMatch }: WatchMatchCl
 	};
 
 	const handleMainBoardClick = () => {
+		setSelectedMoveIndex(null);
 		setShowSavePrompt(true);
 	};
 

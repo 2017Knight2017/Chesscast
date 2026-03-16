@@ -26,7 +26,9 @@ export const UserAnalysisBoard = forwardRef<UserAnalysisBoardRef, UserAnalysisBo
 			currentPath, 
 			setCurrentPath,
 			inspectedUserId,
-			syncAnalysisToServer
+			syncAnalysisToServer,
+			selectedMoveIndex,
+			setSelectedMoveIndex
 		} = useAnalysis();
 
 		const [fen, setFen] = useState(currentFen);
@@ -38,6 +40,20 @@ export const UserAnalysisBoard = forwardRef<UserAnalysisBoardRef, UserAnalysisBo
 			chessRef.current = new Chess(currentFen);
 			setFen(currentFen);
 		}, [currentFen]);
+
+		useEffect(() => {
+			if (selectedMoveIndex !== null && selectedMoveIndex >= 0 && selectedMoveIndex < matchHistory.length) {
+				const tempChess = new Chess();
+				for (let i = 0; i <= selectedMoveIndex; i++) {
+					tempChess.move(matchHistory[i]);
+				}
+				setFen(tempChess.fen());
+				chessRef.current = tempChess;
+			} else if (selectedMoveIndex === null) {
+				chessRef.current = new Chess(currentFen);
+				setFen(currentFen);
+			}
+		}, [selectedMoveIndex, matchHistory, currentFen]);
 
 		useImperativeHandle(ref, () => ({
 			getCurrentFen: () => fen,
@@ -76,6 +92,7 @@ export const UserAnalysisBoard = forwardRef<UserAnalysisBoardRef, UserAnalysisBo
 			
 			if (move) {
 				setFen(chess.fen());
+				setSelectedMoveIndex(null);
 				
 				const newPath = [...currentPath];
 				const nextIndex = matchHistory.length;

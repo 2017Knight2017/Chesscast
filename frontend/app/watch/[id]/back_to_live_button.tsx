@@ -1,16 +1,14 @@
 'use client';
 
-import { usePathname, useSearchParams } from 'next/navigation';
+import { useAnalysis } from '@/context/analysis_context';
 
 export function BackToLiveButton() {
-    const pathname = usePathname();
-    const searchParams = useSearchParams();
+    const { selectedMoveIndex, setSelectedMoveIndex } = useAnalysis();
 
-    const isPreviewing = searchParams.has('move');
+    const isPreviewing = selectedMoveIndex !== null;
 
     const handleBackToLive = () => {
-        window.history.replaceState(null, '', pathname);
-        window.dispatchEvent(new PopStateEvent('popstate'));
+        setSelectedMoveIndex(null);
     };
 
     if (!isPreviewing) return null;
