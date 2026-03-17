@@ -8,7 +8,6 @@ interface StartMatchResponse {
 }
 
 export async function createMatchAction(pgn: string, archetypes: [string, string], whitePlayer: string, blackPlayer: string, title: string, timeControl: number, scheduledAt: string): Promise<StartMatchResponse> {
-	const apiUrl = process.env.NEST_API_URL;
 	const cookieStore = await cookies();
 	const token = cookieStore.get('token')?.value;
 
@@ -17,7 +16,7 @@ export async function createMatchAction(pgn: string, archetypes: [string, string
 	}
 
 	try {
-		const res = await fetch(`${apiUrl}/matches/create`, {
+		const res = await fetch(`${process.env.NEST_API_URL}/matches/create`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',

@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { Move } from '@/types/types'
-import { getTurnFromFen } from '@/utils/get_turn_from_fen';
 import { useGuestId } from './use_guest_id';
 
 export const useBroadcast = (matchId: string) => {
@@ -48,7 +47,7 @@ export const useBroadcast = (matchId: string) => {
 		return () => controller.abort();
 	}, [matchId]);
 
-useEffect(() => {
+	useEffect(() => {
 		const stored = localStorage.getItem('user');
 		const user = stored ? JSON.parse(stored) : null;
 		const username = user?.username;
@@ -58,13 +57,10 @@ useEffect(() => {
 		});
 
 		socket.on('connect', () => {
-			console.log('Сокет подключен, ID:', socket.id);
 			socket.emit('joinMatch', { matchId, username, guestId });
 		});
 
 		socket.on('newMove', (data: any) => {
-			console.log('Новый ход:', data);
-			
 			setcurrentMoveData((prev) => {
 				if (!prev) return prev;
 					
@@ -81,7 +77,6 @@ useEffect(() => {
 		});
 
 		socket.on('analysisEnded', (data: { matchId: string }) => {
-			console.log('Трансляция партии завершена', data);
 			setIsEnded(true);
 		});
 

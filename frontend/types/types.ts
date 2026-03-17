@@ -3,7 +3,7 @@ export interface Match {
 	title: string;
 	author: string;
 	timeControl: number
-	status: "waiting"|"in_progress"|"finished"
+	status: "processing"|"waiting"|"in_progress"|"finished"
 	white: { name: string; time: string; timeMs?: number };
 	black: { name: string; time: string; timeMs?: number };
 	fen: string;

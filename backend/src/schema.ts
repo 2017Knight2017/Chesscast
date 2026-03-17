@@ -14,7 +14,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
-export const statusEnum = pgEnum("status", ['waiting', 'in_progress', 'finished']);
+export const statusEnum = pgEnum("status", ['processing', 'waiting', 'in_progress', 'finished']);
 
 export const users = pgTable('users', {
 	id:                serial('id').primaryKey(),
@@ -49,7 +49,7 @@ export const matches = pgTable('matches', {
 	blackPlayerTime:     integer('black_player_time').notNull().default(600000),
 	moveIndex:           integer('move_index').notNull().default(0),
 	fen:                 text('fen').notNull().default('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'),
-	status:              statusEnum().notNull().default('waiting'),
+	status:              statusEnum().notNull().default('processing'),
 	timeControl:         integer('time_control').notNull(), 
 	increment:           integer('increment').default(0),
 	scheduledAt:         timestamp('scheduled_time').notNull(),

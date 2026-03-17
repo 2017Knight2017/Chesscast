@@ -1,4 +1,4 @@
-import { Injectable, Inject, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException, Logger, forwardRef } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as sc from '../schema';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
@@ -11,6 +11,7 @@ import { requestArchetypes } from "src/matches/utils/archetype";
 import { PlayersService } from 'src/players/players.service';
 import { RedisService } from 'src/redis/redis.service';
 import { Chess } from 'chess.js';
+import { MatchesGateway } from './matches.gateway';
 
 export interface gameState {
 	isStarted: boolean,
@@ -23,7 +24,7 @@ export interface Match {
 	author: string,
 	white: { name: string; time: string; timeMs?: number },
 	black: { name: string; time: string; timeMs?: number },
-	status: "waiting"|"in_progress"|"finished",
+	status: "processing"|"waiting"|"in_progress"|"finished",
 	timeControl: number,
 	fen: string,
 	viewerCount: number,
@@ -64,8 +65,8 @@ export class MatchesService {
 		@Inject(PlayersService) private playersService: PlayersService,
 		@InjectQueue('analysis') private analysisQueue: Queue,
 		@InjectQueue('timer') private timerQueue: Queue,
-		@Inject(RedisService) private redisService: RedisService
-		
+		@Inject(RedisService) private redisService: RedisService,
+		@Inject(forwardRef(() => MatchesGateway)) private readonly gateway: MatchesGateway,
 	) {}
 
 	private readonly logger = new Logger(MatchesService.name);
@@ -80,7 +81,7 @@ export class MatchesService {
 			this.playersService.getArchetypeFromDB(blackPlayer)
 		]);
 		let validatedArchetypes: [string|undefined, string|undefined] = [
-			this.getValidArchetype(archetypes[0]) || whiteDB ,
+			this.getValidArchetype(archetypes[0]) || whiteDB,
 			this.getValidArchetype(archetypes[1]) || blackDB 
 		];
 		let isArchetypeAiGenerated: boolean[] = [false, false];
@@ -133,7 +134,7 @@ export class MatchesService {
 				blackPlayer: blackPlayer,
 				whitePlayerTime: timeControl*1000,
 				blackPlayerTime: timeControl*1000,
-				status: 'waiting',
+				status: 'processing',
 				moveIndex: 0,
 				timeControl: timeControl,
 				scheduledAt: scheduledAt
@@ -158,20 +159,25 @@ export class MatchesService {
 
 	async handleWorkerReport(id: string, evaluations: number[], durations: number[], notation: string[]) {
 		console.log(id, evaluations, durations, notation)
-		const [broadcast] = await this.db
+		await this.db
 			.update(sc.analysis)
 			.set({
 				evaluations: evaluations,
 				durations: durations,
 				notation: notation
 			})
-			.where(eq(sc.analysis.id, id))
-			.returning();
-		return broadcast;
+			.where(eq(sc.analysis.id, id));
+		await this.db
+			.update(sc.matches)
+			.set({
+				status: "waiting"
+			})
+			.where(eq(sc.matches.id, id));
+		this.gateway.server.to(`is_processing:${id}`).emit("no_more_processing");
 	}
 
 	async startBroadcast(id: string) {
-		const [match] = await this.db
+		await this.db
 			.update(sc.matches)
 			.set({
 				status: "in_progress",
@@ -329,7 +335,7 @@ export class MatchesService {
 		table: PgTableWithColumns<any>, 
 		isJoinTable: boolean,
 		userId?: number,
-		status?: "waiting"|"in_progress"|"finished"
+		status?: "processing"|"waiting"|"in_progress"|"finished"
 	}) {
 		let query = this.db
 			.select({

@@ -55,7 +55,6 @@ export default function WatchMatchClient({ matchId, initialMatch }: WatchMatchCl
 		}
 	}, []);
 
-	// 2. Проверяем существующий анализ
 	useEffect(() => {
 		if (matchId && userId) {
 			setMatchId(matchId);
@@ -63,7 +62,6 @@ export default function WatchMatchClient({ matchId, initialMatch }: WatchMatchCl
 		}
 	}, [matchId, userId, checkExistingAnalysis, setMatchId]);
 
-	// 3. Подключение сокетов
 	useEffect(() => {
 		socketRef.current = io(process.env.NEXT_PUBLIC_SOCKET_URL, {
 			transports: ['websocket'],
