@@ -23,6 +23,12 @@ export function useProcessing(match: Match) {
 			setIsProcessing(false);
 		});
 		
+		return () => {
+			socket.off("connect");
+			socket.off("no_more_processing");
+
+			socket.disconnect();
+		};
 	}, [match.id]);
 
 	return {isProcessing}
