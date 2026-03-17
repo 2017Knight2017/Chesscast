@@ -200,94 +200,92 @@ export function MoveList({ id, matchHistory: propMatchHistory }: MoveListProps) 
 	if (!isAnalysisMode && !currentMoveData) return <div>Loading...</div>;
 
 	return (
-		<div className="bg-[#f4ead5] text-[#3e2b1d] shadow-inner p-6 border-l-4 border-[#8b5e34] font-mono">
+	// 1. Добавляем h-full и flex flex-col всему контейнеру
+	<div className="h-full flex flex-col bg-[#f4ead5] text-[#3e2b1d] shadow-inner p-6 border-l-4 border-[#8b5e34] font-mono overflow-hidden">
+		
+		{/* Заголовки — запрещаем им сжиматься через shrink-0 */}
+		<div className="shrink-0">
 			<h3 className="text-center border-b mb-2 sepia">Moves Record</h3>
-			<div className="col-span-3 border-b border-black/10 pb-1 mb-2 italic"># — White — Black</div>
+			<div className="border-b border-black/10 pb-1 mb-2 italic text-xs"># — White — Black</div>
+		</div>
 
-			<div className={`${isAnalysisMode ? 'h-40' : 'h-100'} overflow-x-auto overflow-y-hidden`}>
-				<div 
-					style={{
-						display: 'flex',
-						flexFlow: 'column wrap',
-						height: '100%',
-						alignContent: 'flex-start',
-						overscrollBehaviorX: 'contain',
-					}}
-				>
-					{displayPairs.map((pair, i) => {
-						const whiteIndex = i * 2;
-						const blackIndex = i * 2 + 1;
-
-						let isWhiteActive, isBlackActive;
-
-						if (isAnalysisMode) {
-							const isAtMainline = currentPath.length === 0;
-							isWhiteActive = isAtMainline && selectedMoveIndex === whiteIndex;
-							isBlackActive = isAtMainline && selectedMoveIndex === blackIndex;
-						} else {
-							isWhiteActive = selectedMoveIndex === whiteIndex;
-							isBlackActive = selectedMoveIndex === blackIndex;
-						}
+		{/* 2. Основной блок ходов: flex-1 заставит его занять всё свободное место */}
+		{/* min-h-0 критически важен, чтобы блок мог уменьшаться и включать скролл */}
+		<div className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden mb-4">
+			<div 
+				style={{
+					display: 'flex',
+					flexFlow: 'column wrap',
+					height: '100%', // Теперь 100% будет считаться от высоты, которую дал flex-1
+					alignContent: 'flex-start',
+					overscrollBehaviorX: 'contain',
+				}}
+			>
+				{displayPairs.map((pair, i) => {
+					const whiteIndex = i * 2;
+					const blackIndex = i * 2 + 1;
 					
-						return (
-							<div 
-								key={i}
-								className="flex items-center mr-2 gap-1 w-32 h-8 border-r border-dotted border-black/5 break-inside-avoid"
-								ref={isWhiteActive || isBlackActive ? activeRef : null}
-							>
-								<span className="text-[10px] text-slate-500 w-5">{pair.num}.</span>
-						
-								<button 
-									onClick={() => handleMoveClick(whiteIndex)}
-									onMouseDown={(e) => e.preventDefault()}
-									className={`flex-1 text-sm rounded px-1 transition-colors text-left whitespace-nowrap ${
-										isWhiteActive ? 'bg-amber-400 font-bold text-black' : 'hover:bg-black/5'
-									}`}
-								>
-									{pair.white}
-								</button>
-								
-								{pair.black && (
-									<button 
-										onClick={() => handleMoveClick(blackIndex)}
-										onMouseDown={(e) => e.preventDefault()}
-										className={`flex-1 text-sm rounded px-1 transition-colors text-left whitespace-nowrap ${
-											isBlackActive ? 'bg-amber-400 font-bold text-black' : 'hover:bg-black/5'
-										}`}
-									>
-										{pair.black}
-									</button>
-								)}
-							</div>
-						);
-					})}
-				</div>
-			</div>
+					// Ваша логика активных индексов...
+					const isWhiteActive = isAnalysisMode 
+						? (currentPath.length === 0 && selectedMoveIndex === whiteIndex)
+						: selectedMoveIndex === whiteIndex;
+					const isBlackActive = isAnalysisMode
+						? (currentPath.length === 0 && selectedMoveIndex === blackIndex)
+						: selectedMoveIndex === blackIndex;
 
-			{variationNodes.length > 0 && isAnalysisMode && (
-				<div className="mt-2 pt-2 border-t border-black/20 w-full">
-					<span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
-						Variations
-					</span>
-					<div className="leading-relaxed">
-						{variationNodes.map(({ node, absolutePath }) => (
-							<div key={absolutePath.join('-')} className="mb-3 last:mb-0 p-2 bg-white/30 rounded border border-black/5">
-								<MoveNode
-									node={node}
-									path={absolutePath}
-									level={1}
-									currentPath={currentPath}
-									onPathClick={handlePathClick}
-								/>
-							</div>
-						))}
-					</div>
-				</div>
-			)}
-				
-			<div className="mt-4">
-				<BackToLiveButton />
+					return (
+						<div 
+							key={i}
+							className="flex items-center mr-4 gap-1 w-32 h-8 border-r border-dotted border-black/5 break-inside-avoid shrink-0"
+							ref={isWhiteActive || isBlackActive ? activeRef : null}
+						>
+							<span className="text-[10px] text-slate-500 w-5">{pair.num}.</span>
+							<button 
+								onClick={() => handleMoveClick(whiteIndex)}
+								className={`flex-1 text-sm rounded px-1 text-left whitespace-nowrap ${isWhiteActive ? 'bg-amber-400 font-bold text-black' : 'hover:bg-black/5'}`}
+							>
+								{pair.white}
+							</button>
+							{pair.black !== "..." && (
+								<button 
+									onClick={() => handleMoveClick(blackIndex)}
+									className={`flex-1 text-sm rounded px-1 text-left whitespace-nowrap ${isBlackActive ? 'bg-amber-400 font-bold text-black' : 'hover:bg-black/5'}`}
+								>
+									{pair.black}
+								</button>
+							)}
+						</div>
+					);
+				})}
 			</div>
 		</div>
-	);
+
+		{/* 3. Блок вариаций: ограничиваем по высоте, чтобы не вытеснял всё остальное */}
+		{variationNodes.length > 0 && isAnalysisMode && (
+			<div className="shrink-0 max-h-[30%] mt-2 pt-2 border-t border-black/20 w-full overflow-y-auto">
+				<span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
+					Variations
+				</span>
+				<div className="leading-relaxed">
+					{variationNodes.map(({ node, absolutePath }) => (
+						<div key={absolutePath.join('-')} className="mb-2 p-2 bg-white/30 rounded border border-black/5">
+							<MoveNode
+								node={node}
+								path={absolutePath}
+								level={1}
+								currentPath={currentPath}
+								onPathClick={handlePathClick}
+							/>
+						</div>
+					))}
+				</div>
+			</div>
+		)}
+			
+		{/* Кнопка — всегда внизу */}
+		<div className="shrink-0 mt-auto pt-4">
+			<BackToLiveButton />
+		</div>
+	</div>
+);
 }

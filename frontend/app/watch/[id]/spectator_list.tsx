@@ -2,7 +2,6 @@
 
 import { useViewerCounts } from "@/hooks/use_viewer_counts";
 import { useState, useEffect } from "react";
-import { useAnalysis } from "@/context/analysis_context";
 import Chessground from "@bezalel6/react-chessground";
 
 interface SpectatorListProps {
@@ -14,18 +13,12 @@ export function SpectatorList({ id, onInspectUser }: SpectatorListProps) {
 	const [selectedSpectator, setSelectedSpectator] = useState<string | null>(null);
 	const [previewFen, setPreviewFen] = useState<string | null>(null);
 	const { usernames, guestCount } = useViewerCounts([id]);
-	const { isAnalysisMode } = useAnalysis();
 	let resolvedUsernames: string[] = [];
 	let resolvedGuestCount = 0;
 	if (usernames) resolvedUsernames = usernames[id] || [];
 	if (guestCount) resolvedGuestCount = guestCount[id] || 0;
 
 	useEffect(() => {
-		if (!selectedSpectator || !isAnalysisMode) {
-			setPreviewFen(null);
-			return;
-		}
-
 		const fetchUserFen = async () => {
 			const user = localStorage.getItem('user');
 			if (!user) return;
@@ -56,7 +49,7 @@ export function SpectatorList({ id, onInspectUser }: SpectatorListProps) {
 		};
 
 		fetchUserFen();
-	}, [selectedSpectator, id, isAnalysisMode]);
+	}, [selectedSpectator, id]);
 
 	const handleSpectatorClick = (username: string) => {
 		setSelectedSpectator(username);
@@ -64,38 +57,42 @@ export function SpectatorList({ id, onInspectUser }: SpectatorListProps) {
 	};
 
 	return (
-		<div className="w-full max-w-md p-6 bg-[#f2e6d0] border border-[#8b5e34]/30 shadow-inner font-serif">
-			<h3 className="text-center text-[#3e2b1d] uppercase tracking-widest border-b border-[#8b5e34]/20 mb-4 pb-2 text-sm font-bold">Список зрителей</h3>
-			<div className="grid h-75 [grid-template-columns: repeat(autofit, 50%)] gap-x-8">
-				{resolvedUsernames.length > 0 && 
-					(resolvedUsernames.map((username) => (
+		<div className="w-full h-full flex flex-col p-4 bg-[#f2e6d0] border border-[#8b5e34]/30 shadow-inner font-serif overflow-hidden">
+
+			<h3 className="shrink-0 text-center text-[#3e2b1d] uppercase tracking-widest border-b border-[#8b5e34]/20 mb-3 pb-2 text-sm font-bold">
+				Spectator List
+			</h3>
+
+			<div className="shrink-0 flex flex-row overflow-x-auto overflow-y-hidden gap-3 pb-2 mb-2 scrollbar-thin scrollbar-thumb-[#8b5e34]/30">
+				{resolvedUsernames.length > 0 ? (
+					resolvedUsernames.map((username) => (
 						<button
 							key={username}
-							onClick={() => handleSpectatorClick(username)}
-							className="block w-full text-left mb-2 text-[#5a3e2b] hover:text-[#8b5e34] transition-colors group"
+							onClick={() => selectedSpectator === null ? handleSpectatorClick(username) : setSelectedSpectator(null)}
+							className="shrink-0 whitespace-nowrap flex items-center gap-1 text-[#5a3e2b] hover:text-[#8b5e34] transition-colors group px-2 py-1 bg-[#e8dac0]/40 rounded border border-[#8b5e34]/10 hover:border-[#8b5e34]/40"
 						>
-							<span className="opacity-40 mr-1">❧</span>
-							<span className="border-b border-transparent group-hover:border-[#8b5e34] py-0.5">
+							<span className="opacity-40 text-xs">❧</span>
+							<span className="border-b border-transparent group-hover:border-[#8b5e34] py-0.5 text-sm">
 								{username}
 							</span>
 						</button>
-					)
-				))}
+					))
+				) : (
+					<span className="text-sm italic opacity-50 text-[#5a3e2b] px-2">No spectators yet...</span>
+				)}
+			</div>
 
-				{selectedSpectator && isAnalysisMode && (
-					<div className="mt-6 p-4 bg-[#e8dac0] border-2 border-double border-[#8b5e34]/40 animate-in fade-in slide-in-from-bottom-2">
-						<div className="flex justify-between items-start mb-2">
-							<h4 className="font-bold text-[#3e2b1d]">Analysis by {selectedSpectator}</h4>
-							<button 
-								onClick={() => setSelectedSpectator(null)}
-								className="text-xs uppercase opacity-50 hover:opacity-100"
-							>
-								[закрыть]
-							</button>
+			<div className="flex-1 min-h-0 overflow-y-auto">
+				{selectedSpectator && (
+					<div className="mt-2 p-3 bg-[#e8dac0] border-2 border-double border-[#8b5e34]/40 flex flex-col items-center animate-in fade-in slide-in-from-top-2">
+						<div className="flex justify-between w-full items-start mb-2">
+							<h4 className="font-bold text-[#3e2b1d] text-sm truncate pr-2">
+								Analysis by {selectedSpectator}
+							</h4>
 						</div>
-						
+
 						{previewFen && (
-							<div className="w-full aspect-square max-w-[200px] mx-auto mb-2 border-2 border-[#8b5e34]/30">
+							<div className="w-full aspect-square max-w-[160px] mx-auto mb-2 border-2 border-[#8b5e34]/30 shrink-0">
 								<Chessground
 									fen={previewFen}
 									viewOnly={true}
@@ -106,25 +103,26 @@ export function SpectatorList({ id, onInspectUser }: SpectatorListProps) {
 							</div>
 						)}
 
-						<p className="text-xs leading-relaxed italic opacity-80">
+						<p className="text-xs leading-relaxed italic opacity-80 text-center">
 							{previewFen 
 								? 'Click to view full analysis' 
 								: 'No analysis data yet'}
 						</p>
 					</div>
 				)}
+			</div>
 
-				<div className="mt-4 pt-2 border-t border-[#8b5e34]/10 flex justify-between items-center text-xs text-[#5a3e2b] opacity-60">
-				    <div className="flex items-center gap-1">
-				        <span className="text-lg">👥</span>
-				        <span>Total viewers: {resolvedUsernames.length}</span>
-				    </div>
-				    {resolvedGuestCount > 0 && (
-				        <div className="italic">
-				            + {resolvedGuestCount} guests
-				        </div>
-				    )}
+			{/* 3. Подвал (не сжимается, прибит к низу) */}
+			<div className="shrink-0 mt-3 pt-2 border-t border-[#8b5e34]/10 flex justify-between items-center text-xs text-[#5a3e2b] opacity-60">
+				<div className="flex items-center gap-1">
+					<span className="text-base">👥</span>
+					<span>Total: {resolvedUsernames.length}</span>
 				</div>
+				{resolvedGuestCount > 0 && (
+					<div className="italic">
+						+ {resolvedGuestCount} guests
+					</div>
+				)}
 			</div>
 		</div>
 	);

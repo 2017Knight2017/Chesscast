@@ -143,7 +143,7 @@ export const UserAnalysisBoard = forwardRef<UserAnalysisBoardRef, UserAnalysisBo
 		}, [computedChess]);
 
 		return (
-			<div className="w-full h-full flex justify-center items-center">
+			<div className="w-full h-full rounded-md overflow-hidden flex justify-center items-center">
 				<Chessground
 					onMove={handleMove}
 					fen={computedFen}

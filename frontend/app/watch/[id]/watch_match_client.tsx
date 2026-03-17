@@ -11,6 +11,7 @@ import { useBroadcast } from '@/hooks/use_broadcast';
 import { useAnalysis } from '@/context/analysis_context';
 import { io, Socket } from 'socket.io-client';
 import { useGuestId } from '@/hooks/use_guest_id';
+import { redirect } from 'next/navigation';
 
 interface WatchMatchClientProps {
 	matchId: string;
@@ -157,11 +158,20 @@ export default function WatchMatchClient({ matchId, initialMatch }: WatchMatchCl
 				/>
 			)}
 
-			<div className='grid size-full items-center px-10 gap-0 relative z-10 grid-cols-[300px_1fr_300px]'>
-				<aside className="h-[75vh] flex flex-col justify-center">
-					<div className="bg-[#f4ead5]/20 backdrop-blur-sm p-4 h-full border border-[#8b5e34]/20 shadow-lg">
+			<div className='grid size-full items-center px-10 gap-8 relative z-10 grid-cols-[300px_1fr_300px]'>
+				<aside className="h-[75vh] flex flex-col"> 
+					<div className="bg-[#f4ead5]/20 backdrop-blur-sm p-4 flex-1 min-h-0 border border-[#8b5e34]/20 shadow-lg overflow-hidden">
 						<SpectatorList id={match.id} onInspectUser={handleInspectUser} />
 					</div>
+
+					{isAnalysisMode && (
+						<div className='w-full p-6 shrink-0 flex items-center justify-center max-w-[40vh] aspect-square'>
+							<ChessBoard 
+								onInteraction={handleMainBoardClick}
+								match={match} 
+							/>
+						</div>
+					)}
 				</aside>
 
 				<section className='flex justify-center items-center'>
@@ -190,14 +200,6 @@ export default function WatchMatchClient({ matchId, initialMatch }: WatchMatchCl
 
 				<aside className="h-[75vh] flex flex-col justify-center">
 					<div className="bg-[#f4ead5]/20 backdrop-blur-sm p-4 h-full border border-[#8b5e34]/20 shadow-lg">
-						{isAnalysisMode && (
-							<div className='w-full flex items-center justify-center max-w-[40vh] aspect-square'>
-								<ChessBoard 
-									onInteraction={handleMainBoardClick}
-									match={match} 
-								/>
-							</div>
-						)}
 						<MoveList id={match.id} />
 					</div>
 				</aside>
