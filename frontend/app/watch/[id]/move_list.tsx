@@ -2,7 +2,7 @@
 
 import { useBroadcast } from "@/hooks/use_broadcast";
 import { MoveTreeNode, MoveRecord } from "@/types/types"
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { BackToLiveButton } from "./back_to_live_button";
 import { useAnalysis } from "@/context/analysis_context";
 
@@ -24,52 +24,72 @@ function arraysEqual(a: number[], b: number[]): boolean {
 	return true;
 }
 
-function MoveNode({
-	node,
-	path,
-	level = 0,
-	currentPath,
-	onPathClick,
-}: {
-	node: MoveTreeNode;
-	path: number[];
-	level?: number;
-	currentPath: number[];
-	onPathClick: (path: number[]) => void;
-}) {
-	const isActive = arraysEqual(path, currentPath);
-	const bgColor = level > 0 ? getBranchColor(level, path[level] || 0) : undefined;
+const MoveNode = ({ node, path, level, currentPath, onPathClick }: any) => {
+	const isActive = currentPath.length === path.length && path.every((val: number, i: number) => val === currentPath[i]);
+		
+	// Вычисляем номер хода и чья очередь (для веток это важно)
+	// path.length определяет глубину хода
+	const moveNumber = Math.floor((path.length - 1) / 2) + 1;
+	const isWhite = path.length % 2 !== 0;
 
 	return (
-		<div className="flex flex-col">
-			<span
+		<div className="inline">
+			{/* Отображаем номер хода, если это ход белых или первый ход в ветке */}
+			{(isWhite || level === 1) && (
+				<span className="text-[10px] text-slate-400 mr-1">
+					{moveNumber}{isWhite ? '.' : '...'}
+				</span>
+			)}
+
+			<button 
 				onClick={() => onPathClick(path)}
-				className={`cursor-pointer px-1 rounded text-sm transition-colors ${
-					isActive 
-						? 'bg-amber-400 font-bold' 
-						: 'hover:bg-black/5'
+				className={`inline-block text-sm rounded px-1 transition-colors hover:bg-black/5 ${
+					isActive ? 'bg-amber-400 font-bold text-black' : 'text-slate-700'
 				}`}
-				style={bgColor ? { backgroundColor: bgColor } : undefined}
 			>
 				{node.m}
-			</span>
+			</button>
+
+			{/* Рендерим дочерние узлы */}
 			{node.s && node.s.length > 0 && (
-				<div className="ml-4 pl-2 border-l border-black/20">
-					{node.s.map((subNode, subIdx) => (
-						<MoveNode
-							key={`${path.join('-')}-${subIdx}`}
-							node={subNode}
-							path={[...path, subIdx]}
-							level={level + 1}
-							currentPath={currentPath}
-							onPathClick={onPathClick}
-						/>
-					))}
+				<div className="inline">
+					{node.s.map((childNode: any, childIdx: number) => {
+						const isMainBranch = childIdx === 0;
+						const childPath = [...path, childIdx];
+
+						if (isMainBranch) {
+							// Продолжение текущей ветки — просто рендерим дальше в ту же строку
+							return (
+								<MoveNode
+									key={childIdx}
+									node={childNode}
+									path={childPath}
+									level={level + 1}
+									currentPath={currentPath}
+									onPathClick={onPathClick}
+								/>
+							);
+						} else {
+							// Параллельная ветка — выносим в скобки на новую строку или выделяем визуально
+							return (
+								<div key={childIdx} className="block ml-3 my-1 pl-2 border-l-2 border-slate-300 bg-black/5 rounded">
+									<span className="text-[10px] text-slate-400 italic">alt: </span>
+									<MoveNode
+										node={childNode}
+										path={childPath}
+										level={1} // Сбрасываем уровень для новой ветки
+										currentPath={currentPath}
+										onPathClick={onPathClick}
+									/>
+								</div>
+							);
+						}
+					})}
 				</div>
 			)}
 		</div>
 	);
-}
+};
 
 export function MoveList({ id, matchHistory: propMatchHistory }: MoveListProps) {
 	const { currentMoveData } = useBroadcast(id);
@@ -109,9 +129,10 @@ export function MoveList({ id, matchHistory: propMatchHistory }: MoveListProps) 
 		}
 	};
 
-	const handlePathClick = (path: number[]) => {
+	const handlePathClick = useCallback((path: number[]) => {
 		setCurrentPath(path);
-	};
+		setSelectedMoveIndex(null);
+	}, [setCurrentPath, setSelectedMoveIndex]);
 
 	const pairs = useMemo(() => {
 		const p: MoveRecord[] = [];
@@ -142,14 +163,39 @@ export function MoveList({ id, matchHistory: propMatchHistory }: MoveListProps) 
 	}, [isAnalysisMode, analysisTree, matchHistory, pairs]);
 
 	const variationNodes = useMemo(() => {
-		if (!isAnalysisMode || analysisTree.length === 0) {
-			return [];
+		if (!isAnalysisMode || !analysisTree || analysisTree.length === 0) return [];
+
+		const roots: { node: any, absolutePath: number[] }[] = [];
+		let currentLevel = analysisTree;
+		const currentPathTracker: number[] = [];
+
+		const historyLength = matchHistory.length;
+
+		let depth = 0;
+		while (currentLevel && currentLevel.length > 0) {
+			for (let i = 0; i < currentLevel.length; i++) {
+				const isFirstNode = i === 0;
+				const hasHistoryAtThisDepth = depth < historyLength;
+
+				if (!isFirstNode || !hasHistoryAtThisDepth) {
+					roots.push({
+						node: currentLevel[i],
+						absolutePath: [...currentPathTracker, i]
+					});
+
+					if (!hasHistoryAtThisDepth) {
+						return roots; 
+					}
+				}
+			}
+
+			currentPathTracker.push(0);
+			currentLevel = currentLevel[0]?.s || [];
+			depth++;
 		}
-		return analysisTree.map((node, rootIdx) => ({
-			node,
-			rootIdx,
-		})).filter(({ rootIdx }) => rootIdx >= matchHistory.length);
-	}, [isAnalysisMode, analysisTree, matchHistory.length]);
+
+		return roots;
+	}, [analysisTree, isAnalysisMode, matchHistory]);
 
 	if (!isAnalysisMode && !currentMoveData) return <div>Loading...</div>;
 
@@ -215,28 +261,29 @@ export function MoveList({ id, matchHistory: propMatchHistory }: MoveListProps) 
 							</div>
 						);
 					})}
-
-					{variationNodes.length > 0 && isAnalysisMode && (
-						<div className="mt-2 pt-2 border-t border-black/20 w-full">
-							<div className="flex items-center justify-between mb-2">
-								<span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Variations</span>
-							</div>
-							<div className="flex flex-col gap-1">
-								{variationNodes.map(({ node, rootIdx }) => (
-									<MoveNode
-										key={rootIdx}
-										node={node}
-										path={[rootIdx]}
-										level={1}
-										currentPath={currentPath}
-										onPathClick={handlePathClick}
-									/>
-								))}
-							</div>
-						</div>
-					)}
 				</div>
 			</div>
+
+			{variationNodes.length > 0 && isAnalysisMode && (
+				<div className="mt-2 pt-2 border-t border-black/20 w-full">
+					<span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
+						Variations
+					</span>
+					<div className="leading-relaxed">
+						{variationNodes.map(({ node, absolutePath }) => (
+							<div key={absolutePath.join('-')} className="mb-3 last:mb-0 p-2 bg-white/30 rounded border border-black/5">
+								<MoveNode
+									node={node}
+									path={absolutePath}
+									level={1}
+									currentPath={currentPath}
+									onPathClick={handlePathClick}
+								/>
+							</div>
+						))}
+					</div>
+				</div>
+			)}
 				
 			<div className="mt-4">
 				<BackToLiveButton />
