@@ -5,12 +5,10 @@ import { useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 
 export function useProcessing(match: Match) {
-	const [isProcessing, setIsProcessing] = useState<boolean>(true);
+	const [isProcessing, setIsProcessing] = useState<boolean>(match.status === "processing");
 	useEffect(() => {
-		if (match.status === "waiting") {
-			setIsProcessing(false);
-			return
-		}
+		if (match.status === "waiting") return;
+		
 		const socket: Socket = io(process.env.NEXT_PUBLIC_SOCKET_URL, {
 			transports: ['websocket'],
 		});
