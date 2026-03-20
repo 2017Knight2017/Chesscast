@@ -60,7 +60,7 @@ export const useBroadcast = (matchId: string) => {
 			socket.emit('joinMatch', { matchId, username, guestId });
 		});
 
-		socket.on('newMove', (data: any) => {
+		socket.on('new_move', (data: any) => {
 			setcurrentMoveData((prev) => {
 				if (!prev) return prev;
 					
@@ -76,21 +76,16 @@ export const useBroadcast = (matchId: string) => {
 			});
 		});
 
-		socket.on('analysisEnded', (data: { matchId: string }) => {
+		socket.on('match_finished', () => {
 			setIsEnded(true);
-		});
-
-		socket.on('connect_error', (err) => {
-			console.error('Ошибка подключения сокета:', err.message);
 		});
 
 		return () => {
 			socket.emit('leaveMatch', { matchId, username, guestId });
 			
 			socket.off('connect');
-			socket.off('newMove');
-			socket.off('analysisEnded');
-			socket.off('connect_error');
+			socket.off('new_move');
+			socket.off('match_finished');
 			
 			socket.disconnect();
 		};

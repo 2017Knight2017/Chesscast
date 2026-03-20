@@ -4,7 +4,7 @@ import { forwardRef, useImperativeHandle, useState, useMemo, useEffect, useRef }
 import Chessground from '@bezalel6/react-chessground';
 import { Chess } from 'chess.js';
 import { MoveTreeNode } from '@/types/types';
-import { useAnalysis } from '@/context/analysis_context';
+import { useAnalysisState } from '@/context/analysis_context';
 
 interface UserAnalysisBoardProps {
 	matchId: string;
@@ -29,7 +29,7 @@ export const UserAnalysisBoard = forwardRef<UserAnalysisBoardRef, UserAnalysisBo
 			syncAnalysisToServer,
 			selectedMoveIndex,
 			setSelectedMoveIndex
-		} = useAnalysis();
+		} = useAnalysisState();
 
 		const [fen, setFen] = useState(currentFen);
 		const chessRef = useRef(new Chess(currentFen));

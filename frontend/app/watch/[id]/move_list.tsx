@@ -4,7 +4,7 @@ import { useBroadcast } from "@/hooks/use_broadcast";
 import { MoveTreeNode, MoveRecord } from "@/types/types"
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { BackToLiveButton } from "./back_to_live_button";
-import { useAnalysis } from "@/context/analysis_context";
+import { useAnalysisStateState } from "@/context/analysis_context";
 
 interface MoveListProps {
 	id: string;
@@ -93,7 +93,7 @@ const MoveNode = ({ node, path, level, currentPath, onPathClick }: any) => {
 
 export function MoveList({ id, matchHistory: propMatchHistory }: MoveListProps) {
 	const { currentMoveData } = useBroadcast(id);
-	const { isAnalysisMode, analysisTree, currentPath, setCurrentPath, selectedMoveIndex, setSelectedMoveIndex } = useAnalysis();
+	const { isAnalysisMode, analysisTree, currentPath, setCurrentPath, selectedMoveIndex, setSelectedMoveIndex } = useAnalysisStateState();
 	
 	const socketHistory = currentMoveData?.history || [];
 	const matchHistory = propMatchHistory || socketHistory;

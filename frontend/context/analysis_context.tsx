@@ -193,10 +193,10 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 	);
 }
 
-export function useAnalysis() {
+export function useAnalysisState() {
 	const context = useContext(AnalysisContext);
 	if (context === undefined) {
-		throw new Error('useAnalysis must be used within an AnalysisProvider');
+		throw new Error('useAnalysisState must be used within an AnalysisProvider');
 	}
 	return context;
 }

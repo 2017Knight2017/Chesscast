@@ -8,44 +8,41 @@ import { SpectatorList } from '@/app/watch/[id]/spectator_list';
 import { AnalysisPrompt, SavePrompt } from '@/app/watch/[id]/analysis_prompts';
 import { Match } from '@/types/types';
 import { useBroadcast } from '@/hooks/use_broadcast';
-import { useAnalysis } from '@/context/analysis_context';
-import { io, Socket } from 'socket.io-client';
-import { useGuestId } from '@/hooks/use_guest_id';
-import { redirect } from 'next/navigation';
+import { useAnalysisState } from '@/context/analysis_context';
+import { useAnalysisSync } from '@/hooks/use_analysis_sync';
 
-interface WatchMatchClientProps {
-	matchId: string;
-	initialMatch: Match;
-}
-
-export default function WatchMatchClient({ matchId, initialMatch }: WatchMatchClientProps) {
-	const { currentMoveData, isEnded } = useBroadcast(matchId);
+export default function WatchMatchClient({ match }: {match: Match}) {
+	const { currentMoveData, isEnded } = useBroadcast(match.id);
 	const {
 		isAnalysisMode,
-		inspectedUserId,
-		setAnalysisMode,
-		setInspectedUserId,
 		setMatchId,
-		setAnalysisTree,
-		analysisTree,
-		saveAnalysis,
-		discardAnalysis,
 		checkExistingAnalysis,
-		loadAnalysis,
-		syncAnalysisToServer,
-		setSelectedMoveIndex,
-	} = useAnalysis();
+	} = useAnalysisState();
 
-	const [showBeginPrompt, setShowBeginPrompt] = useState(false);
-	const [showSavePrompt, setShowSavePrompt] = useState(false);
 	const [hasExistingAnalysis, setHasExistingAnalysis] = useState(false);
-		
-	const [match, setMatch] = useState(initialMatch); 
 	const [userId, setUserId] = useState<number | null>(null);
+	const {
+        showBeginPrompt,
+        setShowBeginPrompt,
+        showSavePrompt,
+        setShowSavePrompt,
+        handleMoveOnMainBoard,
+        handleMainBoardClick,
+        handleBeginAnalysis,
+        handleSave,
+        handleDiscard,
+        handleInspectUser
+    } = useAnalysisSync({ 
+        match, 
+        userId, 
+        hasExistingAnalysis 
+    });
+
+	const [isManualStarted, setIsManualStarted] = useState<boolean>(false);
+	const isBroadcastActive = match.status === "in_progress" || isManualStarted;
+	const finalIsEnded = match.status === "finished" || isEnded;
 
 	const userAnalysisBoardRef = useRef<UserAnalysisBoardRef>(null); 
-	const guestId = useGuestId();
-	const socketRef = useRef<Socket | null>(null);
 
 	useEffect(() => {
 		const user = localStorage.getItem('user');
@@ -56,83 +53,11 @@ export default function WatchMatchClient({ matchId, initialMatch }: WatchMatchCl
 	}, []);
 
 	useEffect(() => {
-		if (matchId && userId) {
-			setMatchId(matchId);
-			checkExistingAnalysis(matchId, userId).then(setHasExistingAnalysis);
+		if (match.id && userId) {
+			setMatchId(match.id);
+			checkExistingAnalysis(match.id, userId).then(setHasExistingAnalysis);
 		}
-	}, [matchId, userId, checkExistingAnalysis, setMatchId]);
-
-	useEffect(() => {
-		socketRef.current = io(process.env.NEXT_PUBLIC_SOCKET_URL, {
-			transports: ['websocket'],
-		});
-
-		socketRef.current.on('analysisUpdate', (data: { movesTree: any }) => {
-			if (inspectedUserId && data.movesTree) {
-				setAnalysisTree(data.movesTree);
-			}
-		});
-
-		return () => {
-			if (socketRef.current) {
-				socketRef.current.disconnect();
-			}
-		};
-	}, [inspectedUserId, setAnalysisTree]);
-
-	// Обработчики
-	const handleMoveOnMainBoard = useCallback(() => {
-		setSelectedMoveIndex(null);
-		if (!isAnalysisMode && !showBeginPrompt && match && userId) {
-			setShowBeginPrompt(true);
-		}
-	}, [isAnalysisMode, showBeginPrompt, match, userId, setSelectedMoveIndex]);
-
-	const handleBeginAnalysis = async () => {
-		setShowBeginPrompt(false);
-		setAnalysisMode(true);
-		setInspectedUserId(null);
-
-		if (hasExistingAnalysis && matchId && userId) {
-			await loadAnalysis(matchId, userId);
-		}
-
-		socketRef.current?.emit('joinAnalysisStream', { matchId, userId });
-	};
-
-	const handleSave = async () => {
-		setShowSavePrompt(false);
-		if (matchId && userId) {
-			await saveAnalysis(matchId, userId);
-			socketRef.current?.emit('leaveAnalysisStream', { matchId, userId });
-		}
-	};
-
-	const handleDiscard = async () => {
-		setShowSavePrompt(false);
-		if (matchId && userId) {
-			await discardAnalysis(matchId, userId);
-			socketRef.current?.emit('leaveAnalysisStream', { matchId, userId });
-		}
-	};
-
-	const handleInspectUser = async (username: string) => {
-		const res = await fetch(`${process.env.NEST_API_URL}/players/by-username/${username}`);
-		if (!res.ok) return;
-		const playerData = await res.json();
-		
-		setInspectedUserId(playerData.userId);
-		setAnalysisMode(true);
-		
-		await loadAnalysis(matchId, playerData.userId);
-
-		socketRef.current?.emit('joinAnalysisStream', { matchId, userId: playerData.userId });
-	};
-
-	const handleMainBoardClick = () => {
-		setSelectedMoveIndex(null);
-		setShowSavePrompt(true);
-	};
+	}, [match.id, userId]);
 
 	if (!currentMoveData) {
 		return <div>Loading match data...</div>;
@@ -166,7 +91,12 @@ export default function WatchMatchClient({ matchId, initialMatch }: WatchMatchCl
 						<div className='w-full p-6 shrink-0 flex items-center justify-center max-w-[40vh] aspect-square'>
 							<ChessBoard 
 								onInteraction={handleMainBoardClick}
-								match={match} 
+								match={match}
+								currentMoveData={currentMoveData}
+								setIsManualStarted={setIsManualStarted}
+								isManualStarted={isManualStarted}
+								isBroadcastActive={isBroadcastActive}
+								finalIsEnded={finalIsEnded}
 							/>
 						</div>
 					)}
@@ -177,8 +107,13 @@ export default function WatchMatchClient({ matchId, initialMatch }: WatchMatchCl
 						<div className='w-full shadow-2xl flex items-center justify-center max-w-[70vh] aspect-square'>
 							<ChessBoard 
 								onInteraction={handleMoveOnMainBoard}
-								isOnMove={true}
+								setIsManualStarted={setIsManualStarted}
+								isManualStarted={isManualStarted}
 								match={match} 
+								currentMoveData={currentMoveData}
+								isBroadcastActive={isBroadcastActive}
+								finalIsEnded={finalIsEnded}
+								isOnMove={true}
 							/>
 						</div>
 					)}
@@ -187,7 +122,7 @@ export default function WatchMatchClient({ matchId, initialMatch }: WatchMatchCl
 						<div className="w-full max-w-[70vh] aspect-square shadow-2xl flex items-center justify-center">
 							<UserAnalysisBoard
 								ref={userAnalysisBoardRef}
-								matchId={matchId}
+								matchId={match.id}
 								userId={userId}
 								matchHistory={currentMoveData.history}
 								currentFen={currentMoveData.fen}

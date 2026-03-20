@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useRef, useMemo, memo } from 'react';
+import { useState, useRef, useMemo, memo, Dispatch, SetStateAction } from 'react';
 import { useBroadcast } from '@/hooks/use_broadcast';
 import { useChessClock } from '@/hooks/use_chess_clocks';
 import { useKeyboardNavigation } from '@/hooks/use_keyboard_navigation';
 import Chessground from '@bezalel6/react-chessground';
-import { Match } from '@/types/types';
-import { useAnalysis } from '@/context/analysis_context';
+import { Match, Move } from '@/types/types';
+import { useAnalysisState } from '@/context/analysis_context';
 import { Chess } from 'chess.js'
 import { SyncPayload } from '@/types/types';
 
@@ -52,22 +52,35 @@ const ChessTimer = memo(({ data, initial, label, isAnalysisMode }: { data: SyncP
 	);
 });
 
-export function ChessBoard({ onInteraction, match, isOnMove=false }: { onInteraction: () => void, match: Match, isOnMove?: boolean }) {
-	const { selectedMoveIndex, isAnalysisMode } = useAnalysis();
+export function ChessBoard({
+	onInteraction, 
+	setIsManualStarted,
+	isManualStarted,
+	isBroadcastActive,
+	finalIsEnded,
+	match, 
+	currentMoveData, 
+	isOnMove=false 
+}: {
+	onInteraction: () => void,
+	setIsManualStarted: Dispatch<SetStateAction<boolean>>,
+	isManualStarted: boolean
+	isBroadcastActive: boolean
+	finalIsEnded: boolean,
+	match: Match,
+	currentMoveData: Move,
+	isOnMove?: boolean 
+}) {
+	const { selectedMoveIndex, isAnalysisMode } = useAnalysisState();
 	const previewMove = isAnalysisMode ? undefined : (selectedMoveIndex ?? undefined);
 
 	const containerRef = useRef<HTMLDivElement>(null);
 
-	const { currentMoveData, isEnded } = useBroadcast(match.id);
 	const totalMoves = currentMoveData?.history?.length || 0;
 		
 	useKeyboardNavigation(totalMoves);
 
-	const [isManualStarted, setIsManualStarted] = useState<boolean>(false);
-	const isBroadcastActive = match.status === "in_progress" || isManualStarted;
-	const finalIsEnded = match.status === "finished" || isEnded;
-
-	const activeFen = (currentMoveData && currentMoveData.fen) || match.fen;
+	const activeFen = currentMoveData.fen;
 	const fenCache = useRef<string[]>([]);		
 	const fenHistory = useMemo(() => {
 		const history = currentMoveData?.history || [];
@@ -121,7 +134,7 @@ export function ChessBoard({ onInteraction, match, isOnMove=false }: { onInterac
 			</div>
 			<div className="relative w-full h-full overflow-hidden rounded-md border border-[#8b5e34]/20 shadow-lg">
 			
-				{!isBroadcastActive && !finalIsEnded && (
+				{!(isBroadcastActive || finalIsEnded || isManualStarted) && (
 					<button 
 						className='absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 p-3 z-10 border-4 rounded-lg bg-amber-900 border-amber-700 hover:bg-amber-800 hover:border-amber-600' 
 						onClick={() => handleStart()}

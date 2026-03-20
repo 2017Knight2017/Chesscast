@@ -14,7 +14,7 @@ export function useProcessing(match: Match) {
 		});
 
 		socket.on('connect', () => {
-			socket.emit("isMatchProcessing", {matchId: match.id});
+			socket.emit("joinMatchProcessing", {matchId: match.id});
 		});
 
 		socket.on('no_more_processing', () => {
@@ -22,6 +22,8 @@ export function useProcessing(match: Match) {
 		});
 		
 		return () => {
+			socket.emit("leaveMatchProcessing", {matchId: match.id});
+
 			socket.off("connect");
 			socket.off("no_more_processing");
 

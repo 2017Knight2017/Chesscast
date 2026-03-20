@@ -33,7 +33,7 @@ export class MatchesProcessor extends WorkerHost {
 		
 	    const updatedMatch = await this.matchesService.updateGameState(matchId, currentMoveNotation);
 
-	    this.gateway.server.to(matchId).emit('newMove', {
+	    this.gateway.server.to(matchId).emit('new_move', {
 	        move: currentMoveNotation,
 	        evaluation: analysis.evaluations[moveIndex],
 	        fen: updatedMatch.fen,
@@ -55,6 +55,7 @@ export class MatchesProcessor extends WorkerHost {
 	            },
 	        );
 	    } else {
+			this.gateway.server.to(matchId).emit('match_finished');
 	        await this.matchesService.finishGame(matchId);
 	    }
 	}

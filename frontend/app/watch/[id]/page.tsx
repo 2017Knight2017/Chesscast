@@ -12,9 +12,9 @@ export default async function WatchPage({ params }: { params: Promise<{ id: stri
         return <div className="p-10 text-center">Match not found or failed to load.</div>;
     }
 
-    const initialMatchData: Match = await res.json();
+    const match: Match = await res.json();
     
     return (
-		<WatchMatchClient matchId={matchId} initialMatch={initialMatchData} />
+		<WatchMatchClient match={match} />
 	);
 }

@@ -104,23 +104,19 @@ export class MatchesGateway implements OnGatewayConnection, OnGatewayDisconnect 
 	}
 
 	@SubscribeMessage('joinAnalysisStream')
-	async handleJoinAnalysisStream(
+	handleJoinAnalysisStream(
 		@MessageBody() data: { matchId: string; userId: number },
 		@ConnectedSocket() client: Socket,
 	) {
-		const room = `analysis_stream:${data.matchId}:user:${data.userId}`;
-		client.join(room);
-		console.log(`Client ${client.id} joined analysis stream room: ${room}`);
+		client.join(`analysis_stream:${data.matchId}:user:${data.userId}`);
 	}
 
 	@SubscribeMessage('leaveAnalysisStream')
-	async handleLeaveAnalysisStream(
+	handleLeaveAnalysisStream(
 		@MessageBody() data: { matchId: string; userId: number },
 		@ConnectedSocket() client: Socket,
 	) {
-		const room = `analysis_stream:${data.matchId}:user:${data.userId}`;
-		client.leave(room);
-		console.log(`Client ${client.id} left analysis stream room: ${room}`);
+		client.leave(`analysis_stream:${data.matchId}:user:${data.userId}`);
 	}
 
 	@SubscribeMessage('syncUserAnalysis')
@@ -128,25 +124,30 @@ export class MatchesGateway implements OnGatewayConnection, OnGatewayDisconnect 
 		@MessageBody() data: { matchId: string; userId: number; movesTree: object },
 		@ConnectedSocket() client: Socket,
 	) {
-		await this.redisService.setUserAnalysis(
-			data.matchId,
-			data.userId,
-			data.movesTree,
-		);
+		await this.redisService.setUserAnalysis(data.matchId, data.userId, data.movesTree);
 
-		const room = `analysis_stream:${data.matchId}:user:${data.userId}`;
-		this.server.to(room).emit('analysisUpdate', {
-			matchId: data.matchId,
-			userId: data.userId,
-			movesTree: data.movesTree,
-		});
+		this.server.to(`analysis_stream:${data.matchId}:user:${data.userId}`)
+			.emit('analysisUpdate', {
+				matchId: data.matchId,
+				userId: data.userId,
+				movesTree: data.movesTree
+			}
+		);
 	}
 
-	@SubscribeMessage('isMatchProcessing')
-	async handleIsMatchProcessing(
+	@SubscribeMessage('joinMatchProcessing')
+	handlejoinMatchProcessing(
 		@MessageBody() data: {matchId: string},
 		@ConnectedSocket() client: Socket,
 	) {
-		client.join(`is_processing:${data.matchId}`)
+		client.join(`is_processing:${data.matchId}`);
+	}
+
+	@SubscribeMessage('leaveMatchProcessing')
+	handleleaveMatchProcessing(
+		@MessageBody() data: {matchId: string},
+		@ConnectedSocket() client: Socket,
+	) {
+		client.leave(`is_processing:${data.matchId}`);
 	}
 }

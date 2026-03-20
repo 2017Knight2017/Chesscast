@@ -1,9 +1,9 @@
 'use client';
 
-import { useAnalysis } from '@/context/analysis_context';
+import { useAnalysisState } from '@/context/analysis_context';
 
 export function BackToLiveButton() {
-    const { selectedMoveIndex, setSelectedMoveIndex } = useAnalysis();
+    const { selectedMoveIndex, setSelectedMoveIndex } = useAnalysisState();
 
     const isPreviewing = selectedMoveIndex !== null;
 

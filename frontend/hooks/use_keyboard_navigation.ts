@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useAnalysis } from '@/context/analysis_context';
+import { useAnalysisState } from '@/context/analysis_context';
 
 
 export function useKeyboardNavigation(totalMoves: number) {
+	
 	const { 
 		selectedMoveIndex, 
 		setSelectedMoveIndex, 
@@ -12,7 +13,7 @@ export function useKeyboardNavigation(totalMoves: number) {
 		currentPath,
 		setCurrentPath,
 		analysisTree
-	} = useAnalysis();
+	} = useAnalysisState();
 
 	useEffect(() => {
 		const handleKeyDown = (event: KeyboardEvent) => {
