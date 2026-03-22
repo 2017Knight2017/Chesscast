@@ -6,55 +6,40 @@ import { and, eq, ilike, isNotNull } from 'drizzle-orm';
 
 @Injectable()
 export class PlayersService {
-  constructor(
-    @Inject(DrizzleAsyncProvider) private db: NodePgDatabase<typeof sc>,
-  ) {}
+	constructor(
+		@Inject(DrizzleAsyncProvider) private db: NodePgDatabase<typeof sc>,
+	) {}
 
-  async findByName(name: string) {
-    return await this.db
-      .select()
-      .from(sc.players)
-      .where(ilike(sc.players.name, `%${name}%`))
-      .limit(10)
-      .execute();
-  }
+	async findByName(name: string) {
+		return await this.db
+			.select()
+			.from(sc.players)
+			.where(ilike(sc.players.name, `%${name}%`))
+			.limit(10)
+			.execute();
+	}
 
-  async updateArchetype(name: string, archetype: string) {
-    await this.db
-      .update(sc.players)
-      .set({ archetype: archetype })
-      .where(eq(sc.players.name, name))
-      .execute();
+	async updateArchetype(name: string, archetype: string) {
+		await this.db
+			.update(sc.players)
+			.set({ archetype: archetype })
+			.where(eq(sc.players.name, name))
+			.execute();
 
-    console.log(`Successfully cached archetype for ${name}: ${archetype}`);
-  }
+		console.log(`Successfully cached archetype for ${name}: ${archetype}`);
+	}
 
-  async getArchetypeFromDB(name: string) {
-    const result = await this.db
-      .select()
-      .from(sc.players)
+	async getArchetypeFromDB(name: string) {
+		const result = await this.db
+			.select()
+			.from(sc.players)
 			.where(
 				and(
 					eq(sc.players.name, name),
 					isNotNull(sc.players.archetype)
 				)
 			);
-    if (!result || !result[0]?.archetype) return undefined;
-    else return result[0]?.archetype;
-  }
-
-  async findByUsername(username: string) {
-    const result = await this.db
-      .select({
-        id: sc.users.id,
-        username: sc.users.username,
-      })
-      .from(sc.users)
-      .where(eq(sc.users.username, username))
-      .limit(1)
-      .execute();
-
-    if (!result || result.length === 0) return null;
-    return { userId: result[0].id, username: result[0].username };
-  }
+		if (!result || !result[0]?.archetype) return undefined;
+		else return result[0]?.archetype;
+	}
 }

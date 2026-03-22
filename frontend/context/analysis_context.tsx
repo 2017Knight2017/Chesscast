@@ -7,7 +7,8 @@ import {
 	saveAnalysisAction, 
 	discardAnalysisAction, 
 	checkExistingAnalysisAction, 
-	loadAnalysisAction 
+	loadAnalysisAction,
+	saveAnalysisDraftAction
 } from '@/actions/analysis_actions';
 
 
@@ -31,6 +32,7 @@ interface AnalysisContextType {
 	discardAnalysis: (matchId: string, userId: number) => Promise<void>;
 	checkExistingAnalysis: (matchId: string, userId: number) => Promise<boolean>;
 	loadAnalysis: (matchId: string, userId: number) => Promise<void>;
+	saveDraft: (matchId: string) => Promise<void>;
 }
 
 const AnalysisContext = createContext<AnalysisContextType | undefined>(undefined);
@@ -45,6 +47,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 
 	const socket = useSocket();
 	const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+	const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
 	const syncAnalysisToServer = useCallback((matchId: string, userId: number) => {
 		if (debounceTimerRef.current) {
@@ -59,6 +62,64 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 			});
 		}, 300);
 	}, [analysisTree, socket]);
+
+	const saveDraft = useCallback(async (currentMatchId: string) => {
+		try {
+			const token = localStorage.getItem('token');
+			if (!token) return;
+			await saveAnalysisDraftAction(currentMatchId, token);
+		} catch (error) {
+			console.error("Failed to save analysis draft:", error);
+		}
+	}, []);
+
+	useEffect(() => {
+		if (isAnalysisMode && matchId && inspectedUserId === null) {
+			autoSaveTimerRef.current = setInterval(() => {
+				saveDraft(matchId);
+			}, 30000); // Auto-save every 30 seconds
+		} else {
+			if (autoSaveTimerRef.current) {
+				clearInterval(autoSaveTimerRef.current);
+			}
+		}
+
+		return () => {
+			if (autoSaveTimerRef.current) {
+				clearInterval(autoSaveTimerRef.current);
+			}
+		};
+	}, [isAnalysisMode, matchId, inspectedUserId, saveDraft]);
+
+	useEffect(() => {
+		const handleBeforeUnload = () => {
+			if (isAnalysisMode && matchId && inspectedUserId === null) {
+				const token = localStorage.getItem('token');
+				if (token) {
+					const url = `${process.env.NEXT_PUBLIC_NEST_API_URL || 'http://localhost:3001'}/user-analysis/save-draft`;
+					const headers = {
+						'Content-Type': 'application/json',
+						'Authorization': `Bearer ${token}`
+					};
+					const blob = new Blob([JSON.stringify({ matchId })], { type: 'application/json' });
+					
+					// sendBeacon cannot send custom headers easily, 
+					// but since our NestJS is likely configured for standard Auth, 
+					// we might need a workaround or just rely on the 30s interval + periodic sync.
+					// For simplicity and immediate effect, we use fetch with keepalive: true which is modern equivalent of sendBeacon that supports headers.
+					fetch(url, {
+						method: 'POST',
+						headers,
+						body: JSON.stringify({ matchId }),
+						keepalive: true
+					});
+				}
+			}
+		};
+
+		window.addEventListener('beforeunload', handleBeforeUnload);
+		return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+	}, [isAnalysisMode, matchId, inspectedUserId]);
 
 	const addMoveToTree = useCallback((move: string, matchHistory: string[], parentPath: number[] = []) => {
 		setAnalysisTree((prevTree) => {
@@ -174,6 +235,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 				discardAnalysis,
 				checkExistingAnalysis,
 				loadAnalysis,
+				saveDraft,
 			}}
 		>
 			{children}

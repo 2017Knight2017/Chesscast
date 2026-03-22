@@ -71,6 +71,13 @@ export class UserAnalysisService {
 		await this.redisService.deleteUserAnalysis(matchId, userId);
 	}
 
+	async saveAnalysisFromRedis(matchId: string, userId: number): Promise<void> {
+		const redisData = await this.redisService.getUserAnalysis(matchId, userId);
+		if (redisData) {
+			await this.saveUserAnalysis(matchId, userId, redisData as MoveTreeNode[]);
+		}
+	}
+
 	async discardUserAnalysis(matchId: string, userId: number): Promise<void> {
 		await this.redisService.deleteUserAnalysis(matchId, userId);
 	}
@@ -87,5 +94,20 @@ export class UserAnalysisService {
 		});
 
 		return !!dbRecord;
+	}
+
+	async findByUsername(username: string) {
+		const result = await this.db
+			.select({
+				id: sc.users.id,
+				username: sc.users.username,
+			})
+			.from(sc.users)
+			.where(eq(sc.users.username, username))
+			.limit(1)
+			.execute();
+
+		if (!result || result.length === 0) return null;
+		return { userId: result[0].id, username: result[0].username };
 	}
 }

@@ -14,6 +14,20 @@ export async function saveAnalysisAction(matchId: string, analysisTree: any, tok
 	return res.json();
 }
 
+export async function saveAnalysisDraftAction(matchId: string, token: string | null) {
+	const res = await fetch(`${process.env.NEST_API_URL}/user-analysis/save-draft`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			...(token ? { Authorization: `Bearer ${token}` } : {}),
+		},
+		body: JSON.stringify({ matchId }),
+	});
+
+	if (!res.ok) throw new Error('Failed to save analysis draft');
+	return res.json();
+}
+
 export async function discardAnalysisAction(matchId: string, token: string | null) {
 	const res = await fetch(`${process.env.NEST_API_URL}/user-analysis/discard`, {
 		method: 'DELETE',
@@ -45,7 +59,7 @@ export async function loadAnalysisAction(matchId: string, userId: number) {
 
 export async function getPlayerByUsernameAction(username: string) {
 	try {
-		const res = await fetch(`${process.env.NEST_API_URL}/players/by-username/${username}`, {
+		const res = await fetch(`${process.env.NEST_API_URL}/user-analysis/by-username/${username}`, {
 			cache: 'no-store'
 		});
 
