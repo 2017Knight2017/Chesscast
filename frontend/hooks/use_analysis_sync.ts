@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { io, Socket } from 'socket.io-client';
+import { useEffect, useState, useCallback } from 'react';
+import { useSocket } from '@/context/socket_context';
 import { useAnalysisState } from '../context/analysis_context';
 import { Match } from '@/types/types';
 import { getPlayerByUsernameAction } from '@/actions/analysis_actions';
@@ -28,28 +28,21 @@ export function useAnalysisSync({ match, userId, hasExistingAnalysis }: UseAnaly
 	const [showBeginPrompt, setShowBeginPrompt] = useState(false);
 	const [showSavePrompt, setShowSavePrompt] = useState(false);
 
-	const socketRef = useRef<Socket | null>(null);
+	const socket = useSocket();
 
 	useEffect(() => {
-		socketRef.current = io(process.env.NEXT_PUBLIC_SOCKET_URL, {
-			transports: ['websocket'],
-		});
-
 		const handleAnalysisUpdate = (data: { movesTree: any }) => {
 			if (inspectedUserId && data.movesTree) {
 				setAnalysisTree(data.movesTree);
 			}
 		};
 
-		socketRef.current.on('analysis_update', handleAnalysisUpdate);
+		socket.on('analysisUpdate', handleAnalysisUpdate);
 
 		return () => {
-			if (socketRef.current) {
-				socketRef.current.off('analysis_update', handleAnalysisUpdate);
-				socketRef.current.disconnect();
-			}
+			socket.off('analysisUpdate', handleAnalysisUpdate);
 		};
-	}, [inspectedUserId, setAnalysisTree]);
+	}, [inspectedUserId, setAnalysisTree, socket]);
 
 	const handleMoveOnMainBoard = useCallback(() => {
 		setSelectedMoveIndex(null);
@@ -72,14 +65,14 @@ export function useAnalysisSync({ match, userId, hasExistingAnalysis }: UseAnaly
 			await loadAnalysis(match.id, userId);
 		}
 
-		socketRef.current?.emit('joinAnalysisStream', { matchId: match?.id, userId });
+		socket.emit('joinAnalysisStream', { matchId: match?.id, userId });
 	};
 
 	const handleSave = async () => {
 		setShowSavePrompt(false);
 		if (match?.id && userId) {
 			await saveAnalysis(match.id, userId);
-			socketRef.current?.emit('leaveAnalysisStream', { matchId: match.id, userId });
+			socket.emit('leaveAnalysisStream', { matchId: match.id, userId });
 		}
 	};
 
@@ -87,7 +80,7 @@ export function useAnalysisSync({ match, userId, hasExistingAnalysis }: UseAnaly
 		setShowSavePrompt(false);
 		if (match?.id && userId) {
 			await discardAnalysis(match.id, userId);
-			socketRef.current?.emit('leaveAnalysisStream', { matchId: match.id, userId });
+			socket.emit('leaveAnalysisStream', { matchId: match.id, userId });
 		}
 	};
 
@@ -106,7 +99,7 @@ export function useAnalysisSync({ match, userId, hasExistingAnalysis }: UseAnaly
 
 		if (match.id) {
 			await loadAnalysis(match.id, playerData.userId);
-			socketRef.current?.emit('joinAnalysisStream', { 
+			socket.emit('joinAnalysisStream', { 
 				matchId: match.id, 
 				userId: playerData.userId 
 			});

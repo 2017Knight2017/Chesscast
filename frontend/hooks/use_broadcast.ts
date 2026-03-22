@@ -1,18 +1,33 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { io, Socket } from 'socket.io-client';
-import { Move } from '@/types/types'
+import { useSocket } from '@/context/socket_context';
+import { Move, Match } from '@/types/types'
 import { useGuestId } from './use_guest_id';
 
-export const useBroadcast = (matchId: string) => {
-	const [currentMoveData, setcurrentMoveData] = useState<Move | null>(null);
-	const [isEnded, setIsEnded] = useState<boolean>(false);
+export const useBroadcast = (matchId: string, initialMatch?: Match) => {
+	const [currentMoveData, setcurrentMoveData] = useState<Move | null>(() => {
+		if (initialMatch) {
+			return {
+				fen: initialMatch.fen,
+				whiteTimeMs: initialMatch.white?.timeMs ?? 0,
+				blackTimeMs: initialMatch.black?.timeMs ?? 0,
+				turn: initialMatch.fen.split(' ')[1],
+				evaluations: initialMatch.evaluations || [],
+				history: initialMatch.history || [],
+			} as Move;
+		}
+		return null;
+	});
+	const [isEnded, setIsEnded] = useState<boolean>(initialMatch?.status === "finished");
 	const guestId = useGuestId();
+	const socket = useSocket();
 	
 	const hasLiveMove = useRef(false);
 
 	useEffect(() => {
+		if (initialMatch) return;
+
 		const controller = new AbortController();
 		hasLiveMove.current = false;
 
@@ -45,22 +60,25 @@ export const useBroadcast = (matchId: string) => {
 		})();
 
 		return () => controller.abort();
-	}, [matchId]);
+	}, [matchId, initialMatch]);
 
 	useEffect(() => {
 		const stored = localStorage.getItem('user');
 		const user = stored ? JSON.parse(stored) : null;
 		const username = user?.username;
 
-		const socket: Socket = io(process.env.NEXT_PUBLIC_SOCKET_URL, {
-			transports: ['websocket'],
-		});
-
-		socket.on('connect', () => {
+		const handleConnect = () => {
 			socket.emit('joinMatch', { matchId, username, guestId });
-		});
+		};
+
+		if (socket.connected) {
+			handleConnect();
+		}
+
+		socket.on('connect', handleConnect);
 
 		socket.on('new_move', (data: any) => {
+			hasLiveMove.current = true;
 			setcurrentMoveData((prev) => {
 				if (!prev) return prev;
 					
@@ -83,13 +101,11 @@ export const useBroadcast = (matchId: string) => {
 		return () => {
 			socket.emit('leaveMatch', { matchId, username, guestId });
 			
-			socket.off('connect');
+			socket.off('connect', handleConnect);
 			socket.off('new_move');
 			socket.off('match_finished');
-			
-			socket.disconnect();
 		};
-	}, [matchId, guestId]);
+	}, [matchId, guestId, socket]);
 
 	return { currentMoveData, isEnded };
 };

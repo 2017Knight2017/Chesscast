@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useCallback, ReactNode, useEffect, useRef, SetStateAction, Dispatch } from 'react';
 import { MoveTreeNode } from '@/types/types';
-import { io, Socket } from 'socket.io-client';
+import { useSocket } from '@/context/socket_context';
 import { 
 	saveAnalysisAction, 
 	discardAnalysisAction, 
@@ -43,20 +43,8 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 	const [matchId, setMatchId] = useState<string | null>(null);
 	const [selectedMoveIndex, setSelectedMoveIndex] = useState<number | null>(null);
 
-	const socketRef = useRef<Socket | null>(null);
+	const socket = useSocket();
 	const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-	useEffect(() => {
-		socketRef.current = io(process.env.NEXT_PUBLIC_SOCKET_URL, {
-			transports: ['websocket'],
-		});
-
-		return () => {
-			if (socketRef.current) {
-				socketRef.current.disconnect();
-			}
-		};
-	}, []);
 
 	const syncAnalysisToServer = useCallback((matchId: string, userId: number) => {
 		if (debounceTimerRef.current) {
@@ -64,13 +52,13 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 		}
 
 		debounceTimerRef.current = setTimeout(() => {
-			socketRef.current?.emit('syncUserAnalysis', {
+			socket.emit('syncUserAnalysis', {
 				matchId,
 				userId,
 				movesTree: analysisTree,
 			});
 		}, 300);
-	}, [analysisTree]);
+	}, [analysisTree, socket]);
 
 	const addMoveToTree = useCallback((move: string, matchHistory: string[], parentPath: number[] = []) => {
 		setAnalysisTree((prevTree) => {

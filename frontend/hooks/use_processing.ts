@@ -2,20 +2,24 @@
 
 import { Match } from '@/types/types';
 import { useEffect, useState } from 'react';
-import { io, Socket } from 'socket.io-client';
+import { useSocket } from '@/context/socket_context';
 
 export function useProcessing(match: Match) {
 	const [isProcessing, setIsProcessing] = useState<boolean>(match.status === "processing");
+	const socket = useSocket();
+
 	useEffect(() => {
 		if (match.status === "waiting") return;
 		
-		const socket: Socket = io(process.env.NEXT_PUBLIC_SOCKET_URL, {
-			transports: ['websocket'],
-		});
-
-		socket.on('connect', () => {
+		const handleConnect = () => {
 			socket.emit("joinMatchProcessing", {matchId: match.id});
-		});
+		};
+
+		if (socket.connected) {
+			handleConnect();
+		}
+
+		socket.on('connect', handleConnect);
 
 		socket.on('no_more_processing', () => {
 			setIsProcessing(false);
@@ -24,12 +28,10 @@ export function useProcessing(match: Match) {
 		return () => {
 			socket.emit("leaveMatchProcessing", {matchId: match.id});
 
-			socket.off("connect");
+			socket.off("connect", handleConnect);
 			socket.off("no_more_processing");
-
-			socket.disconnect();
 		};
-	}, [match.id]);
+	}, [match.id, socket]);
 
 	return {isProcessing}
 }

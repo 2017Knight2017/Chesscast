@@ -12,7 +12,7 @@ import { useAnalysisState } from '@/context/analysis_context';
 import { useAnalysisSync } from '@/hooks/use_analysis_sync';
 
 export default function WatchMatchClient({ match }: {match: Match}) {
-	const { currentMoveData, isEnded } = useBroadcast(match.id);
+	const { currentMoveData, isEnded } = useBroadcast(match.id, match);
 	const {
 		isAnalysisMode,
 		setMatchId,
