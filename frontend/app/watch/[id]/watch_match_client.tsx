@@ -92,13 +92,6 @@ export default function WatchMatchClient({ match }: {match: Match}) {
 				</aside>
 
 				<section className='flex justify-center items-center flex-col gap-4'>
-					{isAnalysisMode && inspectedUserId === null && (
-						<div className="flex items-center gap-2 text-[#8b5e34] bg-[#f4ead5]/80 px-3 py-1 rounded-full text-xs font-serif border border-[#8b5e34]/20">
-							<span className="w-2 h-2 bg-green-500 rounded-full"></span>
-							Autosaving enabled
-						</div>
-					)}
-
 					{!isAnalysisMode && (
 						<div className='w-full shadow-2xl flex items-center justify-center max-w-[70vh] aspect-square'>
 							<ChessBoard 

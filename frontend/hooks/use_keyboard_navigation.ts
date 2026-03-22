@@ -23,7 +23,17 @@ export function useKeyboardNavigation(totalMoves: number) {
 				switch (event.key) {
 					case "ArrowLeft":
 						if (currentPath.length > 0) {
-							setCurrentPath(prev => prev.slice(0, -1));
+							const newPath = currentPath.slice(0, -1);
+							const isStillInVariation = newPath.some(idx => idx !== 0);
+							
+							if (isStillInVariation) {
+								setCurrentPath(newPath);
+							} else {
+								// Return to mainline at the appropriate index
+								const moveIndex = newPath.length - 1;
+								setCurrentPath([]);
+								setSelectedMoveIndex(moveIndex);
+							}
 						} else {
 							const idx = selectedMoveIndex ?? totalMoves - 1;
 							if (idx > -1) setSelectedMoveIndex(idx - 1);
@@ -31,23 +41,30 @@ export function useKeyboardNavigation(totalMoves: number) {
 						break;
 
 					case "ArrowRight":
-						let currentLevel = analysisTree;
-						for (const idx of currentPath) {
-							if (currentLevel[idx]?.s) {
-								currentLevel = currentLevel[idx].s!;
-							} else {
-								currentLevel = []; break;
+						if (currentPath.length > 0) {
+							let currentLevel = analysisTree;
+							for (const idx of currentPath) {
+								currentLevel = currentLevel[idx]?.s || [];
 							}
-						}
-
-						if (currentLevel.length > 0) {
-							setCurrentPath(prev => [...prev, 0]);
-						} else if (currentPath.length === 0) {
+							if (currentLevel.length > 0) {
+								setCurrentPath(prev => [...prev, 0]);
+							}
+						} else {
 							const idx = selectedMoveIndex ?? totalMoves - 1;
 							if (idx < totalMoves - 1) {
 								setSelectedMoveIndex(idx + 1);
 							} else {
-								setSelectedMoveIndex(null);
+								// Check for analysis beyond history
+								let currentLevel = analysisTree;
+								for (let i = 0; i < totalMoves; i++) {
+									currentLevel = currentLevel[0]?.s || [];
+								}
+								if (currentLevel.length > 0) {
+									setCurrentPath(Array(totalMoves + 1).fill(0));
+									setSelectedMoveIndex(null);
+								} else {
+									setSelectedMoveIndex(null);
+								}
 							}
 						}
 						break;

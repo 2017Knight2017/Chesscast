@@ -24,6 +24,7 @@ interface AnalysisContextType {
 	setAnalysisTree: (tree: MoveTreeNode[]) => void;
 	setMatchId: (id: string | null) => void;
 	addMoveToTree: (move: string, matchHistory: string[], parentPath?: number[]) => void;
+	deleteBranch: (path: number[], matchHistory: string[]) => void;
 	setCurrentPath: Dispatch<SetStateAction<number[]>>;
 	setSelectedMoveIndex: (index: number | null) => void;
 	resetAnalysis: () => void;
@@ -125,14 +126,43 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 	const addMoveToTree = useCallback((move: string, matchHistory: string[], parentPath: number[] = []) => {
 		setAnalysisTree((prevTree) => {
 			const newTree = JSON.parse(JSON.stringify(prevTree)) as MoveTreeNode[];
+			const correctedParentPath = [...parentPath]; 
 			let currentLevel = newTree;
+			let targetIdx = -1;
+			let isOnMainline = true;
 
-			for (let depth = 0; depth < parentPath.length; depth++) {
-				const idx = parentPath[depth];
+			for (let depth = 0; depth < correctedParentPath.length; depth++) {
+				let idx = correctedParentPath[depth];
+				const historyMove = matchHistory[depth];
+
+				// Ensure index 0 is the history move if it exists, but only if we are on the mainline.
+				if (isOnMainline && historyMove) {
+					if (!currentLevel[0] || currentLevel[0].m !== historyMove) {
+						const existingIdx = currentLevel.findIndex(n => n.m === historyMove);
+						if (existingIdx !== -1) {
+							if (existingIdx > 0) {
+								const [node] = currentLevel.splice(existingIdx, 1);
+								currentLevel.unshift(node);
+								
+								// If our current path was affected by this move to front, adjust it
+								if (idx === existingIdx) {
+									idx = 0;
+								} else if (idx < existingIdx) {
+									idx++;
+								}
+							}
+						} else {
+							// History move missing from tree, insert at front
+							currentLevel.unshift({ m: historyMove, s: [] });
+							idx++;
+						}
+						correctedParentPath[depth] = idx;
+					}
+				}
+
+				if (idx !== 0) isOnMainline = false;
 
 				if (!currentLevel[idx]) {
-					const historyMove = matchHistory[depth];
-
 					if (historyMove) {
 						currentLevel[idx] = { m: historyMove, s: [] };
 					} else {
@@ -148,18 +178,69 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 			const existingMoveIndex = currentLevel.findIndex(node => node.m === move);
 
 			if (existingMoveIndex === -1) {
-				const nextMoveInHistory = matchHistory[parentPath.length];
+				const nextMoveInHistory = matchHistory[correctedParentPath.length];
 
-				if (move === nextMoveInHistory) {
+				if (isOnMainline && move === nextMoveInHistory) {
 					currentLevel.unshift({ m: move, s: [] });
+					targetIdx = 0;
 				} else {
 					currentLevel.push({ m: move, s: [] });
+					targetIdx = currentLevel.length - 1;
 				}
+			} else {
+				targetIdx = existingMoveIndex;
 			}
+
+			// Schedule navigation to the new move
+			setTimeout(() => {
+				setCurrentPath([...correctedParentPath, targetIdx]);
+				setSelectedMoveIndex(null);
+			}, 0);
 
 			return newTree;
 		});
-	}, []);
+	}, [setCurrentPath, setSelectedMoveIndex]);
+
+	const deleteBranch = useCallback((path: number[], matchHistory: string[]) => {
+		if (path.length === 0) return;
+
+		setAnalysisTree((prevTree) => {
+			const newTree = JSON.parse(JSON.stringify(prevTree)) as MoveTreeNode[];
+			let currentLevel = newTree;
+			
+			// Navigate to the parent of the node to be deleted
+			for (let i = 0; i < path.length - 1; i++) {
+				const idx = path[i];
+				if (!currentLevel[idx] || !currentLevel[idx].s) return prevTree;
+				currentLevel = currentLevel[idx].s!;
+			}
+
+			const indexToDelete = path[path.length - 1];
+			const depth = path.length - 1;
+			const historyMove = matchHistory[depth];
+
+			// Safety check: Don't allow deleting the main line move
+			// A move is part of the main line if it's at index 0 and matches history
+			if (indexToDelete === 0 && historyMove && currentLevel[0]?.m === historyMove) {
+				console.warn("Cannot delete main line move");
+				return prevTree;
+			}
+
+			if (currentLevel[indexToDelete]) {
+				currentLevel.splice(indexToDelete, 1);
+				
+				// Navigate back to the parent
+				setTimeout(() => {
+					setCurrentPath(path.slice(0, -1));
+					setSelectedMoveIndex(null);
+				}, 0);
+				
+				return newTree;
+			}
+
+			return prevTree;
+		});
+	}, [setCurrentPath, setSelectedMoveIndex]);
 
 	const resetAnalysis = useCallback(() => {
 		setAnalysisMode(false);
@@ -228,6 +309,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 				setAnalysisTree,
 				setMatchId,
 				addMoveToTree,
+				deleteBranch,
 				setCurrentPath,
 				setSelectedMoveIndex,
 				resetAnalysis,

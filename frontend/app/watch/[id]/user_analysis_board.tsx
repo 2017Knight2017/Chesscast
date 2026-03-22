@@ -104,18 +104,12 @@ export const UserAnalysisBoard = forwardRef<UserAnalysisBoardRef, UserAnalysisBo
 			const move = chess.move({ from: orig, to: dest, promotion: 'q' });
 
 			if (move) {
-				if (currentPath.length === 0) {
-					const targetIndex = selectedMoveIndex !== null ? selectedMoveIndex : matchHistory.length - 1;
-					const historyPath = Array.from({ length: targetIndex + 1 }, () => 0);
-
-					addMoveToTree(move.san, matchHistory, historyPath);
-					setCurrentPath([...historyPath, 0]);
-				} else {
-					addMoveToTree(move.san, matchHistory, currentPath);
-					setCurrentPath(prev => [...prev, 0]);
-				}
+				const parentPath = currentPath.length === 0 
+					? Array.from({ length: (selectedMoveIndex !== null ? selectedMoveIndex : matchHistory.length - 1) + 1 }, () => 0)
+					: currentPath;
+				
+				addMoveToTree(move.san, matchHistory, parentPath);
 			
-				setSelectedMoveIndex(null);
 				if (userId) syncAnalysisToServer(matchId, userId);
 				onMove?.(move.san);
 			}

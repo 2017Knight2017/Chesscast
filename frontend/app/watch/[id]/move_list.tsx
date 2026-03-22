@@ -76,7 +76,15 @@ const MoveNode = ({ node, path, level, currentPath, onPathClick }: any) => {
 
 export function MoveList({ id, matchHistory: propMatchHistory }: MoveListProps) {
 	const { currentMoveData } = useBroadcast(id);
-	const { isAnalysisMode, analysisTree, currentPath, setCurrentPath, selectedMoveIndex, setSelectedMoveIndex } = useAnalysisState();
+	const { 
+		isAnalysisMode, 
+		analysisTree, 
+		currentPath, 
+		setCurrentPath, 
+		selectedMoveIndex, 
+		setSelectedMoveIndex, 
+		deleteBranch 
+	} = useAnalysisState();
 	
 	const socketHistory = currentMoveData?.history || [];
 	const matchHistory = propMatchHistory || socketHistory;
@@ -156,20 +164,26 @@ export function MoveList({ id, matchHistory: propMatchHistory }: MoveListProps) 
 
 		let depth = 0;
 		while (currentLevel && currentLevel.length > 0) {
+			let foundMainLineAtThisDepth = false;
+
 			for (let i = 0; i < currentLevel.length; i++) {
 				const isFirstNode = i === 0;
 				const hasHistoryAtThisDepth = depth < historyLength;
+				
+				const isMainLineNode = isFirstNode && hasHistoryAtThisDepth && currentLevel[i].m === matchHistory[depth];
 
-				if (!isFirstNode || !hasHistoryAtThisDepth) {
+				if (!isMainLineNode) {
 					roots.push({
 						node: currentLevel[i],
 						absolutePath: [...currentPathTracker, i]
 					});
-
-					if (!hasHistoryAtThisDepth) {
-						return roots; 
-					}
+				} else {
+					foundMainLineAtThisDepth = true;
 				}
+			}
+
+			if (!foundMainLineAtThisDepth) {
+				return roots;
 			}
 
 			currentPathTracker.push(0);
@@ -242,24 +256,44 @@ export function MoveList({ id, matchHistory: propMatchHistory }: MoveListProps) 
 		</div>
 
 		{/* 3. Блок вариаций: ограничиваем по высоте, чтобы не вытеснял всё остальное */}
-		{variationNodes.length > 0 && isAnalysisMode && (
+		{isAnalysisMode && (
 			<div className="shrink-0 max-h-[30%] mt-2 pt-2 border-t border-black/20 w-full overflow-y-auto">
-				<span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
-					Variations
-				</span>
-				<div className="leading-relaxed">
-					{variationNodes.map(({ node, absolutePath }) => (
-						<div key={absolutePath.join('-')} className="mb-2 p-2 bg-white/30 rounded border border-black/5">
-							<MoveNode
-								node={node}
-								path={absolutePath}
-								level={1}
-								currentPath={currentPath}
-								onPathClick={handlePathClick}
-							/>
-						</div>
-					))}
+				<div className="flex justify-between items-center mb-2">
+					<span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+						Variations
+					</span>
+					
+					{currentPath.length > 0 && (
+						<button 
+							onClick={() => deleteBranch(currentPath, matchHistory)}
+							className="text-[10px] text-red-500 hover:text-red-700 transition-colors uppercase font-bold flex items-center gap-1"
+							title="Delete current move and its branch"
+						>
+							<span>Delete Branch</span>
+							<span className="text-xs">×</span>
+						</button>
+					)}
 				</div>
+
+				{variationNodes.length > 0 ? (
+					<div className="leading-relaxed">
+						{variationNodes.map(({ node, absolutePath }) => (
+							<div key={absolutePath.join('-')} className="mb-2 p-2 bg-white/30 rounded border border-black/5">
+								<MoveNode
+									node={node}
+									path={absolutePath}
+									level={1}
+									currentPath={currentPath}
+									onPathClick={handlePathClick}
+								/>
+							</div>
+						))}
+					</div>
+				) : (
+					<div className="text-[10px] italic text-slate-400 text-center py-2">
+						No variations yet. Make a move on the board to start one.
+					</div>
+				)}
 			</div>
 		)}
 			
