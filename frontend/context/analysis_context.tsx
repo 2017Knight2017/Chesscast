@@ -27,7 +27,7 @@ interface AnalysisContextType {
 	setCurrentPath: Dispatch<SetStateAction<number[]>>;
 	setSelectedMoveIndex: (index: number | null) => void;
 	resetAnalysis: () => void;
-	syncAnalysisToServer: (matchId: string, userId: number) => void;
+	syncAnalysisToServer: (matchId: string, userId: number, tree?: MoveTreeNode[], path?: number[]) => void;
 	saveAnalysis: (matchId: string, userId: number) => Promise<void>;
 	discardAnalysis: (matchId: string, userId: number) => Promise<void>;
 	checkExistingAnalysis: (matchId: string, userId: number) => Promise<boolean>;
@@ -49,7 +49,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 	const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 	const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-	const syncAnalysisToServer = useCallback((matchId: string, userId: number) => {
+	const syncAnalysisToServer = useCallback((matchId: string, userId: number, tree?: MoveTreeNode[], path?: number[]) => {
 		if (debounceTimerRef.current) {
 			clearTimeout(debounceTimerRef.current);
 		}
@@ -58,10 +58,11 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 			socket.emit('syncUserAnalysis', {
 				matchId,
 				userId,
-				movesTree: analysisTree,
+				movesTree: tree || analysisTree,
+				currentPath: path || currentPath
 			});
 		}, 300);
-	}, [analysisTree, socket]);
+	}, [analysisTree, currentPath, socket]);
 
 	const saveDraft = useCallback(async (currentMatchId: string) => {
 		try {

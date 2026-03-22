@@ -3,6 +3,7 @@
 import { useViewerCounts } from "@/hooks/use_viewer_counts";
 import { useState, useEffect } from "react";
 import Chessground from "@bezalel6/react-chessground";
+import { getPlayerByUsernameAction, loadAnalysisAction } from "@/actions/analysis_actions";
 
 interface SpectatorListProps {
 	id: string;
@@ -20,31 +21,40 @@ export function SpectatorList({ id, onInspectUser }: SpectatorListProps) {
 
 	useEffect(() => {
 		const fetchUserFen = async () => {
-			const user = localStorage.getItem('user');
-			if (!user) return;
-			const parsed = JSON.parse(user);
+			if (!selectedSpectator) {
+				setPreviewFen(null);
+				return;
+			}
+
+			const playerResult = await getPlayerByUsernameAction(selectedSpectator);
+			if (!playerResult.success || !playerResult.data) {
+				setPreviewFen(null);
+				return;
+			}
 			
-			const res = await fetch(`${process.env.NEST_API_URL}/user-analysis/${id}/${parsed.id}`);
-			const data = await res.json();
+			const analysisData = await loadAnalysisAction(id, playerResult.data.userId);
 			
-			if (data.data && data.data.length > 0) {
+			if (analysisData.data && analysisData.data.length > 0) {
 				const { Chess } = await import('chess.js');
 				const chess = new Chess();
 				
-				const applyMoves = (tree: any[], path: number[]) => {
+				const applyMainLine = (tree: any[]) => {
 					let current = tree;
-					for (const idx of path) {
-						if (current[idx]) {
-							chess.move(current[idx].m);
-							if (current[idx].s) {
-								current = current[idx].s;
-							}
+					while (current && current.length > 0) {
+						const node = current[0];
+						try {
+							chess.move(node.m);
+							current = node.s || [];
+						} catch (e) {
+							break;
 						}
 					}
 				};
 				
-				applyMoves(data.data, []);
+				applyMainLine(analysisData.data);
 				setPreviewFen(chess.fen());
+			} else {
+				setPreviewFen(null);
 			}
 		};
 
@@ -52,7 +62,7 @@ export function SpectatorList({ id, onInspectUser }: SpectatorListProps) {
 	}, [selectedSpectator, id]);
 
 	const handleSpectatorClick = (username: string) => {
-		setSelectedSpectator(username);
+		setSelectedSpectator(prev => prev === username ? null : username);
 		onInspectUser?.(username);
 	};
 

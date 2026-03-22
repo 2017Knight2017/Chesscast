@@ -1,7 +1,7 @@
 'use client';
 
 import { useBroadcast } from "@/hooks/use_broadcast";
-import { MoveTreeNode, MoveRecord } from "@/types/types"
+import { MoveRecord } from "@/types/types"
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { BackToLiveButton } from "./back_to_live_button";
 import { useAnalysisState } from "@/context/analysis_context";
@@ -11,24 +11,9 @@ interface MoveListProps {
 	matchHistory?: string[];
 }
 
-function getBranchColor(level: number, branchIndex: number): string {
-	const hue = (branchIndex * 137.508) % 360;
-	return `hsla(${hue}, 70%, 50%, 0.25)`;
-}
-
-function arraysEqual(a: number[], b: number[]): boolean {
-	if (a.length !== b.length) return false;
-	for (let i = 0; i < a.length; i++) {
-		if (a[i] !== b[i]) return false;
-	}
-	return true;
-}
-
 const MoveNode = ({ node, path, level, currentPath, onPathClick }: any) => {
 	const isActive = currentPath.length === path.length && path.every((val: number, i: number) => val === currentPath[i]);
 		
-	// Вычисляем номер хода и чья очередь (для веток это важно)
-	// path.length определяет глубину хода
 	const moveNumber = Math.floor((path.length - 1) / 2) + 1;
 	const isWhite = path.length % 2 !== 0;
 
@@ -58,7 +43,6 @@ const MoveNode = ({ node, path, level, currentPath, onPathClick }: any) => {
 						const childPath = [...path, childIdx];
 
 						if (isMainBranch) {
-							// Продолжение текущей ветки — просто рендерим дальше в ту же строку
 							return (
 								<MoveNode
 									key={childIdx}
@@ -70,14 +54,13 @@ const MoveNode = ({ node, path, level, currentPath, onPathClick }: any) => {
 								/>
 							);
 						} else {
-							// Параллельная ветка — выносим в скобки на новую строку или выделяем визуально
 							return (
 								<div key={childIdx} className="block ml-3 my-1 pl-2 border-l-2 border-slate-300 bg-black/5 rounded">
 									<span className="text-[10px] text-slate-400 italic">alt: </span>
 									<MoveNode
 										node={childNode}
 										path={childPath}
-										level={1} // Сбрасываем уровень для новой ветки
+										level={1}
 										currentPath={currentPath}
 										onPathClick={onPathClick}
 									/>
@@ -200,7 +183,6 @@ export function MoveList({ id, matchHistory: propMatchHistory }: MoveListProps) 
 	if (!isAnalysisMode && !currentMoveData) return <div>Loading...</div>;
 
 	return (
-	// 1. Добавляем h-full и flex flex-col всему контейнеру
 	<div className="h-full flex flex-col bg-[#f4ead5] text-[#3e2b1d] shadow-inner p-6 border-l-4 border-[#8b5e34] font-mono overflow-hidden">
 		
 		{/* Заголовки — запрещаем им сжиматься через shrink-0 */}
@@ -216,7 +198,7 @@ export function MoveList({ id, matchHistory: propMatchHistory }: MoveListProps) 
 				style={{
 					display: 'flex',
 					flexFlow: 'column wrap',
-					height: '100%', // Теперь 100% будет считаться от высоты, которую дал flex-1
+					height: '100%',
 					alignContent: 'flex-start',
 					overscrollBehaviorX: 'contain',
 				}}
@@ -225,7 +207,6 @@ export function MoveList({ id, matchHistory: propMatchHistory }: MoveListProps) 
 					const whiteIndex = i * 2;
 					const blackIndex = i * 2 + 1;
 					
-					// Ваша логика активных индексов...
 					const isWhiteActive = isAnalysisMode 
 						? (currentPath.length === 0 && selectedMoveIndex === whiteIndex)
 						: selectedMoveIndex === whiteIndex;
