@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -96,7 +97,7 @@ func getBias(name string) Bias {
 }
 
 // Главная функция обработки одной игры
-func ProcessGame(matchID, pgn string, initialTime int, archNames []string) error {
+func ProcessGame(ctx context.Context, matchID, pgn string, initialTime int, archNames []string) error {
 	logger.Printf("Начинаем обработку матча %s с архетипами %v", matchID, archNames)
 
 	biasWhite := getBias(archNames[0])
@@ -124,11 +125,10 @@ func ProcessGame(matchID, pgn string, initialTime int, archNames []string) error
 	movesPlayed := 0
 	openingTill := rand.Intn(8) + 10 // от 10 до 17
 
-	// В продакшене лучше использовать пул процессов (Worker Pool), чтобы не запускать движок каждый раз
 	engPath := "/usr/games/stockfish"
 
-	// Создаем long-lived движок
-	eng, err := NewLongLivedEngine(engPath)
+	// Создаем long-lived движок с контекстом
+	eng, err := NewLongLivedEngine(ctx, engPath)
 	if err != nil {
 		return fmt.Errorf("не удалось запустить движок: %v", err)
 	}
@@ -137,6 +137,12 @@ func ProcessGame(matchID, pgn string, initialTime int, archNames []string) error
 	logger.Printf("Начинаем обработку %d полуходов. EngPath: %s", len(moves), engPath)
 
 	for _, move := range moves {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
+
 		currentPlayer := board.Position().Turn()
 		moveText := chess.AlgebraicNotation{}.Encode(board.Position(), move)
 		notation = append(notation, moveText)
@@ -153,7 +159,7 @@ func ProcessGame(matchID, pgn string, initialTime int, archNames []string) error
 			currentBias = biasBlack
 		}
 
-		eval, moveTime, err := calculateMoveTimeWithEngine(eng, clocks[currentPlayer], movesToControl, fen, currentBias)
+		eval, moveTime, err := calculateMoveTimeWithEngine(ctx, eng, clocks[currentPlayer], movesToControl, fen, currentBias)
 		if err != nil {
 			return err
 		}
@@ -175,7 +181,7 @@ func ProcessGame(matchID, pgn string, initialTime int, archNames []string) error
 		if currentPlayer == chess.Black {
 			colorStr = "черных"
 		}
-		logger.Printf("Полуход %d. Ход %s: %.1f сек (оценка: %d)", movesPlayed, colorStr, moveTime, eval)
+		logger.Printf("Матч %s, полуход %d. Ход %s: %.1f сек (оценка: %d)", matchID, movesPlayed, colorStr, moveTime, eval)
 
 		board.Move(move)
 	}
@@ -191,7 +197,6 @@ func parseEngineOutput(output string) ([]int, MateStats) {
 	stats := MateStats{ClosestWin: math.MaxInt32, ClosestLoss: math.MaxInt32}
 	mateCeiling := 30000
 
-	// Собираем все multipv линии с максимальной глубины
 	maxDepth := 0
 	multipvLines := make(map[int][]int) // multipv -> scores
 
@@ -261,14 +266,12 @@ func parseEngineOutput(output string) ([]int, MateStats) {
 		}
 	}
 
-	// Берем последние значения для каждого multipv (самые глубокие)
 	for multipv := 1; multipv <= 3; multipv++ {
 		if scores, ok := multipvLines[multipv]; ok && len(scores) > 0 {
 			cpValues = append(cpValues, scores[len(scores)-1])
 		}
 	}
 
-	// Паддинг, если линий меньше 3
 	for len(cpValues) < 3 {
 		lastVal := 0
 		if len(cpValues) > 0 {
@@ -294,9 +297,9 @@ type LongLivedEngine struct {
 }
 
 // Создаем long-lived движок
-func NewLongLivedEngine(path string) (*LongLivedEngine, error) {
+func NewLongLivedEngine(ctx context.Context, path string) (*LongLivedEngine, error) {
 	logger.Printf("Создаем движок: %s", path)
-	cmd := exec.Command(path)
+	cmd := exec.CommandContext(ctx, path)
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
@@ -323,20 +326,15 @@ func NewLongLivedEngine(path string) (*LongLivedEngine, error) {
 	}
 
 	// Инициализируем UCI
-	logger.Println("Отправляем команду uci")
 	fmt.Fprintln(eng.stdin, "uci")
 
 	// Ждем uciok
-	logger.Println("Ждем uciok...")
-	if err := eng.waitFor("uciok", 5*time.Second); err != nil {
-		logger.Printf("Ошибка ожидания uciok: %v", err)
+	if err := eng.waitFor(ctx, "uciok", 5*time.Second); err != nil {
 		eng.Close()
 		return nil, err
 	}
-	logger.Println("Получен uciok")
 
 	// Настраиваем MultiPV
-	logger.Println("Настраиваем MultiPV")
 	fmt.Fprintf(eng.stdin, "setoption name MultiPV value 3\n")
 
 	logger.Println("Движок успешно инициализирован")
@@ -351,7 +349,7 @@ func (eng *LongLivedEngine) Close() error {
 	return eng.cmd.Wait()
 }
 
-func (eng *LongLivedEngine) readLineWithTimeout(timeout time.Duration) (string, error) {
+func (eng *LongLivedEngine) readLineWithTimeout(ctx context.Context, timeout time.Duration) (string, error) {
 	done := make(chan string, 1)
 	errChan := make(chan error, 1)
 
@@ -365,6 +363,8 @@ func (eng *LongLivedEngine) readLineWithTimeout(timeout time.Duration) (string, 
 	}()
 
 	select {
+	case <-ctx.Done():
+		return "", ctx.Err()
 	case line := <-done:
 		return line, nil
 	case err := <-errChan:
@@ -374,8 +374,7 @@ func (eng *LongLivedEngine) readLineWithTimeout(timeout time.Duration) (string, 
 	}
 }
 
-func (eng *LongLivedEngine) waitFor(marker string, timeout time.Duration) error {
-	logger.Printf("Ждем маркер: %s", marker)
+func (eng *LongLivedEngine) waitFor(ctx context.Context, marker string, timeout time.Duration) error {
 	deadline := time.Now().Add(timeout)
 
 	for {
@@ -384,26 +383,23 @@ func (eng *LongLivedEngine) waitFor(marker string, timeout time.Duration) error 
 			return fmt.Errorf("timeout waiting for %s", marker)
 		}
 
-		line, err := eng.readLineWithTimeout(remaining)
+		line, err := eng.readLineWithTimeout(ctx, remaining)
 		if err != nil {
-			logger.Printf("Ошибка чтения при ожидании маркера: %v", err)
 			return err
 		}
 
-		logger.Printf("Получена строка при ожидании: %s", line)
 		if strings.Contains(line, marker) {
-			logger.Printf("Найден маркер: %s", marker)
 			return nil
 		}
 	}
 }
 
-func (eng *LongLivedEngine) analyzePosition(fen string) ([]int, MateStats, error) {
+func (eng *LongLivedEngine) analyzePosition(ctx context.Context, fen string) ([]int, MateStats, error) {
 	fmt.Fprintf(eng.stdin, "position fen %s\n", fen)
 	fmt.Fprintln(eng.stdin, "go depth 16")
 
 	var lines []string
-	deadline := time.Now().Add(10 * time.Second)
+	deadline := time.Now().Add(15 * time.Second)
 
 	for {
 		remaining := time.Until(deadline)
@@ -411,7 +407,7 @@ func (eng *LongLivedEngine) analyzePosition(fen string) ([]int, MateStats, error
 			return nil, MateStats{}, fmt.Errorf("timeout waiting for bestmove")
 		}
 
-		line, err := eng.readLineWithTimeout(remaining)
+		line, err := eng.readLineWithTimeout(ctx, remaining)
 		if err != nil {
 			return nil, MateStats{}, err
 		}
@@ -425,10 +421,10 @@ func (eng *LongLivedEngine) analyzePosition(fen string) ([]int, MateStats, error
 }
 
 // Новая функция для работы с long-lived движком
-func calculateMoveTimeWithEngine(eng *LongLivedEngine, timeLeftSec float64, movesToControl int, fen string, bias Bias) (int, float64, error) {
+func calculateMoveTimeWithEngine(ctx context.Context, eng *LongLivedEngine, timeLeftSec float64, movesToControl int, fen string, bias Bias) (int, float64, error) {
 	baseTime := timeLeftSec / float64(movesToControl+10)
 
-	vals, stats, err := eng.analyzePosition(fen)
+	vals, stats, err := eng.analyzePosition(ctx, fen)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -447,24 +443,20 @@ func calculateMoveTimeWithEngine(eng *LongLivedEngine, timeLeftSec float64, move
 	sumVals := float64(vals[0] + vals[1] + vals[2])
 	sharpnessFactor := math.Abs(e1-(sumVals/3.0)) / 100.0
 
-	// ОПТИМИЗАЦИЯ ТАКТИКИ: Никаких board.push/pop!
 	fenFunc, err := chess.FEN(fen)
 	if err != nil {
 		return 0, 0, fmt.Errorf("ошибка парсинга FEN: %v", err)
 	}
 
-	// Создаем игру с конкретной позицией
 	game := chess.NewGame(fenFunc)
 	validMoves := game.ValidMoves()
 	tactics := 0
 
 	for _, m := range validMoves {
-		// В notnil/chess флаги взятия и шаха вычисляются при генерации ходов
 		if m.HasTag(chess.Capture) || m.HasTag(chess.Check) {
 			tactics++
 		}
 	}
-	logger.Printf("Анализ позиции: %d тактических ходов из %d возможных", tactics, len(validMoves))
 
 	tacticsFactor := 0.0
 	if len(validMoves) > 0 {
@@ -479,8 +471,7 @@ func calculateMoveTimeWithEngine(eng *LongLivedEngine, timeLeftSec float64, move
 		panicFactor = 0.3
 	}
 
-	// Lognormal распределение в Go
-	logNorm := math.Exp(rand.NormFloat64() * bias.Sigma) // Эквивалент random.lognormvariate(0, sigma)
+	logNorm := math.Exp(rand.NormFloat64() * bias.Sigma)
 
 	calculatedTime := baseTime * complexityMult * panicFactor * logNorm
 	absoluteMax := math.Min(timeLeftSec*0.15, 600)

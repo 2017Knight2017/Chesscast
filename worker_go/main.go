@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -17,7 +18,6 @@ func main() {
 	redisAddr := os.Getenv("REDIS_URL")
 	queueName := "analysis"
 
-	// 2. Подключение к Redis
 	rdb := redis.NewClient(&redis.Options{
 		Addr: redisAddr,
 	})
@@ -37,21 +37,23 @@ func main() {
 
 	fmt.Printf("[MAIN] Воркер запущен. Очередь: %s, Redis: %s\n", queueName, redisAddr)
 
-	// 3. Цикл обработки задач
-	// BullMQ хранит активные задачи в Redis List: bull:<queueName>:wait
 	bullQueueKey := fmt.Sprintf("bull:%s:wait", queueName)
+
+	maxWorkers := 4
+	sem := make(chan struct{}, maxWorkers)
+	var wg sync.WaitGroup
 
 	for {
 		select {
 		case <-ctx.Done():
+			fmt.Println("[MAIN] Ожидание завершения активных задач...")
+			wg.Wait()
 			return
 		default:
-			// Используем BRPop для блокирующего чтения (ожидание задачи 5 секунд)
-			// BRPOP возвращает [ключ, job_id]
 			result, err := rdb.BRPop(ctx, 5*time.Second, bullQueueKey).Result()
 			if err != nil {
 				if err == redis.Nil {
-					continue // Таймаут, просто пробуем снова
+					continue
 				}
 				log.Printf("[ERROR] Ошибка чтения из Redis: %v", err)
 				time.Sleep(2 * time.Second)
@@ -61,7 +63,6 @@ func main() {
 			jobID := result[1]
 			jobKey := fmt.Sprintf("bull:%s:%s", queueName, jobID)
 
-			// Получаем данные задачи из Redis хеша
 			jobData, err := rdb.HGetAll(ctx, jobKey).Result()
 			if err != nil {
 				log.Printf("[ERROR] Не удалось получить данные задачи %s: %v", jobID, err)
@@ -69,23 +70,10 @@ func main() {
 			}
 
 			if len(jobData) == 0 {
-				// Отладка: ищем похожие ключи в Redis
-				log.Printf("[DEBUG] Job ID: %s, Job Key: %s", jobID, jobKey)
-
-				// Пытаемся найти какие-то ключи по паттерну
-				keys, err := rdb.Keys(ctx, fmt.Sprintf("bull:%s:job:*", queueName)).Result()
-				if err == nil && len(keys) > 0 {
-					log.Printf("[DEBUG] Найдены ключи: %v", keys[:min(len(keys), 3)])
-				}
-
 				log.Printf("[ERROR] Данные задачи %s не найдены в Redis", jobID)
 				continue
 			}
 
-			// Отладка: выводим все поля задачи
-			fmt.Printf("[DEBUG] Поля задачи %s: %v\n", jobID, jobData)
-
-			// Парсим JSON из поля "data"
 			var jobDataPayload struct {
 				MatchID     string   `json:"id"`
 				PGN         string   `json:"pgn"`
@@ -103,22 +91,35 @@ func main() {
 				continue
 			}
 
-			fmt.Printf("[MAIN] Получена задача %s для матча %s\n", jobID, jobDataPayload.MatchID)
+			fmt.Printf("[MAIN] Задача %s для матча %s передана в обработку\n", jobID, jobDataPayload.MatchID)
 
-			// 4. Запуск обработки из worker.go
-			err = ProcessGame(
-				jobDataPayload.MatchID,
-				jobDataPayload.PGN,
-				jobDataPayload.InitialTime,
-				jobDataPayload.Archetypes,
-			)
+			sem <- struct{}{}
+			wg.Add(1)
+			go func(payload struct {
+				MatchID     string   `json:"id"`
+				PGN         string   `json:"pgn"`
+				InitialTime int      `json:"time_control"`
+				Archetypes  []string `json:"archetypes"`
+			}) {
+				defer func() {
+					<-sem
+					wg.Done()
+				}()
 
-			if err != nil {
-				log.Printf("[ERROR] Ошибка при обработке игры %s: %v", jobDataPayload.MatchID, err)
-				// Здесь можно реализовать логику перемещения в bull:<queueName>:failed
-			} else {
-				fmt.Printf("[SUCCESS] Матч %s успешно обработан\n", jobDataPayload.MatchID)
-			}
+				err := ProcessGame(
+					ctx,
+					payload.MatchID,
+					payload.PGN,
+					payload.InitialTime,
+					payload.Archetypes,
+				)
+
+				if err != nil {
+					log.Printf("[ERROR] Ошибка при обработке игры %s: %v", payload.MatchID, err)
+				} else {
+					fmt.Printf("[SUCCESS] Матч %s успешно обработан\n", payload.MatchID)
+				}
+			}(jobDataPayload)
 		}
 	}
 }
