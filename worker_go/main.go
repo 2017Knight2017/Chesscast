@@ -75,10 +75,16 @@ func main() {
 			}
 
 			var jobDataPayload struct {
-				MatchID     string   `json:"id"`
-				PGN         string   `json:"pgn"`
-				InitialTime int      `json:"time_control"`
-				Archetypes  []string `json:"archetypes"`
+				MatchID                 string   `json:"id"`
+				PGN                     string   `json:"pgn"`
+				InitialTime             int      `json:"time_control"`
+				ControlMove             int      `json:"control_move"`
+				TimeIncrement           int      `json:"time_increment"`
+				IsRepeatableControlMove bool     `json:"is_repeatable_control_move"`
+				BonusTimeMin            int      `json:"bonus_time_min"`
+				NextControlMoveAfter    int      `json:"next_control_move_after"`
+				NewTimeIncrement        int      `json:"new_time_increment"`
+				Archetypes              []string `json:"archetypes"`
 			}
 
 			if dataStr, exists := jobData["data"]; exists {
@@ -96,10 +102,16 @@ func main() {
 			sem <- struct{}{}
 			wg.Add(1)
 			go func(payload struct {
-				MatchID     string   `json:"id"`
-				PGN         string   `json:"pgn"`
-				InitialTime int      `json:"time_control"`
-				Archetypes  []string `json:"archetypes"`
+				MatchID                 string   `json:"id"`
+				PGN                     string   `json:"pgn"`
+				InitialTime             int      `json:"time_control"`
+				ControlMove             int      `json:"control_move"`
+				TimeIncrement           int      `json:"time_increment"`
+				IsRepeatableControlMove bool     `json:"is_repeatable_control_move"`
+				BonusTimeMin            int      `json:"bonus_time_min"`
+				NextControlMoveAfter    int      `json:"next_control_move_after"`
+				NewTimeIncrement        int      `json:"new_time_increment"`
+				Archetypes              []string `json:"archetypes"`
 			}) {
 				defer func() {
 					<-sem
@@ -111,6 +123,12 @@ func main() {
 					payload.MatchID,
 					payload.PGN,
 					payload.InitialTime,
+					payload.ControlMove,
+					payload.TimeIncrement,
+					payload.IsRepeatableControlMove,
+					payload.BonusTimeMin,
+					payload.NextControlMoveAfter,
+					payload.NewTimeIncrement,
 					payload.Archetypes,
 				)
 

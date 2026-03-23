@@ -75,7 +75,23 @@ export class MatchesService {
 		return archetypeOptions[key as keyof typeof archetypeOptions];
 }
 
-	async createBroadcast(authorId: number, author: string, title: string, scheduledAt: Date, pgn: string, whitePlayer: string, blackPlayer: string, archetypes: [string, string], timeControl: number) {
+	async createBroadcast(
+		authorId: number, 
+		author: string, 
+		title: string, 
+		scheduledAt: Date, 
+		pgn: string, 
+		whitePlayer: string, 
+		blackPlayer: string, 
+		archetypes: [string, string], 
+		timeControl: number,
+		controlMove: number,
+		timeIncrement: number,
+		isRepeatableControlMove: boolean,
+		bonusTimeMin: number,
+		nextControlMoveAfter: number,
+		newTimeIncrement: number
+	) {
 		const [whiteDB, blackDB] = await Promise.all([
 			this.playersService.getArchetypeFromDB(whitePlayer),
 			this.playersService.getArchetypeFromDB(blackPlayer)
@@ -137,6 +153,7 @@ export class MatchesService {
 				status: 'processing',
 				moveIndex: 0,
 				timeControl: timeControl,
+				increment: timeIncrement,
 				scheduledAt: scheduledAt
 			});
 		
@@ -149,6 +166,12 @@ export class MatchesService {
 			id: analysis.id,	
 			pgn: pgn,
 			time_control: timeControl,
+			control_move: controlMove,
+			time_increment: timeIncrement,
+			is_repeatable_control_move: isRepeatableControlMove,
+			bonus_time_min: bonusTimeMin,
+			next_control_move_after: nextControlMoveAfter,
+			new_time_increment: newTimeIncrement,
 			archetypes: validatedArchetypes
 		}, {
 			attempts: 3, 

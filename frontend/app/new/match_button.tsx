@@ -10,10 +10,30 @@ interface matchData {
 	blackPlayer: string;
 	title: string;
 	timeControl: string;
+	controlMove: number;
+	timeIncrement: number;
+	isRepeatableControlMove: boolean;
+	bonusTimeMin: number;
+	nextControlMoveAfter: number;
+	newTimeIncrement: number;
 	scheduledAt: string;
 }
 
-export default function CreateMatchButton({ pgn, archetypes, whitePlayer, blackPlayer, title, timeControl, scheduledAt }: matchData) {
+export default function CreateMatchButton({ 
+	pgn, 
+	archetypes, 
+	whitePlayer, 
+	blackPlayer, 
+	title, 
+	timeControl, 
+	controlMove, 
+	timeIncrement,
+	isRepeatableControlMove,
+	bonusTimeMin,
+	nextControlMoveAfter,
+	newTimeIncrement,
+	scheduledAt 
+}: matchData) {
 	const [isPending, startTransition] = useTransition();
 	let errorMessage: string = "";
 
@@ -36,7 +56,21 @@ export default function CreateMatchButton({ pgn, archetypes, whitePlayer, blackP
 		}
 
 		startTransition(async () => {
-			const result = await createMatchAction(pgn, archetypes, whitePlayer, blackPlayer, title, convertTimeControlToSeconds(timeControl), scheduledAt);
+			const result = await createMatchAction(
+				pgn, 
+				archetypes, 
+				whitePlayer, 
+				blackPlayer, 
+				title, 
+				convertTimeControlToSeconds(timeControl), 
+				controlMove,
+				timeIncrement,
+				isRepeatableControlMove,
+				bonusTimeMin,
+				nextControlMoveAfter,
+				newTimeIncrement,
+				scheduledAt
+			);
 			
 			if (result.success) {
 				alert('Успех: ' + result.message); 

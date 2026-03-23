@@ -20,7 +20,6 @@ import (
 	"github.com/notnil/chess"
 )
 
-// Структуры для архетипов
 type Archetype struct {
 	K       float64   `json:"k"`
 	Weights []float64 `json:"weights"`
@@ -35,10 +34,8 @@ type Bias struct {
 	Sigma float64
 }
 
-// Глобальный кэш архетипов (чтобы не читать файл каждый раз)
 var archetypesCache map[string]Archetype
 
-// Структуры для отправки отчета
 type ReportPayload struct {
 	Evaluations []int    `json:"evaluations"`
 	Durations   []int    `json:"durations"`
@@ -54,8 +51,10 @@ type MateStats struct {
 
 var logger *log.Logger
 
+const VIRTUAL_CONTROL = 30
+const VIRTUAL_MOVES_TILL_END = 13
+
 func init() {
-	// Инициализируем логгер с выводом в файл
 	logFile, err := os.OpenFile("worker.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Ошибка при открытии файла логов: %v\n", err)
@@ -84,7 +83,6 @@ func loadArchetypes(path string) {
 func getBias(name string) Bias {
 	arch, ok := archetypesCache[name]
 	if !ok {
-		// Значения по умолчанию, если архетип не найден
 		return Bias{K: 1.0, W1: 1.0, W2: 1.0, W3: 1.0, Sigma: 0.5}
 	}
 	return Bias{
@@ -96,8 +94,18 @@ func getBias(name string) Bias {
 	}
 }
 
-// Главная функция обработки одной игры
-func ProcessGame(ctx context.Context, matchID, pgn string, initialTime int, archNames []string) error {
+func ProcessGame(
+	ctx context.Context,
+	matchID, pgn string,
+	initialTime int,
+	controlMove int,
+	timeIncrement int,
+	isRepeatable bool,
+	bonusTimeMin int,
+	nextControlAfter int,
+	newIncrement int,
+	archNames []string,
+) error {
 	logger.Printf("Начинаем обработку матча %s с архетипами %v", matchID, archNames)
 
 	biasWhite := getBias(archNames[0])
@@ -121,13 +129,14 @@ func ProcessGame(ctx context.Context, matchID, pgn string, initialTime int, arch
 		chess.Black: float64(initialTime),
 	}
 
-	nextControlPly := 80
+	currentIncrement := float64(timeIncrement)
+	nextControlPly := controlMove * 2
 	movesPlayed := 0
-	openingTill := rand.Intn(8) + 10 // от 10 до 17
+	openingTill := rand.Intn(8) + 10
+	isControlMoveReached := false
 
 	engPath := "/usr/games/stockfish"
 
-	// Создаем long-lived движок с контекстом
 	eng, err := NewLongLivedEngine(ctx, engPath)
 	if err != nil {
 		return fmt.Errorf("не удалось запустить движок: %v", err)
@@ -148,9 +157,20 @@ func ProcessGame(ctx context.Context, matchID, pgn string, initialTime int, arch
 		notation = append(notation, moveText)
 
 		movesToControl := (nextControlPly - movesPlayed) / 2
+		if isControlMoveReached && !isRepeatable {
+			movesToControl = max(movesToControl, VIRTUAL_MOVES_TILL_END)
+		}
 		if movesToControl <= 0 {
-			nextControlPly += 32
-			movesToControl = 16
+			if isRepeatable {
+				nextControlPly += nextControlAfter * 2
+				movesToControl = nextControlAfter
+			} else {
+				nextControlPly += VIRTUAL_CONTROL * 2
+				movesToControl = VIRTUAL_CONTROL
+			}
+			isControlMoveReached = true
+			currentIncrement = float64(newIncrement)
+			clocks[currentPlayer] += float64(bonusTimeMin * 60)
 		}
 
 		fen := board.Position().String()
@@ -172,6 +192,7 @@ func ProcessGame(ctx context.Context, matchID, pgn string, initialTime int, arch
 		durations = append(durations, moveTime)
 
 		clocks[currentPlayer] -= moveTime
+		clocks[currentPlayer] += currentIncrement
 		if clocks[currentPlayer] < 0 {
 			clocks[currentPlayer] = 0
 		}
@@ -198,7 +219,7 @@ func parseEngineOutput(output string) ([]int, MateStats) {
 	mateCeiling := 30000
 
 	maxDepth := 0
-	multipvLines := make(map[int][]int) // multipv -> scores
+	multipvLines := make(map[int][]int)
 
 	for _, line := range lines {
 		if strings.Contains(line, "info") && strings.Contains(line, "score") {
@@ -287,7 +308,6 @@ func parseEngineOutput(output string) ([]int, MateStats) {
 	return cpValues, stats
 }
 
-// Структура для long-lived движка
 type LongLivedEngine struct {
 	cmd     *exec.Cmd
 	stdin   io.WriteCloser
@@ -296,7 +316,6 @@ type LongLivedEngine struct {
 	running bool
 }
 
-// Создаем long-lived движок
 func NewLongLivedEngine(ctx context.Context, path string) (*LongLivedEngine, error) {
 	logger.Printf("Создаем движок: %s", path)
 	cmd := exec.CommandContext(ctx, path)
@@ -325,16 +344,13 @@ func NewLongLivedEngine(ctx context.Context, path string) (*LongLivedEngine, err
 		running: true,
 	}
 
-	// Инициализируем UCI
 	fmt.Fprintln(eng.stdin, "uci")
 
-	// Ждем uciok
 	if err := eng.waitFor(ctx, "uciok", 5*time.Second); err != nil {
 		eng.Close()
 		return nil, err
 	}
 
-	// Настраиваем MultiPV
 	fmt.Fprintf(eng.stdin, "setoption name MultiPV value 3\n")
 
 	logger.Println("Движок успешно инициализирован")
@@ -420,7 +436,6 @@ func (eng *LongLivedEngine) analyzePosition(ctx context.Context, fen string) ([]
 	}
 }
 
-// Новая функция для работы с long-lived движком
 func calculateMoveTimeWithEngine(ctx context.Context, eng *LongLivedEngine, timeLeftSec float64, movesToControl int, fen string, bias Bias) (int, float64, error) {
 	baseTime := timeLeftSec / float64(movesToControl+10)
 

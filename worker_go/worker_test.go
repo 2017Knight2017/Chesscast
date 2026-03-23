@@ -21,12 +21,18 @@ func TestProcessGame(t *testing.T) {
 	pgn := `1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 d6 8. c3 O-O 9. h3 Nb8 10. d4 Nbd7`
 	matchID := "test_match_001"
 	initialTime := 600
+	controlMove := 40
+	timeIncrement := 0
+	isRepeatable := false
+	bonusTimeMin := 30
+	nextControlAfter := 16
+	newIncrement := 30
 	archetypes := []string{"attacker", "pragmatic"}
 
 	fmt.Println("Начинаем тест обработки игры...")
 
 	ctx := context.Background()
-	err := ProcessGame(ctx, matchID, pgn, initialTime, archetypes)
+	err := ProcessGame(ctx, matchID, pgn, initialTime, controlMove, timeIncrement, isRepeatable, bonusTimeMin, nextControlAfter, newIncrement, archetypes)
 
 	if err != nil {
 		t.Errorf("Ошибка при обработке игры: %v", err)

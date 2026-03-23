@@ -7,7 +7,15 @@ import { PlayerInput } from '@/app/new/player_input';
 export default function BroadcastPage() {
 	const [pgnInput, setPgnInput] = useState('');
 	const [title, setTitle] = useState('');
-	const [timeControl, setTimeControl] = useState('0:10');
+	const [timeControl, setTimeControl] = useState('1:00');
+	const [controlMove, setControlMove] = useState(40);
+	const [timeIncrement, setTimeIncrement] = useState(0);
+
+	const [isRepeatableControlMove, setIsRepeatableControlMove] = useState(false);
+	const [bonusTimeMin, setBonusTimeMin] = useState(30);
+	const [nextControlMoveAfter, setNextControlMoveAfter] = useState(16);
+	const [newTimeIncrement, setNewTimeIncrement] = useState(30);
+
 	const [whitePlayer, setWhitePlayer] = useState('');
 	const [blackPlayer, setBlackPlayer] = useState('');
 
@@ -48,7 +56,7 @@ export default function BroadcastPage() {
 	return (
 		<div className="flex flex-col items-center p-8 bg-slate-900 min-h-screen text-white">
 			<h1 className="text-2xl font-bold mb-6">Creating a broadcast</h1>
-			
+
 			<div className="w-full max-w-2xl mb-10 space-y-4">
 				<label className="block">
 					<span className="text-sm">Title</span>
@@ -80,29 +88,100 @@ export default function BroadcastPage() {
 					/>
 				</label>
 
-				<label className="block">
-					<span className="text-sm">Time Control (H:MM, from 0:10 to 9:59)</span>
-					<input
-						type="text"
-						placeholder="H:MM"
-						className="w-full p-2 rounded bg-slate-800 border border-slate-700 focus:border-blue-500 outline-none"
-						value={timeControl}
-						onChange={(e) => {
-							let value = e.target.value.replace(/\D/g, '');
-							
-							if (value.length > 3) {
-								value = value.slice(0, 3);
-							}
-							
-							if (value.length <= 2) {
-								setTimeControl(value);
-							} else {
-								setTimeControl(value.slice(0, value.length - 2) + ':' + value.slice(-2));
-							}
-						}}
-						maxLength={5}
-					/>
-				</label>
+				<div className="grid gap-4 grid-cols-3">
+					<label className="block">
+						<span className="text-sm">Time Control (H:MM)</span>
+						<input
+							type="text"
+							placeholder="H:MM"
+							className="w-full p-2 rounded bg-slate-800 border border-slate-700 focus:border-blue-500 outline-none"
+							value={timeControl}
+							onChange={(e) => {
+								let value = e.target.value.replace(/\D/g, '');
+
+								if (value.length > 3) {
+									value = value.slice(0, 3);
+								}
+
+								if (value.length <= 2) {
+									setTimeControl(value);
+								} else {
+									setTimeControl(value.slice(0, value.length - 2) + ':' + value.slice(-2));
+								}
+							}}
+							maxLength={5}
+						/>
+					</label>
+					<label className="block">
+						<span className="text-sm">Increment (sec)</span>
+						<input
+							type="number"
+							className="w-full p-2 rounded bg-slate-800 border border-slate-700 focus:border-blue-500 outline-none"
+							value={timeIncrement}
+							min={0}
+							max={60}
+							onChange={(e) => setTimeIncrement(parseInt(e.target.value) || 0)}
+						/>
+					</label>
+					<label className="block">
+						<span className="text-sm">Control Move</span>
+						<input
+							type="number"
+							className="w-full p-2 rounded bg-slate-800 border border-slate-700 focus:border-blue-500 outline-none"
+							value={controlMove}
+							min={10}
+							max={100}
+							onChange={(e) => setControlMove(parseInt(e.target.value) || 40)}
+						/>
+					</label>
+					<label className="block">
+						<span className="text-sm">Bonus Time (min)</span>
+						<input
+							type="number"
+							className="w-full p-2 rounded bg-slate-800 border border-slate-700 focus:border-blue-500 outline-none"
+							value={bonusTimeMin}
+							min={1}
+							max={120}
+							onChange={(e) => setBonusTimeMin(parseInt(e.target.value) || 30)}
+						/>
+					</label>
+					<label className="block">
+						<span className="text-sm">New Increment (sec)</span>
+						<input
+							type="number"
+							className="w-full p-2 rounded bg-slate-800 border border-slate-700 focus:border-blue-500 outline-none"
+							value={newTimeIncrement}
+							min={0}
+							max={60}
+							onChange={(e) => setNewTimeIncrement(parseInt(e.target.value) || 30)}
+						/>
+					</label>
+					<div className="p-2 rounded bg-slate-800 border border-slate-700 space-y-4">
+						<label className="flex items-center gap-3 cursor-pointer">
+							<input
+								type="checkbox"
+								className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-blue-500 focus:ring-blue-500 focus:ring-offset-slate-800"
+								checked={isRepeatableControlMove}
+								onChange={(e) => setIsRepeatableControlMove(e.target.checked)}
+							/>
+							{isRepeatableControlMove ? (
+								<label className="block">
+									<span className="text-sm font-medium">Next Control Move After</span>
+									<input
+										type="number"
+										className="w-full p-2 rounded bg-slate-900 border border-slate-700 focus:border-blue-500 outline-none"
+										value={nextControlMoveAfter}
+										min={1}
+										max={100}
+										onChange={(e) => setNextControlMoveAfter(parseInt(e.target.value) || 16)}
+									/>
+								</label>
+							) : (
+								<span className="text-sm font-medium leading-16">Repeatable Control Move</span>
+							)}
+						</label>
+					</div>
+				</div>
 
 				<div className="grid gap-4 grid-cols-2 grid-rows-2">
 					<PlayerInput
@@ -161,6 +240,12 @@ export default function BroadcastPage() {
 					blackPlayer={blackPlayer}
 					title={title}
 					timeControl={timeControl}
+					controlMove={controlMove}
+					timeIncrement={timeIncrement}
+					isRepeatableControlMove={isRepeatableControlMove}
+					bonusTimeMin={bonusTimeMin}
+					nextControlMoveAfter={nextControlMoveAfter}
+					newTimeIncrement={newTimeIncrement}
 					scheduledAt={scheduledAt ? new Date(scheduledAt).toISOString() : new Date().toISOString()}
 				/>
 			</div>

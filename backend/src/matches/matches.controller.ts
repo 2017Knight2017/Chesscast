@@ -29,9 +29,31 @@ export class MatchesController {
 		blackPlayer: string,
 		title: string,
 		scheduledAt: string,
-		timeControl: number
+		timeControl: number,
+		controlMove: number,
+		timeIncrement: number,
+		isRepeatableControlMove: boolean,
+		bonusTimeMin: number,
+		nextControlMoveAfter: number,
+		newTimeIncrement: number
 	}){
-		return this.matchesService.createBroadcast(req.user.id, req.user.username, body.title, new Date(body.scheduledAt), body.pgn, body.whitePlayer, body.blackPlayer, body.archetypes, body.timeControl);
+		return this.matchesService.createBroadcast(
+			req.user.id, 
+			req.user.username, 
+			body.title, 
+			new Date(body.scheduledAt), 
+			body.pgn, 
+			body.whitePlayer, 
+			body.blackPlayer, 
+			body.archetypes, 
+			body.timeControl,
+			body.controlMove,
+			body.timeIncrement,
+			body.isRepeatableControlMove,
+			body.bonusTimeMin,
+			body.nextControlMoveAfter,
+			body.newTimeIncrement
+		);
 	}
 	
 	@Post(':id/report')
