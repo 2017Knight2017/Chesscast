@@ -5,9 +5,9 @@ import 'chessground/assets/chessground.base.css';
 import 'chessground/assets/chessground.brown.css';
 import 'chessground/assets/chessground.cburnett.css';
 import { ExitButton } from "@/components/exit_button";
-import { cookies } from "next/dist/server/request/cookies";
+import { cookies } from "next/headers";
 import { Providers } from "@/components/providers";
-
+import Link from "next/link";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -26,15 +26,49 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
 	const cookieStore = await cookies();
-	const token = cookieStore.get('token');
+	const token = cookieStore.get('token')?.value;
+	let username: string | null = null;
+
+	if (token) {
+		try {
+			const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+			username = payload.username;
+		} catch (e) {
+			console.error("Error decoding token:", e);
+		}
+	}
+
 	return (
 		<html lang="en">
 			<body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
 				<Providers>
-					<header className="absolute top-0 left-0 w-full h-[6%] flex items-center justify-center z-20">
-						<a href="/">
+					<header className="absolute top-0 left-0 w-full h-[6%] flex items-center px-8 z-20">
+						<Link href="/">
 							<h1 className="text-3xl font-serif text-[#3e2b1d] opacity-80">Chesscast</h1>
-						</a>
+						</Link>
+
+						<nav className="flex items-center gap-6 ml-10">
+							<Link href="/" className="text-[#3e2b1d] opacity-70 hover:opacity-100 transition-opacity">
+								Matches
+							</Link>
+							<Link href="/new" className="text-[#3e2b1d] opacity-70 hover:opacity-100 transition-opacity">
+								Create
+							</Link>
+							{username ? (
+								<Link href={`/member/${username}`} className="text-[#3e2b1d] opacity-70 hover:opacity-100 transition-opacity">
+									Profile ({username})
+								</Link>
+							) : (
+								<>
+									<Link href="/login" className="text-[#3e2b1d] opacity-70 hover:opacity-100 transition-opacity">
+										Login
+									</Link>
+									<Link href="/register" className="text-[#3e2b1d] opacity-70 hover:opacity-100 transition-opacity">
+										Register
+									</Link>
+								</>
+							)}
+						</nav>
 						{token && <ExitButton />}
 					</header>
 					{children}
