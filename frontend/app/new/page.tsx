@@ -123,40 +123,18 @@ export default function BroadcastPage() {
 							onChange={(e) => setTimeIncrement(parseInt(e.target.value) || 0)}
 						/>
 					</label>
-					<label className="block">
-						<span className="text-sm">Control Move</span>
-						<input
-							type="number"
-							className="w-full p-2 rounded bg-slate-800 border border-slate-700 focus:border-blue-500 outline-none"
-							value={controlMove}
-							min={10}
-							max={100}
-							onChange={(e) => setControlMove(parseInt(e.target.value) || 40)}
-						/>
-					</label>
-					<label className="block">
-						<span className="text-sm">Bonus Time (min)</span>
-						<input
-							type="number"
-							className="w-full p-2 rounded bg-slate-800 border border-slate-700 focus:border-blue-500 outline-none"
-							value={bonusTimeMin}
-							min={1}
-							max={120}
-							onChange={(e) => setBonusTimeMin(parseInt(e.target.value) || 30)}
-						/>
-					</label>
-					<label className="block">
-						<span className="text-sm">New Increment (sec)</span>
-						<input
-							type="number"
-							className="w-full p-2 rounded bg-slate-800 border border-slate-700 focus:border-blue-500 outline-none"
-							value={newTimeIncrement}
-							min={0}
-							max={60}
-							onChange={(e) => setNewTimeIncrement(parseInt(e.target.value) || 30)}
-						/>
-					</label>
-					<div className="p-2 rounded bg-slate-800 border border-slate-700 space-y-4">
+					<div className="col-start-3 row-span-2 p-2 rounded bg-slate-800 border border-slate-700 space-y-4">
+						<label className="block">
+							<span className="text-sm">Control Move</span>
+							<input
+								type="number"
+								className="w-full p-2 rounded bg-slate-900 border border-slate-700 focus:border-blue-500 outline-none"
+								value={controlMove}
+								min={10}
+								max={100}
+								onChange={(e) => setControlMove(parseInt(e.target.value))}
+							/>
+						</label>
 						<label className="flex items-center gap-3 cursor-pointer">
 							<input
 								type="checkbox"
@@ -181,6 +159,29 @@ export default function BroadcastPage() {
 							)}
 						</label>
 					</div>
+					<label className="block">
+						<span className="text-sm">Bonus Time after Control (min)</span>
+						<input
+							type="number"
+							className="w-full p-2 rounded bg-slate-800 border border-slate-700 focus:border-blue-500 outline-none"
+							value={bonusTimeMin}
+							min={1}
+							max={120}
+							onChange={(e) => setBonusTimeMin(parseInt(e.target.value) || 0)}
+						/>
+					</label>
+					<label className="block">
+						<span className="text-sm">Increment after Control (sec)</span>
+						<input
+							type="number"
+							className="w-full p-2 rounded bg-slate-800 border border-slate-700 focus:border-blue-500 outline-none"
+							value={newTimeIncrement}
+							min={0}
+							max={60}
+							onChange={(e) => setNewTimeIncrement(parseInt(e.target.value) || 0)}
+						/>
+					</label>
+					
 				</div>
 
 				<div className="grid gap-4 grid-cols-2 grid-rows-2">

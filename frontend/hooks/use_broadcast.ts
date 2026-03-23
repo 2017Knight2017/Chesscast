@@ -20,6 +20,7 @@ export const useBroadcast = (matchId: string, initialMatch?: Match) => {
 		return null;
 	});
 	const [isEnded, setIsEnded] = useState<boolean>(initialMatch?.status === "finished");
+	const [outcome, setOutcome] = useState<string | undefined>(initialMatch?.outcome);
 	const guestId = useGuestId();
 	const socket = useSocket();
 	
@@ -94,8 +95,9 @@ export const useBroadcast = (matchId: string, initialMatch?: Match) => {
 			});
 		});
 
-		socket.on('match_finished', () => {
+		socket.on('match_finished', (data: { outcome: string }) => {
 			setIsEnded(true);
+			setOutcome(outcome);
 		});
 
 		return () => {
@@ -107,5 +109,5 @@ export const useBroadcast = (matchId: string, initialMatch?: Match) => {
 		};
 	}, [matchId, guestId, socket]);
 
-	return { currentMoveData, isEnded };
+	return { currentMoveData, isEnded, outcome };
 };

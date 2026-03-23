@@ -15,6 +15,7 @@ import {
 import { sql } from 'drizzle-orm';
 
 export const statusEnum = pgEnum("status", ['processing', 'waiting', 'in_progress', 'finished']);
+export const outcomeEnum = pgEnum("outcome", ['1/2-1/2', '1-0', '0-1']);
 
 export const users = pgTable('users', {
 	id:                serial('id').primaryKey(),
@@ -36,6 +37,7 @@ export const analysis = pgTable('analysis', {
 	durations:        integer('durations').array().notNull().default(sql`'{}'::integer[]`),
 	evaluations:      integer('evaluations').array().notNull().default(sql`'{}'::integer[]`),
 	notation:         text('notation').array().notNull().default(sql`'{}'::text[]`),
+  outcome:          outcomeEnum().notNull().default('1/2-1/2'),
 	createdAt:        timestamp('created_at').notNull().defaultNow(),
 });
 

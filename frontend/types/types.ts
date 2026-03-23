@@ -10,6 +10,7 @@ export interface Match {
 	viewerCount: number;
 	history?: string[];
 	evaluations?: number[];
+	outcome?: string;
 }
 
 export interface Move {

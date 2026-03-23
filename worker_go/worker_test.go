@@ -54,6 +54,7 @@ func TestReportAnalysis(t *testing.T) {
 	evals := []int{10, 20}
 	durs := []float64{3.5, 4.2}
 	notes := []string{"e4", "e5"}
+	outcome := "1/2-1/2"
 
-	reportAnalysis("test-id", evals, durs, notes)
+	reportAnalysis("test-id", evals, durs, notes, outcome)
 }

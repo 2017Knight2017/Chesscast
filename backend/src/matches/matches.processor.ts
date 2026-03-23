@@ -55,7 +55,7 @@ export class MatchesProcessor extends WorkerHost {
 	            },
 	        );
 	    } else {
-			this.gateway.server.to(matchId).emit('match_finished');
+			this.gateway.server.to(matchId).emit('match_finished', { outcome: analysis.outcome });
 	        await this.matchesService.finishGame(matchId);
 	    }
 	}

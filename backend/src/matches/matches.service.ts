@@ -30,6 +30,7 @@ export interface Match {
 	viewerCount: number,
 	history?: string[] | null,
 	evaluations?: number[] | null
+	outcome?: string
 }
 
 const archetypeOptions = {
@@ -180,14 +181,15 @@ export class MatchesService {
 		return analysis;
 	}
 
-	async handleWorkerReport(id: string, evaluations: number[], durations: number[], notation: string[]) {
+	async handleWorkerReport(id: string, evaluations: number[], durations: number[], notation: string[], outcome: '1/2-1/2'|'1-0'|'0-1') {
 		console.log(id, evaluations, durations, notation)
 		await this.db
 			.update(sc.analysis)
 			.set({
 				evaluations: evaluations,
 				durations: durations,
-				notation: notation
+				notation: notation,
+				outcome: outcome
 			})
 			.where(eq(sc.analysis.id, id));
 		await this.db
@@ -337,6 +339,7 @@ export class MatchesService {
 			fen: match.fen || '',
 			viewerCount: viewers,
 			history: analysis.notation.slice(0, Math.max(match.moveIndex-1, 0)) || [],
+			outcome: analysis.outcome
 		};
 
 		return dto;

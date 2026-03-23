@@ -8,6 +8,13 @@
       "when": 1773631709346,
       "tag": "0000_modern_lifeguard",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1774249428069,
+      "tag": "0001_icy_sleeper",
+      "breakpoints": true
     }
   ]
 }

@@ -60,6 +60,7 @@ export function ChessBoard({
 	finalIsEnded,
 	match, 
 	currentMoveData, 
+	outcome,
 	isOnMove=false 
 }: {
 	onInteraction: () => void,
@@ -69,6 +70,7 @@ export function ChessBoard({
 	finalIsEnded: boolean,
 	match: Match,
 	currentMoveData: Move,
+	outcome: string | undefined,
 	isOnMove?: boolean 
 }) {
 	const { selectedMoveIndex, isAnalysisMode } = useAnalysisState();
@@ -126,6 +128,19 @@ export function ChessBoard({
 
 	const clockData = isBroadcastActive ? currentMoveData : null;
 	const initialTime = match.timeControl * 1000;
+	
+	let outcomeMessage;
+	switch (outcome) {
+		case "1/2-1/2": 
+		outcomeMessage = "Draw!";
+		break;
+		case "1-0": 
+		outcomeMessage = "White wins!";
+		break;
+		case "0-1": 
+		outcomeMessage = "Black wins!";
+		break;
+	}
 		
 	return (
 		<div ref={containerRef} className='relative w-full h-full flex justify-center items-center flex-col sepia-100 brightness-75 contrast-125'>
@@ -145,7 +160,7 @@ export function ChessBoard({
 
 				{finalIsEnded && (
 					<div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 p-3 z-20 rounded-lg bg-amber-900 border-amber-700">
-						<span className='text-gray-300 font-bold text-2xl font-sans'>Broadcast is over!</span>
+						<span className='text-gray-300 font-bold text-2xl font-sans'>{`Broadcast is over!\n${outcomeMessage}`}</span>
 					</div>
 				)}
 

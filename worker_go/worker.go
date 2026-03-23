@@ -40,6 +40,7 @@ type ReportPayload struct {
 	Evaluations []int    `json:"evaluations"`
 	Durations   []int    `json:"durations"`
 	Notation    []string `json:"notation"`
+	Outcome     string   `json:"outcome"`
 }
 
 type MateStats struct {
@@ -207,7 +208,7 @@ func ProcessGame(
 		board.Move(move)
 	}
 
-	reportAnalysis(matchID, evaluations, durations, notation)
+	reportAnalysis(matchID, evaluations, durations, notation, string(game.Outcome()))
 	logger.Printf("Игра %s обработана: %d полуходов", matchID, len(evaluations))
 	return nil
 }
@@ -500,7 +501,7 @@ func calculateMoveTimeWithEngine(ctx context.Context, eng *LongLivedEngine, time
 	return evalRet, finalTime, nil
 }
 
-func reportAnalysis(matchID string, evaluations []int, durations []float64, notation []string) {
+func reportAnalysis(matchID string, evaluations []int, durations []float64, notation []string, outcome string) {
 	url := fmt.Sprintf("%s/matches/%s/report", os.Getenv("BACKEND_URL"), matchID)
 	logger.Printf("Отправляем отчет для матча %s на URL: %s", matchID, url)
 
@@ -509,10 +510,15 @@ func reportAnalysis(matchID string, evaluations []int, durations []float64, nota
 		durationsMs[i] = int(d * 1000)
 	}
 
+	if outcome == "*" {
+		outcome = "1/2-1/2"
+	}
+
 	payload := ReportPayload{
 		Evaluations: evaluations,
 		Durations:   durationsMs,
 		Notation:    notation,
+		Outcome:     outcome,
 	}
 
 	data, err := json.Marshal(payload)
