@@ -52,8 +52,8 @@ type MateStats struct {
 
 var logger *log.Logger
 
-const VIRTUAL_CONTROL = 30
-const VIRTUAL_MOVES_TILL_END = 13
+const VIRTUAL_CONTROL = 40
+const VIRTUAL_MOVES_TILL_END = 15
 
 func init() {
 	logFile, err := os.OpenFile("worker.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
@@ -95,6 +95,24 @@ func getBias(name string) Bias {
 	}
 }
 
+func getAbsoluteMax(initialTimeSec, timeLeftSec float64) float64 {
+	limitByInitial := initialTimeSec * 0.15
+	if initialTimeSec < 300 {
+		limitByInitial = initialTimeSec * 0.25
+	}
+
+	limitByCurrent := timeLeftSec * 0.4
+
+	hardCeiling := 2400.0
+
+	absMax := math.Min(limitByInitial, limitByCurrent)
+	absMax = math.Min(absMax, hardCeiling)
+
+	jitter := 0.95 + (rand.Float64() * 0.1)
+
+	return absMax * jitter
+}
+
 func ProcessGame(
 	ctx context.Context,
 	matchID, pgn string,
@@ -130,8 +148,17 @@ func ProcessGame(
 		chess.Black: float64(initialTime),
 	}
 
+	lastComplexities := map[chess.Color]float64{
+		chess.White: 1.0,
+		chess.Black: 1.0,
+	}
+
+	nextControlForPlayer := map[chess.Color]int{
+		chess.White: controlMove * 2,
+		chess.Black: controlMove * 2,
+	}
+
 	currentIncrement := float64(timeIncrement)
-	nextControlPly := controlMove * 2
 	movesPlayed := 0
 	openingTill := rand.Intn(8) + 10
 	isControlMoveReached := false
@@ -157,22 +184,21 @@ func ProcessGame(
 		moveText := chess.AlgebraicNotation{}.Encode(board.Position(), move)
 		notation = append(notation, moveText)
 
-		movesToControl := (nextControlPly - movesPlayed) / 2
-		if isControlMoveReached && !isRepeatable {
-			movesToControl = max(movesToControl, VIRTUAL_MOVES_TILL_END)
-		}
-		if movesToControl <= 0 {
-			if isRepeatable {
-				nextControlPly += nextControlAfter * 2
-				movesToControl = nextControlAfter
-			} else {
-				nextControlPly += VIRTUAL_CONTROL * 2
-				movesToControl = VIRTUAL_CONTROL
+		var movesToControl int
+		if controlMove == 0 || (isControlMoveReached && !isRepeatable) {
+			plannedTotalMoves := VIRTUAL_CONTROL
+			movesToControl = max(VIRTUAL_MOVES_TILL_END, plannedTotalMoves-(movesPlayed/2))
+		} else {
+			movesToControl = (nextControlForPlayer[currentPlayer] - movesPlayed) / 2
+			if movesToControl <= 0 {
+				movesToControl = 1
 			}
-			isControlMoveReached = true
-			currentIncrement = float64(newIncrement)
-			clocks[currentPlayer] += float64(bonusTimeMin * 60)
 		}
+
+		var eval int
+		var moveTime float64
+		var complexityMult float64
+		var err error
 
 		fen := board.Position().String()
 		currentBias := biasWhite
@@ -180,17 +206,24 @@ func ProcessGame(
 			currentBias = biasBlack
 		}
 
-		eval, moveTime, err := calculateMoveTimeWithEngine(ctx, eng, clocks[currentPlayer], movesToControl, fen, currentBias)
-		if err != nil {
-			return err
-		}
-
 		if movesPlayed < openingTill {
-			moveTime *= 0.05
+			eval = 0
+			moveTime = rand.Float64()*3 + 2
+			complexityMult = 1.0
+		} else {
+			eval, moveTime, complexityMult, err = calculateMoveTimeWithEngine(
+				ctx, eng, clocks[currentPlayer], movesToControl, fen,
+				currentBias, lastComplexities[currentPlayer], math.Min(float64(initialTime)*0.025, clocks[currentPlayer]*0.05),
+				getAbsoluteMax(float64(initialTime), clocks[currentPlayer]),
+			)
+			if err != nil {
+				return err
+			}
 		}
 
 		evaluations = append(evaluations, eval)
 		durations = append(durations, moveTime)
+		lastComplexities[currentPlayer] = complexityMult
 
 		clocks[currentPlayer] -= moveTime
 		clocks[currentPlayer] += currentIncrement
@@ -198,13 +231,19 @@ func ProcessGame(
 			clocks[currentPlayer] = 0
 		}
 
-		movesPlayed++
-		colorStr := "белых"
-		if currentPlayer == chess.Black {
-			colorStr = "черных"
-		}
-		logger.Printf("Матч %s, полуход %d. Ход %s: %.1f сек (оценка: %d)", matchID, movesPlayed, colorStr, moveTime, eval)
+		if controlMove > 0 && (movesPlayed+1) == nextControlForPlayer[currentPlayer] {
+			clocks[currentPlayer] += float64(bonusTimeMin * 60)
 
+			if isRepeatable {
+				nextControlForPlayer[currentPlayer] += nextControlAfter * 2
+			} else {
+				isControlMoveReached = true
+			}
+
+			currentIncrement = float64(newIncrement)
+		}
+
+		movesPlayed++
 		board.Move(move)
 	}
 
@@ -437,12 +476,17 @@ func (eng *LongLivedEngine) analyzePosition(ctx context.Context, fen string) ([]
 	}
 }
 
-func calculateMoveTimeWithEngine(ctx context.Context, eng *LongLivedEngine, timeLeftSec float64, movesToControl int, fen string, bias Bias) (int, float64, error) {
-	baseTime := timeLeftSec / float64(movesToControl+10)
+func calculateMoveTimeWithEngine(ctx context.Context, eng *LongLivedEngine, timeLeftSec float64, movesToControl int, fen string, bias Bias, lastComplexity float64, targetMoveTime float64, absoluteMax float64) (int, float64, float64, error) {
+	survival_base := timeLeftSec / float64(movesToControl+4)
+	baseTime := targetMoveTime
+	if targetMoveTime > timeLeftSec*0.15 {
+		ratio := min(1.0, (timeLeftSec*0.15)/targetMoveTime)
+		baseTime = (targetMoveTime * ratio) + (survival_base * (1 - ratio))
+	}
 
 	vals, stats, err := eng.analyzePosition(ctx, fen)
 	if err != nil {
-		return 0, 0, err
+		return 0, 0, 0, err
 	}
 
 	e1, e2 := float64(vals[0]), float64(vals[1])
@@ -461,13 +505,22 @@ func calculateMoveTimeWithEngine(ctx context.Context, eng *LongLivedEngine, time
 
 	fenFunc, err := chess.FEN(fen)
 	if err != nil {
-		return 0, 0, fmt.Errorf("ошибка парсинга FEN: %v", err)
+		return 0, 0, 0, fmt.Errorf("ошибка парсинга FEN: %v", err)
 	}
 
 	game := chess.NewGame(fenFunc)
-	validMoves := game.ValidMoves()
-	tactics := 0
 
+	evalRet := vals[0]
+	if game.Position().Turn() == chess.Black {
+		evalRet = -evalRet
+	}
+
+	validMoves := game.ValidMoves()
+	if len(validMoves) == 1 {
+		return evalRet, 4.0 + rand.Float64()*2.0, 0.0, nil
+	}
+
+	tactics := 0
 	for _, m := range validMoves {
 		if m.HasTag(chess.Capture) || m.HasTag(chess.Check) {
 			tactics++
@@ -480,7 +533,8 @@ func calculateMoveTimeWithEngine(ctx context.Context, eng *LongLivedEngine, time
 	}
 
 	complexity := bias.W1*uncertaintyFactor + bias.W2*sharpnessFactor + bias.W3*tacticsFactor
-	complexityMult := 0.2 + math.Log1p(complexity*5)
+	complexityMult := 0.2 + math.Pow(complexity*2.5, 1.8)
+	finalComplexity := complexityMult*0.8 + lastComplexity*0.2
 
 	panicFactor := 1.0
 	if movesToControl <= 3 && timeLeftSec < 180 {
@@ -489,16 +543,14 @@ func calculateMoveTimeWithEngine(ctx context.Context, eng *LongLivedEngine, time
 
 	logNorm := math.Exp(rand.NormFloat64() * bias.Sigma)
 
-	calculatedTime := baseTime * complexityMult * panicFactor * logNorm
-	absoluteMax := math.Min(timeLeftSec*0.15, 600)
+	calculatedTime := baseTime * finalComplexity * panicFactor * logNorm
 	finalTime := math.Max(3.0, math.Min(calculatedTime, absoluteMax))
-
-	evalRet := vals[0]
-	if game.Position().Turn() == chess.Black {
-		evalRet = -evalRet
+	finalTime = math.Min(finalTime, timeLeftSec-0.5)
+	if finalTime < 0.1 {
+		finalTime = 0.1
 	}
 
-	return evalRet, finalTime, nil
+	return evalRet, finalTime, complexityMult, nil
 }
 
 func reportAnalysis(matchID string, evaluations []int, durations []float64, notation []string, outcome string) {

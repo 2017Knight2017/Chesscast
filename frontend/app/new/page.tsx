@@ -8,7 +8,7 @@ export default function BroadcastPage() {
 	const [pgnInput, setPgnInput] = useState('');
 	const [title, setTitle] = useState('');
 	const [timeControl, setTimeControl] = useState('1:00');
-	const [controlMove, setControlMove] = useState(40);
+	const [controlMove, setControlMove] = useState(0);
 	const [timeIncrement, setTimeIncrement] = useState(0);
 
 	const [isRepeatableControlMove, setIsRepeatableControlMove] = useState(false);
@@ -130,9 +130,9 @@ export default function BroadcastPage() {
 								type="number"
 								className="w-full p-2 rounded bg-slate-900 border border-slate-700 focus:border-blue-500 outline-none"
 								value={controlMove}
-								min={10}
-								max={100}
-								onChange={(e) => setControlMove(parseInt(e.target.value))}
+								min={0}
+								max={60}
+								onChange={(e) => setControlMove(parseInt(e.target.value) || 0)}
 							/>
 						</label>
 						<label className="flex items-center gap-3 cursor-pointer">
