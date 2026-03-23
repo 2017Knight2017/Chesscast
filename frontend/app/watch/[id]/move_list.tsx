@@ -199,14 +199,11 @@ export function MoveList({ id, matchHistory: propMatchHistory }: MoveListProps) 
 	return (
 	<div className="h-full flex flex-col bg-[#f4ead5] text-[#3e2b1d] shadow-inner p-6 border-l-4 border-[#8b5e34] font-mono overflow-hidden">
 		
-		{/* Заголовки — запрещаем им сжиматься через shrink-0 */}
 		<div className="shrink-0">
 			<h3 className="text-center border-b mb-2 sepia">Moves Record</h3>
 			<div className="border-b border-black/10 pb-1 mb-2 italic text-xs"># — White — Black</div>
 		</div>
 
-		{/* 2. Основной блок ходов: flex-1 заставит его занять всё свободное место */}
-		{/* min-h-0 критически важен, чтобы блок мог уменьшаться и включать скролл */}
 		<div className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden mb-4">
 			<div 
 				style={{
@@ -255,7 +252,6 @@ export function MoveList({ id, matchHistory: propMatchHistory }: MoveListProps) 
 			</div>
 		</div>
 
-		{/* 3. Блок вариаций: ограничиваем по высоте, чтобы не вытеснял всё остальное */}
 		{isAnalysisMode && (
 			<div className="shrink-0 max-h-[30%] mt-2 pt-2 border-t border-black/20 w-full overflow-y-auto">
 				<div className="flex justify-between items-center mb-2">
@@ -263,7 +259,7 @@ export function MoveList({ id, matchHistory: propMatchHistory }: MoveListProps) 
 						Variations
 					</span>
 					
-					{currentPath.length > 0 && (
+					{currentPath.length > 0 && variationNodes.length > 0 && (
 						<button 
 							onClick={() => deleteBranch(currentPath, matchHistory)}
 							className="text-[10px] text-red-500 hover:text-red-700 transition-colors uppercase font-bold flex items-center gap-1"
