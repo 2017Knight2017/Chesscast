@@ -49,7 +49,6 @@ export class MatchesController {
 			body.timeControl,
 			body.controlMove,
 			body.timeIncrement,
-			body.isRepeatableControlMove,
 			body.bonusTimeMin,
 			body.nextControlMoveAfter,
 			body.newTimeIncrement

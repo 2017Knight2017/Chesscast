@@ -23,7 +23,6 @@ func TestProcessGame(t *testing.T) {
 	initialTime := 600
 	controlMove := 40
 	timeIncrement := 0
-	isRepeatable := false
 	bonusTimeMin := 30
 	nextControlAfter := 16
 	newIncrement := 30
@@ -32,7 +31,7 @@ func TestProcessGame(t *testing.T) {
 	fmt.Println("Начинаем тест обработки игры...")
 
 	ctx := context.Background()
-	err := ProcessGame(ctx, matchID, pgn, initialTime, controlMove, timeIncrement, isRepeatable, bonusTimeMin, nextControlAfter, newIncrement, archetypes)
+	err := ProcessGame(ctx, matchID, pgn, initialTime, controlMove, timeIncrement, bonusTimeMin, nextControlAfter, newIncrement, archetypes)
 
 	if err != nil {
 		t.Errorf("Ошибка при обработке игры: %v", err)

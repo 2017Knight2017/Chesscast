@@ -28,7 +28,6 @@ export default function CreateMatchButton({
 	timeControl, 
 	controlMove, 
 	timeIncrement,
-	isRepeatableControlMove,
 	bonusTimeMin,
 	nextControlMoveAfter,
 	newTimeIncrement,
@@ -65,7 +64,6 @@ export default function CreateMatchButton({
 				convertTimeControlToSeconds(timeControl), 
 				controlMove,
 				timeIncrement,
-				isRepeatableControlMove,
 				bonusTimeMin,
 				nextControlMoveAfter,
 				newTimeIncrement,
@@ -73,16 +71,16 @@ export default function CreateMatchButton({
 			);
 			
 			if (result.success) {
-				alert('Успех: ' + result.message); 
+				alert('Success: ' + result.message); 
 			} else {
-				alert('Ошибка: ' + result.message);
+				alert('Error: ' + result.message);
 			}
 		});
 	};
 
 	return (
 		<button onClick={handleClick} disabled={isPending} className={`px-4 py-2 rounded text-white font-bold transition-colors ${isPending ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}`}>
-			{isPending ? 'На обработке...' : 'Создать трансляцию'}
+			{isPending ? 'Loading...' : 'Create Broadcast'}
 		</button>
 	);
 }

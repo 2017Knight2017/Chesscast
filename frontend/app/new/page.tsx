@@ -9,15 +9,15 @@ export default function BroadcastPage() {
 	const [title, setTitle] = useState('');
 	const [timeControl, setTimeControl] = useState('1:00');
 	const [controlMove, setControlMove] = useState(0);
-	const [timeIncrement, setTimeIncrement] = useState(0);
+	const [timeIncrement, setTimeIncrement] = useState(5);
 
 	const [isRepeatableControlMove, setIsRepeatableControlMove] = useState(false);
 	const [bonusTimeMin, setBonusTimeMin] = useState(30);
 	const [nextControlMoveAfter, setNextControlMoveAfter] = useState(16);
 	const [newTimeIncrement, setNewTimeIncrement] = useState(30);
 
-	const [whitePlayer, setWhitePlayer] = useState('');
-	const [blackPlayer, setBlackPlayer] = useState('');
+	const [whitePlayer, setWhitePlayer] = useState('Magnus Carlsen');
+	const [blackPlayer, setBlackPlayer] = useState('Hikaru Nakamura');
 
 	const [scheduledAt, setScheduledAt] = useState("");
 	const [minDate, setMinDate] = useState("");

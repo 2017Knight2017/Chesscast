@@ -15,21 +15,24 @@ export function useProcessing(match: Match) {
 			socket.emit("joinMatchProcessing", {matchId: match.id});
 		};
 
+		const handleNoMoreProcessing = (data: { matchId: string }) => {
+			if (data.matchId === match.id) {
+				setIsProcessing(false);
+			}
+		};
+
 		if (socket.connected) {
 			handleConnect();
 		}
 
 		socket.on('connect', handleConnect);
-
-		socket.on('no_more_processing', () => {
-			setIsProcessing(false);
-		});
+		socket.on('no_more_processing', handleNoMoreProcessing);
 		
 		return () => {
 			socket.emit("leaveMatchProcessing", {matchId: match.id});
 
 			socket.off("connect", handleConnect);
-			socket.off("no_more_processing");
+			socket.off("no_more_processing", handleNoMoreProcessing);
 		};
 	}, [match.id, socket]);
 

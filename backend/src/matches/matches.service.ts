@@ -88,7 +88,6 @@ export class MatchesService {
 		timeControl: number,
 		controlMove: number,
 		timeIncrement: number,
-		isRepeatableControlMove: boolean,
 		bonusTimeMin: number,
 		nextControlMoveAfter: number,
 		newTimeIncrement: number
@@ -137,7 +136,13 @@ export class MatchesService {
 		const [analysis] = await this.db
 			.insert(sc.analysis)
 			.values({
-				pgn: pgn
+				pgn: pgn,
+				timeControl: timeControl,
+				controlMove: controlMove,
+				increment: timeIncrement,
+				bonusTimeMin: bonusTimeMin,
+				newControlMoveEvery: nextControlMoveAfter,
+				newIncrement: newTimeIncrement,
 			})
 			.returning();
 
@@ -153,8 +158,6 @@ export class MatchesService {
 				blackPlayerTime: timeControl*1000,
 				status: 'processing',
 				moveIndex: 0,
-				timeControl: timeControl,
-				increment: timeIncrement,
 				scheduledAt: scheduledAt
 			});
 		
@@ -169,7 +172,6 @@ export class MatchesService {
 			time_control: timeControl,
 			control_move: controlMove,
 			time_increment: timeIncrement,
-			is_repeatable_control_move: isRepeatableControlMove,
 			bonus_time_min: bonusTimeMin,
 			next_control_move_after: nextControlMoveAfter,
 			new_time_increment: newTimeIncrement,
@@ -198,7 +200,7 @@ export class MatchesService {
 				status: "waiting"
 			})
 			.where(eq(sc.matches.id, id));
-		this.gateway.server.to(`is_processing:${id}`).emit("no_more_processing");
+		this.gateway.server.to(`is_processing:${id}`).emit("no_more_processing", { matchId: id });
 	}
 
 	async startBroadcast(id: string) {
@@ -206,7 +208,7 @@ export class MatchesService {
 			.update(sc.matches)
 			.set({
 				status: "in_progress",
-				moveIndex: 1
+				moveIndex: 0
 			})
 			.where(eq(sc.matches.id, id))
 			.returning();
@@ -232,7 +234,7 @@ export class MatchesService {
 			.update(sc.matches)
 			.set({
 				status: 'in_progress',
-				moveIndex: 1 
+				moveIndex: 0
 			})
 			.where(
 				and(
@@ -268,26 +270,59 @@ export class MatchesService {
 		if (!game) throw new Error('Match not found');
 		if (!analysis) throw new Error('Analysis not found');
 
-		const chess = new Chess(game.fen);
+		const { 
+			controlMove,
+			newControlMoveEvery,
+			bonusTimeMin,
+			increment,
+			newIncrement,
+			durations
+		} = analysis;
+
+		const {
+			fen,
+			moveIndex,
+			lastControlMove,
+			whitePlayerTime,
+			blackPlayerTime
+		} = game;
+
+		const chess = new Chess(fen);
 
 		chess.move(move);
 
 		const newFen = chess.fen();
 
-		const moveDuration = analysis.durations[game.moveIndex] || 0;
-		const isWhiteMove = game.moveIndex % 2 === 0;
-		 
+		const moveDuration = durations[moveIndex] || 0;
+		const isWhiteMove = moveIndex % 2 === 0;
+		const currentIncrement = (moveIndex/2 <= controlMove ? increment : newIncrement) * 1000;
+		let lastControlMoveVar = lastControlMove;
+		let bonusTimeMs = 0;
+		
+		if (controlMove !== 0) {
+			const moveNumber = Math.floor(moveIndex / 2);
+			const nextControl = lastControlMove === 0 
+				? controlMove 
+				: lastControlMove + newControlMoveEvery;
+
+			if (moveNumber === nextControl) {
+				if (!isWhiteMove) lastControlMoveVar = nextControl;
+				bonusTimeMs = bonusTimeMin * 60000;
+			}
+		}
+
 		const [updatedMatch] = await this.db
 			.update(sc.matches)
 			.set({
 				fen: newFen,
-				moveIndex: game.moveIndex+1,
+				moveIndex: moveIndex+1,
+				lastControlMove: lastControlMoveVar,
 				whitePlayerTime: isWhiteMove 
-					? game.whitePlayerTime - moveDuration 
-					: game.whitePlayerTime,
+					? whitePlayerTime - moveDuration + currentIncrement + bonusTimeMs
+					: whitePlayerTime,
 				blackPlayerTime: !isWhiteMove 
-					? game.blackPlayerTime - moveDuration 
-					: game.blackPlayerTime,
+					? blackPlayerTime - moveDuration + currentIncrement + bonusTimeMs
+					: blackPlayerTime,
 			})
 			.where(eq(sc.matches.id, id))
 			.returning();
@@ -323,9 +358,9 @@ export class MatchesService {
 			id: match.id,
 			title: match.title,
 			author: match.author,
-			timeControl: match.timeControl,
+			timeControl: analysis.timeControl,
 			status: match.status,
-			evaluations: analysis.evaluations.slice(0, Math.max(match.moveIndex-1, 0)),
+			evaluations: analysis.evaluations.slice(0, match.moveIndex),
 			white: { 
 				name: match.whitePlayer, 
 				time: formatTime(Math.floor(match.whitePlayerTime / 1000)),
@@ -338,7 +373,7 @@ export class MatchesService {
 			},
 			fen: match.fen || '',
 			viewerCount: viewers,
-			history: analysis.notation.slice(0, Math.max(match.moveIndex-1, 0)) || [],
+			history: analysis.notation.slice(0, match.moveIndex) || [],
 			outcome: analysis.outcome
 		};
 
@@ -373,11 +408,12 @@ export class MatchesService {
 				blackPlayer: sc.matches.blackPlayer,
 				whitePlayerTime: sc.matches.whitePlayerTime,
 				blackPlayerTime: sc.matches.blackPlayerTime,
-				timeControl: sc.matches.timeControl,
+				timeControl: sc.analysis.timeControl,
 				fen: sc.matches.fen
 			})
 			.from(sc.matches)
-        	.innerJoin(sc.users, eq(sc.matches.author, sc.users.username));
+			.innerJoin(sc.users, eq(sc.matches.author, sc.users.username))
+			.innerJoin(sc.analysis, eq(sc.analysis.id, sc.matches.id));
 			
 		if (isJoinTable) {
 			query.innerJoin(table, eq(sc.matches.id, table.matchId));

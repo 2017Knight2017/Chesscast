@@ -16,7 +16,6 @@ export async function createMatchAction(
 	timeControl: number, 
 	controlMove: number,
 	timeIncrement: number,
-	isRepeatableControlMove: boolean,
 	bonusTimeMin: number,
 	nextControlMoveAfter: number,
 	newTimeIncrement: number,
@@ -45,7 +44,6 @@ export async function createMatchAction(
 				timeControl: timeControl, 
 				controlMove: controlMove,
 				timeIncrement: timeIncrement,
-				isRepeatableControlMove: isRepeatableControlMove,
 				bonusTimeMin: bonusTimeMin,
 				nextControlMoveAfter: nextControlMoveAfter,
 				newTimeIncrement: newTimeIncrement,
@@ -68,4 +66,8 @@ export async function createMatchAction(
 		console.error('Ошибка связи с API:', error);
 		return { success: false, message: 'Не удалось соединиться с сервером' };
 	}
+}
+
+export async function launchMatchAction(matchId: string) {
+	await fetch(process.env.NEST_API_URL + `/matches/${matchId}/start`, { method: 'POST' });
 }

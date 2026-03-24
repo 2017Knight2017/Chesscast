@@ -33,12 +33,14 @@ export function useAnalysisSync({ match, userId, hasExistingAnalysis }: UseAnaly
 	const socket = useSocket();
 
 	useEffect(() => {
-		const handleAnalysisUpdate = (data: { movesTree: any; currentPath: number[] }) => {
-			if (inspectedUserId && data.movesTree) {
-				setAnalysisTree(data.movesTree);
-			}
-			if (inspectedUserId && data.currentPath) {
-				setCurrentPath(data.currentPath);
+		const handleAnalysisUpdate = (data: { matchId: string; userId: number; movesTree: any; currentPath: number[] }) => {
+			if (data.matchId === match?.id && data.userId === inspectedUserId) {
+				if (data.movesTree) {
+					setAnalysisTree(data.movesTree);
+				}
+				if (data.currentPath) {
+					setCurrentPath(data.currentPath);
+				}
 			}
 		};
 
@@ -47,7 +49,7 @@ export function useAnalysisSync({ match, userId, hasExistingAnalysis }: UseAnaly
 		return () => {
 			socket.off('analysisUpdate', handleAnalysisUpdate);
 		};
-	}, [inspectedUserId, setAnalysisTree, setCurrentPath, socket]);
+	}, [inspectedUserId, setAnalysisTree, setCurrentPath, socket, match?.id]);
 
 	useEffect(() => {
 		if (isAnalysisMode && match?.id && userId && inspectedUserId === null) {

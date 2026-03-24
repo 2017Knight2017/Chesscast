@@ -22,7 +22,7 @@ export const users = pgTable('users', {
 	email:             varchar('email', { length: 32 }).notNull().unique(),
 	username:          varchar('username', { length: 32 }).notNull().unique(),
 	password:          text('password').notNull(),
-	createdAt: timestamp('created_at').defaultNow().notNull()
+	createdAt:         timestamp('created_at').defaultNow().notNull()
 });
 
 export const players = pgTable('players', {
@@ -32,13 +32,19 @@ export const players = pgTable('players', {
 }, (t) => [index('name_idx').on(t.name)] );
 
 export const analysis = pgTable('analysis', {
-	id:               uuid('id').defaultRandom().primaryKey(),
-	pgn:              text("pgn").notNull(),
-	durations:        integer('durations').array().notNull().default(sql`'{}'::integer[]`),
-	evaluations:      integer('evaluations').array().notNull().default(sql`'{}'::integer[]`),
-	notation:         text('notation').array().notNull().default(sql`'{}'::text[]`),
-  outcome:          outcomeEnum().notNull().default('1/2-1/2'),
-	createdAt:        timestamp('created_at').notNull().defaultNow(),
+	id:                  uuid('id').defaultRandom().primaryKey(),
+	pgn:                 text("pgn").notNull(),
+	durations:           integer('durations').array().notNull().default(sql`'{}'::integer[]`),
+	evaluations:         integer('evaluations').array().notNull().default(sql`'{}'::integer[]`),
+	notation:            text('notation').array().notNull().default(sql`'{}'::text[]`),
+  outcome:             outcomeEnum().notNull().default('1/2-1/2'),
+  increment:           integer('increment').notNull().default(0),
+  controlMove:         integer('control_move').notNull().default(0),
+  bonusTimeMin:        integer('bonus_time_min').notNull().default(30),           
+  newIncrement:        integer('new_increment').notNull().default(0),
+  newControlMoveEvery: integer('new_control_move_every').notNull().default(0),
+  timeControl:         integer('time_control').notNull().default(600),
+  createdAt:           timestamp('created_at').notNull().defaultNow(),
 });
 
 export const matches = pgTable('matches', {
@@ -50,10 +56,9 @@ export const matches = pgTable('matches', {
 	whitePlayerTime:     integer('white_player_time').notNull().default(600000),
 	blackPlayerTime:     integer('black_player_time').notNull().default(600000),
 	moveIndex:           integer('move_index').notNull().default(0),
+  lastControlMove:     integer('last_control_move').notNull().default(0),
 	fen:                 text('fen').notNull().default('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'),
 	status:              statusEnum().notNull().default('processing'),
-	timeControl:         integer('time_control').notNull(), 
-	increment:           integer('increment').default(0),
 	scheduledAt:         timestamp('scheduled_time').notNull(),
 	createdAt:           timestamp('created_at').notNull().defaultNow(),
 },  (t) => [

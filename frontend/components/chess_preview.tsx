@@ -15,7 +15,6 @@ export const ChessPreview = ({ match }: { match: Match }) => {
 	return (
 		<div className="relative aspect-square w-full bg-[#262421] p-2 flex flex-col justify-between">
 			
-			{/* Черный игрок (Сверху) */}
 			<div className="flex justify-between items-center mb-1 px-1">
 				<div className="flex items-center gap-2">
 					<div className="w-5 h-5 bg-black border border-slate-600 rounded-sm" />
@@ -26,7 +25,6 @@ export const ChessPreview = ({ match }: { match: Match }) => {
 				</div>
 			</div>
 
-			{/* Сама доска (реальный компонент) */}
 			<div className="flex-1 flex items-center justify-center">
 				<div className="w-full aspect-square max-h-full bg-[#b58863] relative rounded-sm overflow-hidden border border-[#3c3a37]">
 					<div className="absolute inset-0">
@@ -41,7 +39,6 @@ export const ChessPreview = ({ match }: { match: Match }) => {
 				</div>
 			</div>
 
-			{/* Белый игрок (Снизу) */}
 			<div className="flex justify-between items-center mt-1 px-1">
 				<div className="flex items-center gap-2">
 					<div className="w-5 h-5 bg-white border border-slate-300 rounded-sm" />

@@ -119,7 +119,6 @@ func ProcessGame(
 	initialTime int,
 	controlMove int,
 	timeIncrement int,
-	isRepeatable bool,
 	bonusTimeMin int,
 	nextControlAfter int,
 	newIncrement int,
@@ -142,6 +141,7 @@ func ProcessGame(
 	durations := make([]float64, 0, len(moves))
 	evaluations := make([]int, 0, len(moves))
 	notation := make([]string, 0, len(moves))
+	isRepeatable := nextControlAfter != 0
 
 	clocks := map[chess.Color]float64{
 		chess.White: float64(initialTime),

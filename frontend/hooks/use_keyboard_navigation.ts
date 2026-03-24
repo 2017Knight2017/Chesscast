@@ -29,7 +29,6 @@ export function useKeyboardNavigation(totalMoves: number) {
 							if (isStillInVariation) {
 								setCurrentPath(newPath);
 							} else {
-								// Return to mainline at the appropriate index
 								const moveIndex = newPath.length - 1;
 								setCurrentPath([]);
 								setSelectedMoveIndex(moveIndex);
@@ -50,11 +49,10 @@ export function useKeyboardNavigation(totalMoves: number) {
 								setCurrentPath(prev => [...prev, 0]);
 							}
 						} else {
-							const idx = selectedMoveIndex ?? totalMoves - 1;
-							if (idx < totalMoves - 1) {
+							const idx = selectedMoveIndex ?? totalMoves;
+							if (idx < totalMoves) {
 								setSelectedMoveIndex(idx + 1);
 							} else {
-								// Check for analysis beyond history
 								let currentLevel = analysisTree;
 								for (let i = 0; i < totalMoves; i++) {
 									currentLevel = currentLevel[0]?.s || [];

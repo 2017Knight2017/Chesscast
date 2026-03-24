@@ -1,14 +1,13 @@
 'use client';
 
-import { useState, useRef, useMemo, memo, Dispatch, SetStateAction } from 'react';
-import { useBroadcast } from '@/hooks/use_broadcast';
+import { useRef, useMemo, memo, Dispatch, SetStateAction } from 'react';
 import { useChessClock } from '@/hooks/use_chess_clocks';
 import { useKeyboardNavigation } from '@/hooks/use_keyboard_navigation';
 import Chessground from '@bezalel6/react-chessground';
-import { Match, Move } from '@/types/types';
+import { Match, Move, SyncPayload } from '@/types/types';
 import { useAnalysisState } from '@/context/analysis_context';
 import { Chess } from 'chess.js'
-import { SyncPayload } from '@/types/types';
+import { launchMatchAction } from '@/actions/match_actions';
 
 const ChessTimer = memo(({ data, initial, label, isAnalysisMode }: { data: SyncPayload|null, initial: number, label: "White"|"Black", isAnalysisMode: boolean }) => {
 	const { whiteTimeFormatted, blackTimeFormatted } = useChessClock(data, initial); 
@@ -123,7 +122,7 @@ export function ChessBoard({
 
 	const handleStart = async () => {
 		setIsManualStarted(true);
-		await fetch(process.env.NEXT_PUBLIC_SOCKET_URL + `/matches/${match.id}/start`, { method: 'POST' });
+		await launchMatchAction(match.id);
 	};
 
 	const clockData = isBroadcastActive ? currentMoveData : null;

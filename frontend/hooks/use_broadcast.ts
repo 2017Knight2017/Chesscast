@@ -72,13 +72,8 @@ export const useBroadcast = (matchId: string, initialMatch?: Match) => {
 			socket.emit('joinMatch', { matchId, username, guestId });
 		};
 
-		if (socket.connected) {
-			handleConnect();
-		}
-
-		socket.on('connect', handleConnect);
-
-		socket.on('new_move', (data: any) => {
+		const handleNewMove = (data: any) => {
+			if (data.matchId !== matchId) return;
 			hasLiveMove.current = true;
 			setcurrentMoveData((prev) => {
 				if (!prev) return prev;
@@ -93,19 +88,28 @@ export const useBroadcast = (matchId: string, initialMatch?: Match) => {
 					history: [...(prev.history || []), data.move],
 				};
 			});
-		});
+		};
 
-		socket.on('match_finished', (data: { outcome: string }) => {
+		const handleMatchFinished = (data: { matchId: string; outcome: string }) => {
+			if (data.matchId !== matchId) return;
 			setIsEnded(true);
-			setOutcome(outcome);
-		});
+			setOutcome(data.outcome);
+		};
+
+		if (socket.connected) {
+			handleConnect();
+		}
+
+		socket.on('connect', handleConnect);
+		socket.on('new_move', handleNewMove);
+		socket.on('match_finished', handleMatchFinished);
 
 		return () => {
 			socket.emit('leaveMatch', { matchId, username, guestId });
 			
 			socket.off('connect', handleConnect);
-			socket.off('new_move');
-			socket.off('match_finished');
+			socket.off('new_move', handleNewMove);
+			socket.off('match_finished', handleMatchFinished);
 		};
 	}, [matchId, guestId, socket]);
 
