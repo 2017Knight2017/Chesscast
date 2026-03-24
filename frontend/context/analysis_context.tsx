@@ -15,20 +15,20 @@ import {
 interface AnalysisContextType {
 	isAnalysisMode: boolean;
 	inspectedUserId: number | null;
-	analysisTree: MoveTreeNode[];
+	analysisTree: Record<number, MoveTreeNode[]>;
 	currentPath: number[];
 	matchId: string | null;
 	selectedMoveIndex: number | null;
 	setAnalysisMode: (mode: boolean) => void;
 	setInspectedUserId: (userId: number | null) => void;
-	setAnalysisTree: (tree: MoveTreeNode[]) => void;
+	setAnalysisTree: (tree: Record<number, MoveTreeNode[]>) => void;
 	setMatchId: (id: string | null) => void;
-	addMoveToTree: (move: string, matchHistory: string[], parentPath?: number[]) => void;
-	deleteBranch: (path: number[], matchHistory: string[]) => void;
+	addMoveToTree: (move: string, branchRootIndex: number, parentPath?: number[]) => void;
+	deleteBranch: (branchRootIndex: number, path: number[]) => void;
 	setCurrentPath: Dispatch<SetStateAction<number[]>>;
 	setSelectedMoveIndex: (index: number | null) => void;
 	resetAnalysis: () => void;
-	syncAnalysisToServer: (matchId: string, userId: number, tree?: MoveTreeNode[], path?: number[]) => void;
+	syncAnalysisToServer: (matchId: string, userId: number, tree?: Record<number, MoveTreeNode[]>, path?: number[]) => void;
 	saveAnalysis: (matchId: string, userId: number) => Promise<void>;
 	discardAnalysis: (matchId: string, userId: number) => Promise<void>;
 	checkExistingAnalysis: (matchId: string, userId: number) => Promise<boolean>;
@@ -41,7 +41,7 @@ const AnalysisContext = createContext<AnalysisContextType | undefined>(undefined
 export function AnalysisProvider({ children }: { children: ReactNode }) {
 	const [isAnalysisMode, setAnalysisMode] = useState(false);
 	const [inspectedUserId, setInspectedUserId] = useState<number | null>(null);
-	const [analysisTree, setAnalysisTree] = useState<MoveTreeNode[]>([]);
+	const [analysisTree, setAnalysisTree] = useState<Record<number, MoveTreeNode[]>>({});
 	const [currentPath, setCurrentPath] = useState<number[]>([]);
 	const [matchId, setMatchId] = useState<string | null>(null);
 	const [selectedMoveIndex, setSelectedMoveIndex] = useState<number | null>(null);
@@ -50,7 +50,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 	const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 	const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-	const syncAnalysisToServer = useCallback((matchId: string, userId: number, tree?: MoveTreeNode[], path?: number[]) => {
+	const syncAnalysisToServer = useCallback((matchId: string, userId: number, tree?: Record<number, MoveTreeNode[]>, path?: number[]) => {
 		if (debounceTimerRef.current) {
 			clearTimeout(debounceTimerRef.current);
 		}
@@ -105,10 +105,6 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 					};
 					const blob = new Blob([JSON.stringify({ matchId })], { type: 'application/json' });
 					
-					// sendBeacon cannot send custom headers easily, 
-					// but since our NestJS is likely configured for standard Auth, 
-					// we might need a workaround or just rely on the 30s interval + periodic sync.
-					// For simplicity and immediate effect, we use fetch with keepalive: true which is modern equivalent of sendBeacon that supports headers.
 					fetch(url, {
 						method: 'POST',
 						headers,
@@ -123,54 +119,22 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 		return () => window.removeEventListener('beforeunload', handleBeforeUnload);
 	}, [isAnalysisMode, matchId, inspectedUserId]);
 
-	const addMoveToTree = useCallback((move: string, matchHistory: string[], parentPath: number[] = []) => {
+	const addMoveToTree = useCallback((move: string, branchRootIndex: number, parentPath: number[] = []) => {
 		setAnalysisTree((prevTree) => {
-			const newTree = JSON.parse(JSON.stringify(prevTree)) as MoveTreeNode[];
-			const correctedParentPath = [...parentPath]; 
-			let currentLevel = newTree;
+			const newTree = structuredClone(prevTree);
+			
+			if (!newTree[branchRootIndex]) {
+				newTree[branchRootIndex] = [];
+			}
+
+			let currentLevel = newTree[branchRootIndex];
 			let targetIdx = -1;
-			let isOnMainline = true;
 
-			for (let depth = 0; depth < correctedParentPath.length; depth++) {
-				let idx = correctedParentPath[depth];
-				const historyMove = matchHistory[depth];
-
-				// Ensure index 0 is the history move if it exists, but only if we are on the mainline.
-				if (isOnMainline && historyMove) {
-					if (!currentLevel[0] || currentLevel[0].m !== historyMove) {
-						const existingIdx = currentLevel.findIndex(n => n.m === historyMove);
-						if (existingIdx !== -1) {
-							if (existingIdx > 0) {
-								const [node] = currentLevel.splice(existingIdx, 1);
-								currentLevel.unshift(node);
-								
-								// If our current path was affected by this move to front, adjust it
-								if (idx === existingIdx) {
-									idx = 0;
-								} else if (idx < existingIdx) {
-									idx++;
-								}
-							}
-						} else {
-							// History move missing from tree, insert at front
-							currentLevel.unshift({ m: historyMove, s: [] });
-							idx++;
-						}
-						correctedParentPath[depth] = idx;
-					}
-				}
-
-				if (idx !== 0) isOnMainline = false;
-
+			for (let i = 0; i < parentPath.length; i++) {
+				const idx = parentPath[i];
 				if (!currentLevel[idx]) {
-					if (historyMove) {
-						currentLevel[idx] = { m: historyMove, s: [] };
-					} else {
-						console.error("Attempted to navigate beyond history without existing nodes");
-						return prevTree;
-					}
+					return prevTree;
 				}
-
 				if (!currentLevel[idx].s) currentLevel[idx].s = [];
 				currentLevel = currentLevel[idx].s!;
 			}
@@ -178,37 +142,29 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 			const existingMoveIndex = currentLevel.findIndex(node => node.m === move);
 
 			if (existingMoveIndex === -1) {
-				const nextMoveInHistory = matchHistory[correctedParentPath.length];
-
-				if (isOnMainline && move === nextMoveInHistory) {
-					currentLevel.unshift({ m: move, s: [] });
-					targetIdx = 0;
-				} else {
-					currentLevel.push({ m: move, s: [] });
-					targetIdx = currentLevel.length - 1;
-				}
+				currentLevel.push({ m: move, s: [] });
+				targetIdx = currentLevel.length - 1;
 			} else {
 				targetIdx = existingMoveIndex;
 			}
 
-			// Schedule navigation to the new move
 			setTimeout(() => {
-				setCurrentPath([...correctedParentPath, targetIdx]);
-				setSelectedMoveIndex(null);
+				setCurrentPath([...parentPath, targetIdx]);
 			}, 0);
 
 			return newTree;
 		});
-	}, [setCurrentPath, setSelectedMoveIndex]);
+	}, [setCurrentPath]);
 
-	const deleteBranch = useCallback((path: number[], matchHistory: string[]) => {
+	const deleteBranch = useCallback((branchRootIndex: number, path: number[]) => {
 		if (path.length === 0) return;
 
 		setAnalysisTree((prevTree) => {
-			const newTree = JSON.parse(JSON.stringify(prevTree)) as MoveTreeNode[];
-			let currentLevel = newTree;
+			const newTree = structuredClone(prevTree);
+			if (!newTree[branchRootIndex]) return prevTree;
+
+			let currentLevel = newTree[branchRootIndex];
 			
-			// Navigate to the parent of the node to be deleted
 			for (let i = 0; i < path.length - 1; i++) {
 				const idx = path[i];
 				if (!currentLevel[idx] || !currentLevel[idx].s) return prevTree;
@@ -216,23 +172,17 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 			}
 
 			const indexToDelete = path[path.length - 1];
-			const depth = path.length - 1;
-			const historyMove = matchHistory[depth];
-
-			// Safety check: Don't allow deleting the main line move
-			// A move is part of the main line if it's at index 0 and matches history
-			if (indexToDelete === 0 && historyMove && currentLevel[0]?.m === historyMove) {
-				console.warn("Cannot delete main line move");
-				return prevTree;
-			}
 
 			if (currentLevel[indexToDelete]) {
 				currentLevel.splice(indexToDelete, 1);
 				
-				// Navigate back to the parent
+				// If the root branch is empty, we can delete the key
+				if (path.length === 1 && currentLevel.length === 0) {
+					delete newTree[branchRootIndex];
+				}
+
 				setTimeout(() => {
 					setCurrentPath(path.slice(0, -1));
-					setSelectedMoveIndex(null);
 				}, 0);
 				
 				return newTree;
@@ -240,12 +190,12 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 
 			return prevTree;
 		});
-	}, [setCurrentPath, setSelectedMoveIndex]);
+	}, [setCurrentPath]);
 
 	const resetAnalysis = useCallback(() => {
 		setAnalysisMode(false);
 		setInspectedUserId(null);
-		setAnalysisTree([]);
+		setAnalysisTree({});
 		setCurrentPath([]);
 		setMatchId(null);
 		setSelectedMoveIndex(null);
@@ -266,7 +216,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 			const token = localStorage.getItem('token');
 			await discardAnalysisAction(currentMatchId, token);
 			
-			setAnalysisTree([]);
+			setAnalysisTree({});
 			setAnalysisMode(false);
 			setInspectedUserId(null);
 			setCurrentPath([]);

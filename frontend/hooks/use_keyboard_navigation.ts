@@ -19,20 +19,13 @@ export function useKeyboardNavigation(totalMoves: number) {
 		const handleKeyDown = (event: KeyboardEvent) => {
 			if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
 
+			const branchPoint = selectedMoveIndex !== null ? selectedMoveIndex : totalMoves - 1;
+
 			if (isAnalysisMode) {
 				switch (event.key) {
 					case "ArrowLeft":
 						if (currentPath.length > 0) {
-							const newPath = currentPath.slice(0, -1);
-							const isStillInVariation = newPath.some(idx => idx !== 0);
-							
-							if (isStillInVariation) {
-								setCurrentPath(newPath);
-							} else {
-								const moveIndex = newPath.length - 1;
-								setCurrentPath([]);
-								setSelectedMoveIndex(moveIndex);
-							}
+							setCurrentPath(currentPath.slice(0, -1));
 						} else {
 							const idx = selectedMoveIndex ?? totalMoves - 1;
 							if (idx > -1) setSelectedMoveIndex(idx - 1);
@@ -41,71 +34,64 @@ export function useKeyboardNavigation(totalMoves: number) {
 
 					case "ArrowRight":
 						if (currentPath.length > 0) {
-							let currentLevel = analysisTree;
+							// Продолжаем текущую ветку, если есть куда
+							let currentLevel = analysisTree[branchPoint] || [];
 							for (const idx of currentPath) {
 								currentLevel = currentLevel[idx]?.s || [];
 							}
 							if (currentLevel.length > 0) {
-								setCurrentPath(prev => [...prev, 0]);
+								setCurrentPath([...currentPath, 0]);
 							}
 						} else {
-							const idx = selectedMoveIndex ?? totalMoves;
-							if (idx < totalMoves) {
+							// Идем по главной линии
+							const idx = selectedMoveIndex ?? -1;
+							if (idx < totalMoves - 1) {
 								setSelectedMoveIndex(idx + 1);
-							} else {
-								let currentLevel = analysisTree;
-								for (let i = 0; i < totalMoves; i++) {
-									currentLevel = currentLevel[0]?.s || [];
-								}
-								if (currentLevel.length > 0) {
-									setCurrentPath(Array(totalMoves + 1).fill(0));
-									setSelectedMoveIndex(null);
-								} else {
-									setSelectedMoveIndex(null);
-								}
 							}
 						}
 						break;
 
 					case "ArrowUp":
-						let levelUp = analysisTree;
-						for (let i = 0; i < currentPath.length - 1; i++) {
-							levelUp = levelUp[currentPath[i]].s || [];
-						}
-					
-						if (currentPath.length > 0 && levelUp.length > 1) {
-							setCurrentPath(prev => {
-								const newPath = [...prev];
-								const lastIdx = newPath[newPath.length - 1];
-								if (lastIdx > 0) {
-									newPath[newPath.length - 1] = lastIdx - 1;
-								}
-								return newPath;
-							});
+						if (currentPath.length > 0) {
+							// Переключение между сиблингами (альтернативными ходами на одном уровне)
+							let parentLevel = analysisTree[branchPoint] || [];
+							for (let i = 0; i < currentPath.length - 1; i++) {
+								parentLevel = parentLevel[currentPath[i]]?.s || [];
+							}
+							
+							const lastIdx = currentPath[currentPath.length - 1];
+							if (lastIdx > 0) {
+								const newPath = [...currentPath];
+								newPath[newPath.length - 1] = lastIdx - 1;
+								setCurrentPath(newPath);
+							}
 						} else {
-							setCurrentPath([]);
+							// Прыжок в начало
 							setSelectedMoveIndex(-1);
 						}
 						break;
 					
 					case "ArrowDown":
-						let levelDown = analysisTree;
-						for (let i = 0; i < currentPath.length - 1; i++) {
-							levelDown = levelDown[currentPath[i]].s || [];
-						}
-					
-						if (currentPath.length > 0 && levelDown.length > 1) {
-							setCurrentPath(prev => {
-								const newPath = [...prev];
-								const lastIdx = newPath[newPath.length - 1];
-								if (lastIdx < levelDown.length - 1) {
-									newPath[newPath.length - 1] = lastIdx + 1;
-								}
-								return newPath;
-							});
+						if (currentPath.length > 0) {
+							// Переключение между сиблингами
+							let parentLevel = analysisTree[branchPoint] || [];
+							for (let i = 0; i < currentPath.length - 1; i++) {
+								parentLevel = parentLevel[currentPath[i]]?.s || [];
+							}
+							
+							const lastIdx = currentPath[currentPath.length - 1];
+							if (lastIdx < parentLevel.length - 1) {
+								const newPath = [...currentPath];
+								newPath[newPath.length - 1] = lastIdx + 1;
+								setCurrentPath(newPath);
+							}
 						} else {
-							setCurrentPath([]); 
-							setSelectedMoveIndex(totalMoves - 1);
+							// Прыжок в конец или вход в ветку, если она есть
+							if (analysisTree[branchPoint] && analysisTree[branchPoint].length > 0) {
+								setCurrentPath([0]);
+							} else {
+								setSelectedMoveIndex(totalMoves - 1);
+							}
 						}
 						break;
 				}
@@ -119,8 +105,6 @@ export function useKeyboardNavigation(totalMoves: number) {
 					case "ArrowRight":
 						if (currentIndex < totalMoves - 1) {
 							setSelectedMoveIndex(currentIndex + 1);
-						} else if (currentIndex === totalMoves - 1) {
-							setSelectedMoveIndex(null);
 						}
 						break;
 					case "ArrowUp": setSelectedMoveIndex(-1); break;

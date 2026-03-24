@@ -41,25 +41,25 @@ export const UserAnalysisBoard = forwardRef<UserAnalysisBoardRef, UserAnalysisBo
 			setFen(currentFen);
 		}, [currentFen]);
 
-		useEffect(() => {
-			if (selectedMoveIndex !== null && selectedMoveIndex >= 0 && selectedMoveIndex < matchHistory.length) {
-				const tempChess = new Chess();
-				for (let i = 0; i <= selectedMoveIndex; i++) {
-					tempChess.move(matchHistory[i]);
-				}
-				setFen(tempChess.fen());
-				chessRef.current = tempChess;
-			} else if (selectedMoveIndex === null) {
-				chessRef.current = new Chess(currentFen);
-				setFen(currentFen);
-			}
-		}, [selectedMoveIndex, matchHistory, currentFen]);
-
 		const computedChess = useMemo(() => {
 			const chess = new Chess();
 
-			if (currentPath.length > 0 && analysisTree.length > 0) {
-				let currentLevel = analysisTree;
+			// 1. Накатываем историю до точки ветвления (selectedMoveIndex)
+			const branchPoint = selectedMoveIndex !== null ? selectedMoveIndex : matchHistory.length - 1;
+			
+			for (let i = 0; i <= branchPoint; i++) {
+				if (matchHistory[i]) {
+					try {
+						chess.move(matchHistory[i]);
+					} catch (e) {
+						console.error("Failed to apply history move", matchHistory[i]);
+					}
+				}
+			}
+
+			// 2. Если мы находимся в ветке анализа, накатываем ходы из дерева
+			if (currentPath.length > 0 && analysisTree[branchPoint]) {
+				let currentLevel = analysisTree[branchPoint];
 				for (const idx of currentPath) {
 					if (currentLevel && currentLevel[idx]) {
 						try {
@@ -72,24 +72,10 @@ export const UserAnalysisBoard = forwardRef<UserAnalysisBoardRef, UserAnalysisBo
 						break;
 					}
 				}
-			} else if (selectedMoveIndex !== null) {
-				if (selectedMoveIndex == -1) return chess;
-				for (let i = 0; i <= selectedMoveIndex; i++) {
-					if (matchHistory[i]) {
-						chess.move(matchHistory[i]);
-					}
-				}
-			} else {
-				for (const m of matchHistory) {
-					chess.move(m);
-				}
-				if (chess.fen() !== currentFen) {
-					chess.load(currentFen);
-				}
 			}
 			
 			return chess;
-		}, [analysisTree, currentPath, selectedMoveIndex, matchHistory, currentFen]);
+		}, [analysisTree, currentPath, selectedMoveIndex, matchHistory]);
 
 		const computedFen = computedChess.fen();
 
@@ -104,11 +90,11 @@ export const UserAnalysisBoard = forwardRef<UserAnalysisBoardRef, UserAnalysisBo
 			const move = chess.move({ from: orig, to: dest, promotion: 'q' });
 
 			if (move) {
-				const parentPath = currentPath.length === 0 
-					? Array.from({ length: (selectedMoveIndex !== null ? selectedMoveIndex : matchHistory.length - 1) + 1 }, () => 0)
-					: currentPath;
+				const branchPoint = selectedMoveIndex !== null ? selectedMoveIndex : matchHistory.length - 1;
 				
-				addMoveToTree(move.san, matchHistory, parentPath);
+				// Если currentPath пуст, мы создаем первый ход в новой ветке от branchPoint
+				// Если не пуст, мы продолжаем текущую ветку
+				addMoveToTree(move.san, branchPoint, currentPath);
 			
 				if (userId) syncAnalysisToServer(matchId, userId);
 				onMove?.(move.san);

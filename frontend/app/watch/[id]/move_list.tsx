@@ -1,7 +1,7 @@
 'use client';
 
 import { useBroadcast } from "@/hooks/use_broadcast";
-import { MoveRecord } from "@/types/types"
+import { MoveRecord, MoveTreeNode } from "@/types/types"
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { BackToLiveButton } from "./back_to_live_button";
 import { useAnalysisState } from "@/context/analysis_context";
@@ -11,62 +11,40 @@ interface MoveListProps {
 	matchHistory?: string[];
 }
 
-const MoveNode = ({ node, path, level, currentPath, onPathClick }: any) => {
-	const isActive = currentPath.length === path.length && path.every((val: number, i: number) => val === currentPath[i]);
+const MoveNode = ({ node, path, branchPoint, currentPath, onPathClick }: { 
+	node: MoveTreeNode, 
+	path: number[], 
+	branchPoint: number, 
+	currentPath: number[], 
+	onPathClick: (branchPoint: number, path: number[]) => void 
+}) => {
+	const isActive = currentPath.length === path.length && path.every((val, i) => val === currentPath[i]);
 		
-	const moveNumber = Math.floor((path.length - 1) / 2) + 1;
-	const isWhite = path.length % 2 !== 0;
-
 	return (
-		<div className="inline">
-			{/* Отображаем номер хода, если это ход белых или первый ход в ветке */}
-			{(isWhite || level === 1) && (
-				<span className="text-[10px] text-slate-400 mr-1">
-					{moveNumber}{isWhite ? '.' : '...'}
-				</span>
-			)}
-
+		<div className="inline-block">
 			<button 
-				onClick={() => onPathClick(path)}
-				className={`inline-block text-sm rounded px-1 transition-colors hover:bg-black/5 ${
-					isActive ? 'bg-amber-400 font-bold text-black' : 'text-slate-700'
+				onClick={() => onPathClick(branchPoint, path)}
+				className={`inline-block text-[11px] rounded px-1 transition-colors hover:bg-black/5 ${
+					isActive ? 'bg-amber-400 font-bold text-black' : 'text-slate-700 underline decoration-dotted'
 				}`}
 			>
 				{node.m}
 			</button>
 
-			{/* Рендерим дочерние узлы */}
 			{node.s && node.s.length > 0 && (
 				<div className="inline">
-					{node.s.map((childNode: any, childIdx: number) => {
-						const isMainBranch = childIdx === 0;
+					{node.s.map((childNode, childIdx) => {
 						const childPath = [...path, childIdx];
-
-						if (isMainBranch) {
-							return (
-								<MoveNode
-									key={childIdx}
-									node={childNode}
-									path={childPath}
-									level={level + 1}
-									currentPath={currentPath}
-									onPathClick={onPathClick}
-								/>
-							);
-						} else {
-							return (
-								<div key={childIdx} className="block ml-3 my-1 pl-2 border-l-2 border-slate-300 bg-black/5 rounded">
-									<span className="text-[10px] text-slate-400 italic">alt: </span>
-									<MoveNode
-										node={childNode}
-										path={childPath}
-										level={1}
-										currentPath={currentPath}
-										onPathClick={onPathClick}
-									/>
-								</div>
-							);
-						}
+						return (
+							<MoveNode
+								key={childIdx}
+								node={childNode}
+								path={childPath}
+								branchPoint={branchPoint}
+								currentPath={currentPath}
+								onPathClick={onPathClick}
+							/>
+						);
 					})}
 				</div>
 			)}
@@ -89,8 +67,6 @@ export function MoveList({ id, matchHistory: propMatchHistory }: MoveListProps) 
 	const socketHistory = currentMoveData?.history || [];
 	const matchHistory = propMatchHistory || socketHistory;
 	
-	const selectedHistoryIndex = selectedMoveIndex;
-	
 	const activeRef = useRef<HTMLDivElement | null>(null);
 
 	useEffect(() => {
@@ -109,21 +85,27 @@ export function MoveList({ id, matchHistory: propMatchHistory }: MoveListProps) 
 		return () => {
 			if (rafId) cancelAnimationFrame(rafId);
 		};
-	}, [selectedHistoryIndex, currentPath]);
+	}, [selectedMoveIndex, currentPath]);
 
 	const handleMoveClick = (moveIndex: number) => {
-		if (isAnalysisMode) {
-			setCurrentPath([]); 
-			setSelectedMoveIndex(moveIndex);
-		} else {
-			setSelectedMoveIndex(moveIndex);
-		}
+		setCurrentPath([]); 
+		setSelectedMoveIndex(moveIndex);
 	};
 
-	const handlePathClick = useCallback((path: number[]) => {
+	const handlePathClick = useCallback((branchPoint: number, path: number[]) => {
+		setSelectedMoveIndex(branchPoint);
 		setCurrentPath(path);
-		setSelectedMoveIndex(null);
 	}, [setCurrentPath, setSelectedMoveIndex]);
+
+	const scrollToActive = useCallback((node: HTMLButtonElement | null) => {
+		if (node) {
+			node.scrollIntoView({
+				behavior: 'smooth',
+				block: 'nearest',
+				inline: 'center'
+			});
+		}
+	}, []);
 
 	const pairs = useMemo(() => {
 		const p: MoveRecord[] = [];
@@ -137,164 +119,121 @@ export function MoveList({ id, matchHistory: propMatchHistory }: MoveListProps) 
 		return p;
 	}, [matchHistory]);
 
-	const displayPairs = useMemo(() => {
-		if (!isAnalysisMode || analysisTree.length === 0) {
-			return pairs;
-		}
-		
-		const result: MoveRecord[] = [];
-		for (let i = 0; i < matchHistory.length; i += 2) {
-			result.push({
-				num: Math.floor(i / 2) + 1,
-				white: matchHistory[i] || "...",
-				black: matchHistory[i + 1] || "...",
-			});
-		}
-		return result;
-	}, [isAnalysisMode, analysisTree, matchHistory, pairs]);
-
-	const variationNodes = useMemo(() => {
-		if (!isAnalysisMode || !analysisTree || analysisTree.length === 0) return [];
-
-		const roots: { node: any, absolutePath: number[] }[] = [];
-		let currentLevel = analysisTree;
-		const currentPathTracker: number[] = [];
-
-		const historyLength = matchHistory.length;
-
-		let depth = 0;
-		while (currentLevel && currentLevel.length > 0) {
-			let foundMainLineAtThisDepth = false;
-
-			for (let i = 0; i < currentLevel.length; i++) {
-				const isFirstNode = i === 0;
-				const hasHistoryAtThisDepth = depth < historyLength;
-				
-				const isMainLineNode = isFirstNode && hasHistoryAtThisDepth && currentLevel[i].m === matchHistory[depth];
-
-				if (!isMainLineNode) {
-					roots.push({
-						node: currentLevel[i],
-						absolutePath: [...currentPathTracker, i]
-					});
-				} else {
-					foundMainLineAtThisDepth = true;
-				}
-			}
-
-			if (!foundMainLineAtThisDepth) {
-				return roots;
-			}
-
-			currentPathTracker.push(0);
-			currentLevel = currentLevel[0]?.s || [];
-			depth++;
-		}
-
-		return roots;
-	}, [analysisTree, isAnalysisMode, matchHistory]);
-
 	if (!isAnalysisMode && !currentMoveData) return <div>Loading...</div>;
 
 	return (
 	<div className="h-full flex flex-col bg-[#f4ead5] text-[#3e2b1d] shadow-inner p-6 border-l-4 border-[#8b5e34] font-mono overflow-hidden">
 		
-		<div className="shrink-0">
-			<h3 className="text-center border-b mb-2 sepia">Moves Record</h3>
-			<div className="border-b border-black/10 pb-1 mb-2 italic text-xs"># — White — Black</div>
+		<div className="shrink-0 flex justify-between items-center border-b mb-2 pb-1">
+			<h3 className="sepia">Moves Record</h3>
+			{isAnalysisMode && currentPath.length > 0 && selectedMoveIndex !== null && (
+				<button 
+					onClick={() => deleteBranch(selectedMoveIndex, currentPath)}
+					className="text-[10px] text-red-500 hover:text-red-700 transition-colors uppercase font-bold flex items-center gap-1"
+					title="Delete current variation"
+				>
+					<span>Delete Branch</span>
+					<span className="text-xs">×</span>
+				</button>
+			)}
 		</div>
 
-		<div className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden mb-4">
-			<div 
-				style={{
-					display: 'flex',
-					flexFlow: 'column wrap',
-					height: '100%',
-					alignContent: 'flex-start',
-					overscrollBehaviorX: 'contain',
-				}}
-			>
-				{displayPairs.map((pair, i) => {
+		<div className="flex-1 min-h-0 overflow-y-auto mb-4 pr-2 custom-scrollbar">
+			<div className="flex flex-col gap-1">
+				{/* Starting position for variations before the first move */}
+				{isAnalysisMode && analysisTree[-1] && (
+					<div className="pl-6 py-1 border-l-2 border-amber-200 bg-amber-50/30 rounded-r my-1">
+						<span className="text-[10px] text-slate-400 italic mr-2">alt start:</span>
+						{analysisTree[-1].map((node, idx) => (
+							<MoveNode 
+								key={idx} 
+								node={node} 
+								path={[idx]} 
+								branchPoint={-1} 
+								currentPath={selectedMoveIndex === -1 ? currentPath : []} 
+								onPathClick={handlePathClick} 
+							/>
+						))}
+					</div>
+				)}
+
+				{pairs.map((pair, i) => {
 					const whiteIndex = i * 2;
 					const blackIndex = i * 2 + 1;
 					
-					const isWhiteActive = isAnalysisMode 
-						? (currentPath.length === 0 && selectedMoveIndex === whiteIndex)
-						: selectedMoveIndex === whiteIndex;
-					const isBlackActive = isAnalysisMode
-						? (currentPath.length === 0 && selectedMoveIndex === blackIndex)
-						: selectedMoveIndex === blackIndex;
+					const isWhiteActive = currentPath.length === 0 && selectedMoveIndex === whiteIndex;
+					const isBlackActive = currentPath.length === 0 && selectedMoveIndex === blackIndex;
 
 					return (
-						<div 
-							key={i}
-							className="flex items-center mr-4 gap-1 w-32 h-8 border-r border-dotted border-black/5 break-inside-avoid shrink-0"
-							ref={isWhiteActive || isBlackActive ? activeRef : null}
-						>
-							<span className="text-[10px] text-slate-500 w-5">{pair.num}.</span>
-							<button 
-								onClick={() => handleMoveClick(whiteIndex)}
-								className={`flex-1 text-sm rounded px-1 text-left whitespace-nowrap ${isWhiteActive ? 'bg-amber-400 font-bold text-black' : 'hover:bg-black/5'}`}
-							>
-								{pair.white}
-							</button>
-							{pair.black !== "..." && (
-								<button 
-									onClick={() => handleMoveClick(blackIndex)}
-									className={`flex-1 text-sm rounded px-1 text-left whitespace-nowrap ${isBlackActive ? 'bg-amber-400 font-bold text-black' : 'hover:bg-black/5'}`}
-								>
-									{pair.black}
-								</button>
+						<div key={i} className="flex flex-col">
+							<div className="flex items-center gap-2 h-7 group">
+								<span className="text-[10px] text-slate-500 w-6 shrink-0">{pair.num}.</span>
+								
+								<div className="flex flex-1 gap-1">
+									<button 
+										onClick={() => handleMoveClick(whiteIndex)}
+										className={`flex-1 text-sm rounded px-1 text-left whitespace-nowrap transition-colors ${
+											isWhiteActive ? 'bg-amber-400 font-bold text-black shadow-sm' : 'hover:bg-black/5'
+										}`}
+										ref={isWhiteActive ? scrollToActive : null}
+									>
+										{pair.white}
+									</button>
+									
+									{pair.black !== "..." && (
+										<button 
+											onClick={() => handleMoveClick(blackIndex)}
+											className={`flex-1 text-sm rounded px-1 text-left whitespace-nowrap transition-colors ${
+												isBlackActive ? 'bg-amber-400 font-bold text-black shadow-sm' : 'hover:bg-black/5'
+											}`}
+											ref={isBlackActive ? scrollToActive : null}
+										>
+											{pair.black}
+										</button>
+									)}
+								</div>
+							</div>
+
+							{/* Variations for white move */}
+							{isAnalysisMode && analysisTree[whiteIndex] && (
+								<div className="pl-6 py-1 border-l-2 border-amber-200 bg-amber-50/30 rounded-r my-0.5 ml-6">
+									<span className="text-[10px] text-slate-400 italic mr-2">alt:</span>
+									{analysisTree[whiteIndex].map((node, idx) => (
+										<MoveNode 
+											key={idx} 
+											node={node} 
+											path={[idx]} 
+											branchPoint={whiteIndex} 
+											currentPath={selectedMoveIndex === whiteIndex ? currentPath : []} 
+											onPathClick={handlePathClick} 
+										/>
+									))}
+								</div>
+							)}
+
+							{/* Variations for black move */}
+							{isAnalysisMode && pair.black !== "..." && analysisTree[blackIndex] && (
+								<div className="pl-6 py-1 border-l-2 border-amber-200 bg-amber-50/30 rounded-r my-0.5 ml-6">
+									<span className="text-[10px] text-slate-400 italic mr-2">alt:</span>
+									{analysisTree[blackIndex].map((node, idx) => (
+										<MoveNode 
+											key={idx} 
+											node={node} 
+											path={[idx]} 
+											branchPoint={blackIndex} 
+											currentPath={selectedMoveIndex === blackIndex ? currentPath : []} 
+											onPathClick={handlePathClick} 
+										/>
+									))}
+								</div>
 							)}
 						</div>
 					);
 				})}
 			</div>
 		</div>
-
-		{isAnalysisMode && (
-			<div className="shrink-0 max-h-[30%] mt-2 pt-2 border-t border-black/20 w-full overflow-y-auto">
-				<div className="flex justify-between items-center mb-2">
-					<span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-						Variations
-					</span>
-					
-					{currentPath.length > 0 && variationNodes.length > 0 && (
-						<button 
-							onClick={() => deleteBranch(currentPath, matchHistory)}
-							className="text-[10px] text-red-500 hover:text-red-700 transition-colors uppercase font-bold flex items-center gap-1"
-							title="Delete current move and its branch"
-						>
-							<span>Delete Branch</span>
-							<span className="text-xs">×</span>
-						</button>
-					)}
-				</div>
-
-				{variationNodes.length > 0 ? (
-					<div className="leading-relaxed">
-						{variationNodes.map(({ node, absolutePath }) => (
-							<div key={absolutePath.join('-')} className="mb-2 p-2 bg-white/30 rounded border border-black/5">
-								<MoveNode
-									node={node}
-									path={absolutePath}
-									level={1}
-									currentPath={currentPath}
-									onPathClick={handlePathClick}
-								/>
-							</div>
-						))}
-					</div>
-				) : (
-					<div className="text-[10px] italic text-slate-400 text-center py-2">
-						No variations yet. Make a move on the board to start one.
-					</div>
-				)}
-			</div>
-		)}
 			
-		{/* Кнопка — всегда внизу */}
-		<div className="shrink-0 mt-auto pt-4">
+		<div className="shrink-0 mt-auto pt-4 border-t border-black/5">
 			<BackToLiveButton />
 		</div>
 	</div>

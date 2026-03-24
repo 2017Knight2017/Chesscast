@@ -42,7 +42,7 @@ export interface MoveTreeNode {
 export interface AnalysisState {
 	isAnalysisMode: boolean;
 	inspectedUserId: number | null;
-	analysisTree: MoveTreeNode[];
+	analysisTree: Record<number, MoveTreeNode[]>;
 	currentPath: number[];
 	matchId: string | null;
 }
