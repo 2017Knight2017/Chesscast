@@ -19,7 +19,7 @@ interface MoveBtnProps {
 	text: string, 
 	isActive: boolean, 
 	onClick: () => void, 
-	scrollRef: (node: HTMLButtonElement | null) => void}
+}
 
 const MoveNode = ({ node, path, branchPoint, currentPath, onPathClick, moveIndex }: { 
 	node: MoveTreeNode, 
@@ -122,7 +122,7 @@ export function MoveList({ id, matchHistory: propMatchHistory }: { id: string, m
 		setCurrentPath(path);
 	}, [setCurrentPath, setSelectedMoveIndex]);
 
-	const scrollToActive = useCallback((node: HTMLButtonElement | null) => {
+	const scrollToActive = useCallback((node: HTMLDivElement | null) => {
 		if (node) {
 			node.scrollIntoView({
 				behavior: 'smooth',
@@ -146,20 +146,19 @@ export function MoveList({ id, matchHistory: propMatchHistory }: { id: string, m
 
 	if (!isAnalysisMode && !currentMoveData) return <div>Loading...</div>;
 
-	const MoveBtn = ({ text, isActive, onClick, scrollRef } : MoveBtnProps) => (
+	const MoveBtn = ({ text, isActive, onClick } : MoveBtnProps) => (
 		<button
 			onClick={onClick}
 			className={`flex-1 text-sm rounded px-1 text-left whitespace-nowrap transition-colors ${
 				isActive ? 'bg-amber-400 font-bold text-black shadow-sm' : 'hover:bg-black/5'
 			}`}
-			ref={isActive ? scrollRef : null}
 		>
 			{text}
 		</button>
 	);
 	
 	const MoveRow = ({ num, children }: { num: number; children: React.ReactNode }) => (
-		<div className="flex items-center gap-2 h-7 group">
+		<div className="flex items-center gap-2 h-6 group">
 			<span className="text-[10px] text-slate-500 w-6 shrink-0">{num}.</span>
 			<div className="flex flex-1 gap-1">{children}</div>
 		</div>
@@ -199,8 +198,16 @@ export function MoveList({ id, matchHistory: propMatchHistory }: { id: string, m
 			)}
 		</div>
 
-		<div className="flex-1 min-h-0 overflow-y-auto mb-4 pr-2">
-			<div className="flex flex-col gap-2">
+		<div className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden mb-4 pr-2">
+			<div className="flex flex-col gap-2" 
+			style={{
+					display: 'flex',
+					flexFlow: 'column wrap',
+					height: '100%',
+					alignContent: 'flex-start',
+					overscrollBehaviorX: 'contain',
+				}}
+			>
 				{/* Starting position for variations before the first move */}
 				{isAnalysisMode && analysisTree[-1] && (
 					analysisTree[-1].map((node, idx) => (
@@ -223,19 +230,20 @@ export function MoveList({ id, matchHistory: propMatchHistory }: { id: string, m
 					const isWhiteActive = currentPath.length === 0 && selectedMoveIndex === whiteIndex;
 					const isBlackActive = currentPath.length === 0 && selectedMoveIndex === blackIndex;
 
+					const isPairActive = (selectedMoveIndex === whiteIndex || selectedMoveIndex === blackIndex) && currentPath.length === 0;
+
 					const whiteVars = isAnalysisMode ? analysisTree[whiteIndex] : null;
 					const blackVars = isAnalysisMode && pair.black !== "..." ? analysisTree[blackIndex] : null;
 
 					const placeholder = <span className="flex-1 text-sm px-1 text-slate-400">...</span>;
 
 					return (
-						<div key={i} className="flex flex-col">
+						<div key={i} className="flex flex-col w-32" ref={isPairActive ? scrollToActive : null}>
 							<MoveRow num={pair.num}>
 								<MoveBtn 
 									text={pair.white} 
 									isActive={isWhiteActive} 
 									onClick={() => handleMoveClick(whiteIndex)} 
-									scrollRef={scrollToActive} 
 								/>
 								{whiteVars ? placeholder : (
 									pair.black !== "..." ? 
@@ -243,7 +251,6 @@ export function MoveList({ id, matchHistory: propMatchHistory }: { id: string, m
 										text={pair.black} 
 										isActive={isBlackActive} 
 										onClick={() => handleMoveClick(blackIndex)} 
-										scrollRef={scrollToActive} 
 									/> : null
 								)}
 							</MoveRow>
@@ -265,7 +272,6 @@ export function MoveList({ id, matchHistory: propMatchHistory }: { id: string, m
 												text={pair.black} 
 												isActive={isBlackActive} 
 												onClick={() => handleMoveClick(blackIndex)} 
-												scrollRef={scrollToActive} 
 											/>
 										</MoveRow>
 									)}
