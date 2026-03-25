@@ -6,27 +6,51 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import { BackToLiveButton } from "./back_to_live_button";
 import { useAnalysisState } from "@/context/analysis_context";
 
-interface MoveListProps {
-	id: string;
-	matchHistory?: string[];
+interface VariationBlockProps {
+    vars: MoveTreeNode[];
+    branchPoint: number;
+    currentPath: number[];
+    activePoint: number | null;
+    moveIndex: number;
+    onPathClick: (branchPoint: number, path: number[]) => void;
 }
 
-const MoveNode = ({ node, path, branchPoint, currentPath, onPathClick }: { 
+interface MoveBtnProps { 
+	text: string, 
+	isActive: boolean, 
+	onClick: () => void, 
+	scrollRef: (node: HTMLButtonElement | null) => void}
+
+const MoveNode = ({ node, path, branchPoint, currentPath, onPathClick, moveIndex }: { 
 	node: MoveTreeNode, 
 	path: number[], 
 	branchPoint: number, 
 	currentPath: number[], 
-	onPathClick: (branchPoint: number, path: number[]) => void 
+	onPathClick: (branchPoint: number, path: number[]) => void,
+	moveIndex: number
 }) => {
 	const isActive = currentPath.length === path.length && path.every((val, i) => val === currentPath[i]);
-		
+	
+	const isFirstInVar = path.length === 1;
+	const isWhite = moveIndex % 2 === 0;
+	let moveNum = Math.floor(moveIndex / 2) + 1;
+	if (!isFirstInVar || !isWhite) moveNum++;
+
+	let prefix = "";
+	if (isFirstInVar) {
+		prefix = moveNum + (isWhite ? "..." : ".");
+	} else if (!isWhite) {
+		prefix = moveNum + ". ";
+	}
+
 	return (
-		<div className="inline-block">
+		<div className="inline">
+			<span className="text-[10px] text-slate-400 font-bold whitespace-pre">{prefix}</span>
 			<button 
 				onClick={() => onPathClick(branchPoint, path)}
-				className={`inline-block text-[11px] rounded px-1 transition-colors hover:bg-black/5 ${
-					isActive ? 'bg-amber-400 font-bold text-black' : 'text-slate-700 underline decoration-dotted'
-				}`}
+				className={`inline-block text-[11px] rounded px-1 transition-colors hover:bg-black/5 
+					${isActive ? 'bg-amber-400 font-bold text-black' : 'text-slate-700'} 
+					${isWhite ? 'mr-1' : ''}`}
 			>
 				{node.m}
 			</button>
@@ -43,6 +67,7 @@ const MoveNode = ({ node, path, branchPoint, currentPath, onPathClick }: {
 								branchPoint={branchPoint}
 								currentPath={currentPath}
 								onPathClick={onPathClick}
+								moveIndex={moveIndex + 1}
 							/>
 						);
 					})}
@@ -52,7 +77,7 @@ const MoveNode = ({ node, path, branchPoint, currentPath, onPathClick }: {
 	);
 };
 
-export function MoveList({ id, matchHistory: propMatchHistory }: MoveListProps) {
+export function MoveList({ id, matchHistory: propMatchHistory }: { id: string, matchHistory?: string[] }) {
 	const { currentMoveData } = useBroadcast(id);
 	const { 
 		isAnalysisMode, 
@@ -121,6 +146,42 @@ export function MoveList({ id, matchHistory: propMatchHistory }: MoveListProps) 
 
 	if (!isAnalysisMode && !currentMoveData) return <div>Loading...</div>;
 
+	const MoveBtn = ({ text, isActive, onClick, scrollRef } : MoveBtnProps) => (
+		<button
+			onClick={onClick}
+			className={`flex-1 text-sm rounded px-1 text-left whitespace-nowrap transition-colors ${
+				isActive ? 'bg-amber-400 font-bold text-black shadow-sm' : 'hover:bg-black/5'
+			}`}
+			ref={isActive ? scrollRef : null}
+		>
+			{text}
+		</button>
+	);
+	
+	const MoveRow = ({ num, children }: { num: number; children: React.ReactNode }) => (
+		<div className="flex items-center gap-2 h-7 group">
+			<span className="text-[10px] text-slate-500 w-6 shrink-0">{num}.</span>
+			<div className="flex flex-1 gap-1">{children}</div>
+		</div>
+	);
+	
+	const VariationBlock = ({ vars, branchPoint, currentPath, activePoint, onPathClick, moveIndex }: VariationBlockProps) => (
+		<>
+			{vars.map((node: any, idx: number) => (
+				<div key={idx} className="flex items-center flex-wrap pl-6 border-l-2 border-amber-200 bg-amber-50/30">
+					<MoveNode
+						node={node}
+						path={[idx]}
+						branchPoint={branchPoint}
+						currentPath={activePoint === branchPoint ? currentPath : []}
+						onPathClick={onPathClick}
+						moveIndex={moveIndex}
+					/>
+				</div>
+			))}
+		</>
+	);
+
 	return (
 	<div className="h-full flex flex-col bg-[#f4ead5] text-[#3e2b1d] shadow-inner p-6 border-l-4 border-[#8b5e34] font-mono overflow-hidden">
 		
@@ -138,94 +199,89 @@ export function MoveList({ id, matchHistory: propMatchHistory }: MoveListProps) 
 			)}
 		</div>
 
-		<div className="flex-1 min-h-0 overflow-y-auto mb-4 pr-2 custom-scrollbar">
-			<div className="flex flex-col gap-1">
+		<div className="flex-1 min-h-0 overflow-y-auto mb-4 pr-2">
+			<div className="flex flex-col gap-2">
 				{/* Starting position for variations before the first move */}
 				{isAnalysisMode && analysisTree[-1] && (
-					<div className="pl-6 py-1 border-l-2 border-amber-200 bg-amber-50/30 rounded-r my-1">
-						<span className="text-[10px] text-slate-400 italic mr-2">alt start:</span>
-						{analysisTree[-1].map((node, idx) => (
+					analysisTree[-1].map((node, idx) => (
+						<div key={idx} className="flex items-center h-7 ml-6">
 							<MoveNode 
-								key={idx} 
 								node={node} 
 								path={[idx]} 
 								branchPoint={-1} 
 								currentPath={selectedMoveIndex === -1 ? currentPath : []} 
 								onPathClick={handlePathClick} 
+								moveIndex={0}
 							/>
-						))}
-					</div>
+						</div>
+					))
 				)}
 
 				{pairs.map((pair, i) => {
 					const whiteIndex = i * 2;
 					const blackIndex = i * 2 + 1;
-					
 					const isWhiteActive = currentPath.length === 0 && selectedMoveIndex === whiteIndex;
 					const isBlackActive = currentPath.length === 0 && selectedMoveIndex === blackIndex;
 
+					const whiteVars = isAnalysisMode ? analysisTree[whiteIndex] : null;
+					const blackVars = isAnalysisMode && pair.black !== "..." ? analysisTree[blackIndex] : null;
+
+					const placeholder = <span className="flex-1 text-sm px-1 text-slate-400">...</span>;
+
 					return (
 						<div key={i} className="flex flex-col">
-							<div className="flex items-center gap-2 h-7 group">
-								<span className="text-[10px] text-slate-500 w-6 shrink-0">{pair.num}.</span>
-								
-								<div className="flex flex-1 gap-1">
-									<button 
-										onClick={() => handleMoveClick(whiteIndex)}
-										className={`flex-1 text-sm rounded px-1 text-left whitespace-nowrap transition-colors ${
-											isWhiteActive ? 'bg-amber-400 font-bold text-black shadow-sm' : 'hover:bg-black/5'
-										}`}
-										ref={isWhiteActive ? scrollToActive : null}
-									>
-										{pair.white}
-									</button>
-									
+							<MoveRow num={pair.num}>
+								<MoveBtn 
+									text={pair.white} 
+									isActive={isWhiteActive} 
+									onClick={() => handleMoveClick(whiteIndex)} 
+									scrollRef={scrollToActive} 
+								/>
+								{whiteVars ? placeholder : (
+									pair.black !== "..." ? 
+									<MoveBtn 
+										text={pair.black} 
+										isActive={isBlackActive} 
+										onClick={() => handleMoveClick(blackIndex)} 
+										scrollRef={scrollToActive} 
+									/> : null
+								)}
+							</MoveRow>
+							
+							{whiteVars && (
+								<>
+									<VariationBlock 
+										vars={whiteVars} 
+										branchPoint={whiteIndex} 
+										activePoint={selectedMoveIndex}
+										currentPath={currentPath} 
+										onPathClick={handlePathClick} 
+										moveIndex={whiteIndex}
+									/>
 									{pair.black !== "..." && (
-										<button 
-											onClick={() => handleMoveClick(blackIndex)}
-											className={`flex-1 text-sm rounded px-1 text-left whitespace-nowrap transition-colors ${
-												isBlackActive ? 'bg-amber-400 font-bold text-black shadow-sm' : 'hover:bg-black/5'
-											}`}
-											ref={isBlackActive ? scrollToActive : null}
-										>
-											{pair.black}
-										</button>
+										<MoveRow num={pair.num}>
+											{placeholder}
+											<MoveBtn 
+												text={pair.black} 
+												isActive={isBlackActive} 
+												onClick={() => handleMoveClick(blackIndex)} 
+												scrollRef={scrollToActive} 
+											/>
+										</MoveRow>
 									)}
-								</div>
-							</div>
-
-							{/* Variations for white move */}
-							{isAnalysisMode && analysisTree[whiteIndex] && (
-								<div className="pl-6 py-1 border-l-2 border-amber-200 bg-amber-50/30 rounded-r my-0.5 ml-6">
-									<span className="text-[10px] text-slate-400 italic mr-2">alt:</span>
-									{analysisTree[whiteIndex].map((node, idx) => (
-										<MoveNode 
-											key={idx} 
-											node={node} 
-											path={[idx]} 
-											branchPoint={whiteIndex} 
-											currentPath={selectedMoveIndex === whiteIndex ? currentPath : []} 
-											onPathClick={handlePathClick} 
-										/>
-									))}
-								</div>
+								</>
 							)}
 
-							{/* Variations for black move */}
-							{isAnalysisMode && pair.black !== "..." && analysisTree[blackIndex] && (
-								<div className="pl-6 py-1 border-l-2 border-amber-200 bg-amber-50/30 rounded-r my-0.5 ml-6">
-									<span className="text-[10px] text-slate-400 italic mr-2">alt:</span>
-									{analysisTree[blackIndex].map((node, idx) => (
-										<MoveNode 
-											key={idx} 
-											node={node} 
-											path={[idx]} 
-											branchPoint={blackIndex} 
-											currentPath={selectedMoveIndex === blackIndex ? currentPath : []} 
-											onPathClick={handlePathClick} 
-										/>
-									))}
-								</div>
+							{/* Варианты черных всегда в конце блока пары */}
+							{blackVars && (
+								<VariationBlock 
+									vars={blackVars} 
+									branchPoint={blackIndex} 
+									activePoint={selectedMoveIndex}
+									currentPath={currentPath} 
+									onPathClick={handlePathClick} 
+									moveIndex={blackIndex}
+								/>
 							)}
 						</div>
 					);
