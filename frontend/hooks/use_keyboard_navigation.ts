@@ -34,7 +34,6 @@ export function useKeyboardNavigation(totalMoves: number) {
 
 					case "ArrowRight":
 						if (currentPath.length > 0) {
-							// Продолжаем текущую ветку, если есть куда
 							let currentLevel = analysisTree[branchPoint] || [];
 							for (const idx of currentPath) {
 								currentLevel = currentLevel[idx]?.s || [];
@@ -43,17 +42,17 @@ export function useKeyboardNavigation(totalMoves: number) {
 								setCurrentPath([...currentPath, 0]);
 							}
 						} else {
-							// Идем по главной линии
 							const idx = selectedMoveIndex ?? -1;
 							if (idx < totalMoves - 1) {
 								setSelectedMoveIndex(idx + 1);
+							} else {
+								setSelectedMoveIndex(null);
 							}
 						}
 						break;
 
 					case "ArrowUp":
 						if (currentPath.length > 0) {
-							// Переключение между сиблингами (альтернативными ходами на одном уровне)
 							let parentLevel = analysisTree[branchPoint] || [];
 							for (let i = 0; i < currentPath.length - 1; i++) {
 								parentLevel = parentLevel[currentPath[i]]?.s || [];
@@ -66,14 +65,12 @@ export function useKeyboardNavigation(totalMoves: number) {
 								setCurrentPath(newPath);
 							}
 						} else {
-							// Прыжок в начало
 							setSelectedMoveIndex(-1);
 						}
 						break;
 					
 					case "ArrowDown":
 						if (currentPath.length > 0) {
-							// Переключение между сиблингами
 							let parentLevel = analysisTree[branchPoint] || [];
 							for (let i = 0; i < currentPath.length - 1; i++) {
 								parentLevel = parentLevel[currentPath[i]]?.s || [];
@@ -86,7 +83,6 @@ export function useKeyboardNavigation(totalMoves: number) {
 								setCurrentPath(newPath);
 							}
 						} else {
-							// Прыжок в конец или вход в ветку, если она есть
 							if (analysisTree[branchPoint] && analysisTree[branchPoint].length > 0) {
 								setCurrentPath([0]);
 							} else {

@@ -7,12 +7,13 @@ import { BackToLiveButton } from "./back_to_live_button";
 import { useAnalysisState } from "@/context/analysis_context";
 
 interface VariationBlockProps {
-    vars: MoveTreeNode[];
-    branchPoint: number;
-    currentPath: number[];
-    activePoint: number | null;
-    moveIndex: number;
-    onPathClick: (branchPoint: number, path: number[]) => void;
+	vars: MoveTreeNode[],
+	branchPoint: number,
+	currentPath: number[],
+	activePoint: number | null,
+	moveIndex: number,
+	onPathClick: (branchPoint: number, path: number[]) => void,
+	depth: number
 }
 
 interface MoveBtnProps { 
@@ -21,61 +22,207 @@ interface MoveBtnProps {
 	onClick: () => void, 
 }
 
-const MoveNode = ({ node, path, branchPoint, currentPath, onPathClick, moveIndex }: { 
+const isVerticalBranching = (node: MoveTreeNode) => {
+	return node.s && node.s.length > 1 && node.s.some(c => c.s && c.s.length > 1);
+};
+
+const MoveNode = ({ 
+	node, 
+	path, 
+	branchPoint, 
+	currentPath, 
+	onPathClick, 
+	moveIndex, 
+	isFirstInVar = false
+}: { 
 	node: MoveTreeNode, 
 	path: number[], 
 	branchPoint: number, 
 	currentPath: number[], 
 	onPathClick: (branchPoint: number, path: number[]) => void,
-	moveIndex: number
+	moveIndex: number,
+	isFirstInVar?: boolean 
 }) => {
-	const isActive = currentPath.length === path.length && path.every((val, i) => val === currentPath[i]);
-	
-	const isFirstInVar = path.length === 1;
 	const isWhite = moveIndex % 2 === 0;
-	let moveNum = Math.floor(moveIndex / 2) + 1;
-	if (!isFirstInVar || !isWhite) moveNum++;
+	const moveNum = Math.floor(moveIndex / 2) + 1;
+		
+	const showMoveNum = isWhite || isFirstInVar;
+		
+	const numberPrefix = showMoveNum ? `${moveNum}${isWhite ? "." : "..."} ` : "";
+	const notation = `${numberPrefix}${node.m}`;
 
-	let prefix = "";
-	if (isFirstInVar) {
-		prefix = moveNum + (isWhite ? "..." : ".");
-	} else if (!isWhite) {
-		prefix = moveNum + ". ";
-	}
+	const isActive = currentPath.length === path.length && path.every((val, i) => val === currentPath[i]);
+	const isVertical = isVerticalBranching(node);
 
 	return (
-		<div className="inline">
-			<span className="text-[10px] text-slate-400 font-bold whitespace-pre">{prefix}</span>
-			<button 
-				onClick={() => onPathClick(branchPoint, path)}
-				className={`inline-block text-[11px] rounded px-1 transition-colors hover:bg-black/5 
-					${isActive ? 'bg-amber-400 font-bold text-black' : 'text-slate-700'} 
-					${isWhite ? 'mr-1' : ''}`}
-			>
-				{node.m}
-			</button>
+		<div className={isVertical ? "flex flex-col w-full" : "inline"}>
+			
+			<div className={isVertical ? "flex items-center h-7" : "inline"}>
+				<button 
+					onClick={() => onPathClick(branchPoint, path)}
+					className={`inline-block text-[11px] rounded px-1 transition-colors hover:bg-black/5 
+						${isActive ? 'bg-amber-400 font-bold text-black' : 'text-slate-700'} 
+						${!isWhite && !isVertical ? 'mr-1' : ''}`}
+				>
+					{notation}
+				</button>
+			</div>
 
 			{node.s && node.s.length > 0 && (
-				<div className="inline">
-					{node.s.map((childNode, childIdx) => {
-						const childPath = [...path, childIdx];
-						return (
-							<MoveNode
-								key={childIdx}
-								node={childNode}
-								path={childPath}
-								branchPoint={branchPoint}
-								currentPath={currentPath}
-								onPathClick={onPathClick}
-								moveIndex={moveIndex + 1}
-							/>
-						);
-					})}
-				</div>
+				isVertical ? (
+					<div className="flex flex-col ml-3 pl-2 border-l-2 border-black/10">
+						{node.s.map((childNode, childIdx) => (
+							<div key={childIdx} className="flex items-center flex-wrap">
+								<MoveNode 
+									node={childNode} 
+									path={[...path, childIdx]} 
+									branchPoint={branchPoint} 
+									currentPath={currentPath} 
+									onPathClick={onPathClick} 
+									moveIndex={moveIndex + 1}
+									isFirstInVar={childIdx > 0} 
+								/>
+							</div>
+						))}
+					</div>
+				) : (
+					<span className="inline">
+						{node.s.map((childNode, childIdx) => {
+							const childPath = [...path, childIdx];
+							
+							if (childIdx === 0) {
+								return (
+									<span key={childIdx} className="inline">
+										<MoveNode 
+											node={childNode} 
+											path={childPath} 
+											branchPoint={branchPoint} 
+											currentPath={currentPath} 
+											onPathClick={onPathClick} 
+											moveIndex={moveIndex + 1}
+											isFirstInVar={false}
+										/>
+									</span>
+								);
+							} else {
+								return (
+									<span key={childIdx} className="text-slate-500 italic mr-1">
+										(
+										<MoveNode 
+											node={childNode} 
+											path={childPath} 
+											branchPoint={branchPoint} 
+											currentPath={currentPath} 
+											onPathClick={onPathClick} 
+											moveIndex={moveIndex + 1}
+											isFirstInVar={true}
+										/>
+										)
+									</span>
+								);
+							}
+						})}
+					</span>
+				)
 			)}
 		</div>
 	);
 };
+
+/*
+const MoveNode = ({ node, path, branchPoint, currentPath, onPathClick, moveIndex, isItalic, isFirstItalic }: { 
+	node: MoveTreeNode, 
+	path: number[], 
+	branchPoint: number, 
+	currentPath: number[], 
+	onPathClick: (branchPoint: number, path: number[]) => void,
+	moveIndex: number,
+	isItalic?: boolean,
+	isFirstItalic?: boolean
+}) => {
+	const isActive = currentPath.length === path.length && path.every((val, i) => val === currentPath[i]);
+	const isVertical = isVerticalBranching(node);
+
+	const isFirstInVar = path.length === 1;
+	const isBlack = moveIndex % 2 === 1;
+	let moveNum = Math.floor(moveIndex / 2) + 1;
+	if ((!isFirstInVar || isBlack || !isVertical) && (!isFirstItalic)) moveNum++;
+
+	const showMoveNum = isBlack || isFirstInVar || isFirstItalic || isVertical;
+	const notation = (showMoveNum ? moveNum + (isBlack ? "." : "...") : "") + node.m;
+
+	return (
+		<div className={isVertical ? "flex flex-col w-full" : "inline"}>
+			<div className={isVertical ? "flex items-center h-7" : "inline"}>
+				<button 
+					onClick={() => onPathClick(branchPoint, path)}
+				className={`inline-block text-[11px] rounded px-1 transition-colors hover:bg-black/5 
+					${isActive ? 'bg-amber-400 font-bold text-black' : 'text-slate-700'} 
+					${isBlack ? '' : 'mr-1'}`}
+				>
+					{notation}
+				</button>
+			</div>
+
+			{node.s && node.s.length > 0 && (
+				isVertical ? (
+					<div className="flex flex-col ml-3 pl-2 border-l-2 border-black/10">
+						{node.s.map((childNode, childIdx) => (
+							<div key={childIdx} className="flex items-center flex-wrap">
+								<MoveNode 
+									node={childNode} 
+									path={[...path, childIdx]} 
+									branchPoint={branchPoint} 
+									currentPath={currentPath} 
+									onPathClick={onPathClick} 
+									moveIndex={moveIndex + 1}
+								/>
+							</div>
+						))}
+					</div>
+				) : (
+					<span className="inline">
+						{node.s.map((childNode, childIdx) => {
+							const childPath = [...path, childIdx];
+							if (childIdx === 0) {
+								return (
+									<span key={childIdx} className="inline ml-1">
+										<MoveNode 
+											node={childNode} 
+											path={childPath} 
+											branchPoint={branchPoint} 
+											currentPath={currentPath} 
+											onPathClick={onPathClick} 
+											moveIndex={moveIndex + 1}
+											isItalic={isItalic}
+											isFirstItalic={false}
+										/>
+									</span>
+								);
+							} else {
+								return (
+									<span key={childIdx} className="text-slate-500 italic ml-1">
+										(<MoveNode 
+											node={childNode} 
+											path={childPath} 
+											branchPoint={branchPoint} 
+											currentPath={currentPath} 
+											onPathClick={onPathClick} 
+											moveIndex={moveIndex + 1}
+											isItalic={true}
+											isFirstItalic={true}
+										/>)
+									</span>
+								);
+							}
+						})}
+					</span>
+				)
+			)}
+		</div>
+	);
+};
+*/
 
 export function MoveList({ id, matchHistory: propMatchHistory }: { id: string, matchHistory?: string[] }) {
 	const { currentMoveData } = useBroadcast(id);
@@ -164,10 +311,10 @@ export function MoveList({ id, matchHistory: propMatchHistory }: { id: string, m
 		</div>
 	);
 	
-	const VariationBlock = ({ vars, branchPoint, currentPath, activePoint, onPathClick, moveIndex }: VariationBlockProps) => (
+	const VariationBlock = ({ vars, branchPoint, currentPath, activePoint, onPathClick, moveIndex, depth }: VariationBlockProps) => (
 		<>
 			{vars.map((node: any, idx: number) => (
-				<div key={idx} className="flex items-center flex-wrap pl-6 border-l-2 border-amber-200 bg-amber-50/30">
+				<div key={idx} className="flex items-center flex-wrap pl-2 ml-4 pb-2 border-l-2 border-amber-300 bg-amber-50/30 rounded-r">
 					<MoveNode
 						node={node}
 						path={[idx]}
@@ -175,6 +322,7 @@ export function MoveList({ id, matchHistory: propMatchHistory }: { id: string, m
 						currentPath={activePoint === branchPoint ? currentPath : []}
 						onPathClick={onPathClick}
 						moveIndex={moveIndex}
+						isFirstInVar={true}
 					/>
 				</div>
 			))}
@@ -211,7 +359,7 @@ export function MoveList({ id, matchHistory: propMatchHistory }: { id: string, m
 				{/* Starting position for variations before the first move */}
 				{isAnalysisMode && analysisTree[-1] && (
 					analysisTree[-1].map((node, idx) => (
-						<div key={idx} className="flex items-center h-7 ml-6">
+						<div key={idx} className="flex items-center h-7 pl-2 ml-4 border-l-2 border-amber-300 bg-amber-50/30 rounded-r">
 							<MoveNode 
 								node={node} 
 								path={[idx]} 
@@ -227,6 +375,7 @@ export function MoveList({ id, matchHistory: propMatchHistory }: { id: string, m
 				{pairs.map((pair, i) => {
 					const whiteIndex = i * 2;
 					const blackIndex = i * 2 + 1;
+					
 					const isWhiteActive = currentPath.length === 0 && selectedMoveIndex === whiteIndex;
 					const isBlackActive = currentPath.length === 0 && selectedMoveIndex === blackIndex;
 
@@ -238,12 +387,12 @@ export function MoveList({ id, matchHistory: propMatchHistory }: { id: string, m
 					const placeholder = <span className="flex-1 text-sm px-1 text-slate-400">...</span>;
 
 					return (
-						<div key={i} className="flex flex-col w-32" ref={isPairActive ? scrollToActive : null}>
+						<div key={i} className="flex flex-col w-52" ref={isPairActive ? scrollToActive : null}>
 							<MoveRow num={pair.num}>
 								<MoveBtn 
 									text={pair.white} 
 									isActive={isWhiteActive} 
-									onClick={() => handleMoveClick(whiteIndex)} 
+												onClick={() => handleMoveClick(whiteIndex)}
 								/>
 								{whiteVars ? placeholder : (
 									pair.black !== "..." ? 
@@ -264,6 +413,7 @@ export function MoveList({ id, matchHistory: propMatchHistory }: { id: string, m
 										currentPath={currentPath} 
 										onPathClick={handlePathClick} 
 										moveIndex={whiteIndex}
+										depth={1}
 									/>
 									{pair.black !== "..." && (
 										<MoveRow num={pair.num}>
@@ -271,23 +421,23 @@ export function MoveList({ id, matchHistory: propMatchHistory }: { id: string, m
 											<MoveBtn 
 												text={pair.black} 
 												isActive={isBlackActive} 
-												onClick={() => handleMoveClick(blackIndex)} 
+												onClick={() => handleMoveClick(blackIndex)}
 											/>
 										</MoveRow>
 									)}
 								</>
 							)}
 
-							{/* Варианты черных всегда в конце блока пары */}
 							{blackVars && (
 								<VariationBlock 
 									vars={blackVars} 
 									branchPoint={blackIndex} 
+									currentPath={selectedMoveIndex === blackIndex ? currentPath : []} 
 									activePoint={selectedMoveIndex}
-									currentPath={currentPath} 
 									onPathClick={handlePathClick} 
 									moveIndex={blackIndex}
-								/>
+									depth={1}
+								/>	
 							)}
 						</div>
 					);
