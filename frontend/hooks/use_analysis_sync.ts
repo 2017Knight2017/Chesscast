@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useSocket } from '@/context/socket_context';
 import { useAnalysisState } from '../context/analysis_context';
 import { Match } from '@/types/types';
@@ -74,16 +74,20 @@ export function useAnalysisSync({ match, userId, hasExistingAnalysis }: UseAnaly
 	}, [isAnalysisMode, hasExistingAnalysis, match, userId]);
 
 	const handleMainBoardClick = useCallback(async () => {
+		let hasExistingAnalysis: boolean;
 		if (userId && Object.keys(analysisTree).length === 0) {
 			await discardAnalysis(match.id, userId);
+			hasExistingAnalysis = false;
 		} else {
 			await saveDraft(match.id);
+			hasExistingAnalysis = true
 		}
 		
 		setSelectedMoveIndex(null);
 		resetAnalysis();
 		socket.emit('leaveAnalysisStream', { matchId: match.id, userId });
-		
+		return hasExistingAnalysis;
+
 	}, [isAnalysisMode, match?.id, userId, inspectedUserId, analysisTree, saveDraft, resetAnalysis, setSelectedMoveIndex, socket]);
 
 	const handleInspectUser = async (username: string) => {

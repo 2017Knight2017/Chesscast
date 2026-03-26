@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ChessBoard } from '@/app/watch/[id]/chess_board';
 import { UserAnalysisBoard, UserAnalysisBoardRef } from '@/app/watch/[id]/user_analysis_board';
 import { MoveList } from '@/app/watch/[id]/move_list';
@@ -66,7 +66,10 @@ export default function WatchMatchClient({ match }: {match: Match}) {
 					{isAnalysisMode && (
 						<div className='w-full p-6 shrink-0 flex items-center justify-center max-w-[40vh] aspect-square'>
 							<ChessBoard 
-								onSelect={handleMainBoardClick}
+								onSelect={async () => {
+									const exists = await handleMainBoardClick();
+									setHasExistingAnalysis(exists);
+								}}
 								setIsManualStarted={setIsManualStarted}
 								isManualStarted={isManualStarted}
 								match={match}

@@ -13,7 +13,6 @@ interface VariationBlockProps {
 	activePoint: number | null,
 	moveIndex: number,
 	onPathClick: (branchPoint: number, path: number[]) => void,
-	depth: number
 }
 
 interface MoveBtnProps { 
@@ -216,7 +215,7 @@ export function MoveList({ id, matchHistory: propMatchHistory }: { id: string, m
 		</div>
 	);
 	
-	const VariationBlock = ({ vars, branchPoint, currentPath, activePoint, onPathClick, moveIndex, depth }: VariationBlockProps) => (
+	const VariationBlock = ({ vars, branchPoint, currentPath, activePoint, onPathClick, moveIndex }: VariationBlockProps) => (
 		<>
 			{vars.map((node: any, idx: number) => (
 				<div key={idx} className="flex items-center flex-wrap pl-2 ml-4 pb-2 border-l-2 border-amber-300 bg-amber-50/30 rounded-r">
@@ -318,7 +317,6 @@ export function MoveList({ id, matchHistory: propMatchHistory }: { id: string, m
 										currentPath={currentPath} 
 										onPathClick={handlePathClick} 
 										moveIndex={whiteIndex}
-										depth={1}
 									/>
 									{pair.black !== "..." && (
 										<MoveRow num={pair.num}>
@@ -337,11 +335,10 @@ export function MoveList({ id, matchHistory: propMatchHistory }: { id: string, m
 								<VariationBlock 
 									vars={blackVars} 
 									branchPoint={blackIndex} 
-									currentPath={selectedMoveIndex === blackIndex ? currentPath : []} 
+									currentPath={currentPath} 
 									activePoint={selectedMoveIndex}
 									onPathClick={handlePathClick} 
 									moveIndex={blackIndex}
-									depth={1}
 								/>	
 							)}
 						</div>
