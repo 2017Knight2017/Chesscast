@@ -26,6 +26,7 @@ export const UserAnalysisBoard = forwardRef<UserAnalysisBoardRef, UserAnalysisBo
 			currentPath, 
 			inspectedUserId,
 			selectedMoveIndex,
+			setSelectedMoveIndex,
 		} = useAnalysisState();
 
 		const chessRef = useRef(new Chess(currentFen));
@@ -84,6 +85,11 @@ export const UserAnalysisBoard = forwardRef<UserAnalysisBoardRef, UserAnalysisBo
 
 			if (move) {
 				const branchPoint = selectedMoveIndex !== null ? selectedMoveIndex : matchHistory.length - 1;
+				
+				if (selectedMoveIndex === null) {
+					setSelectedMoveIndex(branchPoint);
+				}
+
 				addMoveToTree(move.san, branchPoint, currentPath);
 				onMove?.(move.san);
 			}

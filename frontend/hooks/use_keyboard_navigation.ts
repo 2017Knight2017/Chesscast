@@ -96,15 +96,23 @@ export function useKeyboardNavigation(totalMoves: number) {
 				const currentIndex = selectedMoveIndex ?? totalMoves - 1;
 				switch (event.key) {
 					case "ArrowLeft":
-						if (currentIndex > -1) setSelectedMoveIndex(currentIndex - 1);
+						if (currentIndex > -1) {
+							setSelectedMoveIndex(currentIndex - 1);
+						}
 						break;
 					case "ArrowRight":
 						if (currentIndex < totalMoves - 1) {
 							setSelectedMoveIndex(currentIndex + 1);
+						} else {
+							setSelectedMoveIndex(null);
 						}
 						break;
-					case "ArrowUp": setSelectedMoveIndex(-1); break;
-					case "ArrowDown": setSelectedMoveIndex(totalMoves - 1); break;
+					case "ArrowUp": 
+						setSelectedMoveIndex(-1);
+						break;
+					case "ArrowDown":
+						setSelectedMoveIndex(totalMoves - 1); 
+						break;
 				}
 			}
 		};
