@@ -9,7 +9,26 @@ import { useAnalysisState } from '@/context/analysis_context';
 import { Chess } from 'chess.js'
 import { launchMatchAction } from '@/actions/match_actions';
 
-const ChessTimer = memo(({ data, initial, label, isAnalysisMode }: { data: SyncPayload|null, initial: number, label: "White"|"Black", isAnalysisMode: boolean }) => {
+interface ChessBoardProps {
+	onMove?: (orig: string, dest: string) => void,
+	onSelect?: (key: string) => void,
+	setIsManualStarted: Dispatch<SetStateAction<boolean>>,
+	isManualStarted: boolean
+	isBroadcastActive: boolean
+	finalIsEnded: boolean,
+	match: Match,
+	currentMoveData: Move,
+	outcome: string | undefined,
+}
+
+interface ChessTimerProps { 
+	data: SyncPayload|null, 
+	initial: number, 
+	label: "White"|"Black", 
+	isAnalysisMode: boolean 
+}
+
+const ChessTimer = memo(({ data, initial, label, isAnalysisMode }: ChessTimerProps) => {
 	const { whiteTimeFormatted, blackTimeFormatted } = useChessClock(data, initial); 
 		
 	const isWhite = label === "White";
@@ -52,7 +71,8 @@ const ChessTimer = memo(({ data, initial, label, isAnalysisMode }: { data: SyncP
 });
 
 export function ChessBoard({
-	onInteraction, 
+	onMove, 
+	onSelect,
 	setIsManualStarted,
 	isManualStarted,
 	isBroadcastActive,
@@ -60,18 +80,7 @@ export function ChessBoard({
 	match, 
 	currentMoveData, 
 	outcome,
-	isOnMove=false 
-}: {
-	onInteraction: () => void,
-	setIsManualStarted: Dispatch<SetStateAction<boolean>>,
-	isManualStarted: boolean
-	isBroadcastActive: boolean
-	finalIsEnded: boolean,
-	match: Match,
-	currentMoveData: Move,
-	outcome: string | undefined,
-	isOnMove?: boolean 
-}) {
+}: ChessBoardProps) {
 	const { selectedMoveIndex, isAnalysisMode } = useAnalysisState();
 	const previewMove = isAnalysisMode ? undefined : (selectedMoveIndex ?? undefined);
 
@@ -164,8 +173,8 @@ export function ChessBoard({
 				)}
 
 				<Chessground
-					onSelect={isOnMove ? () => {} : onInteraction}
-					onMove={isOnMove ? onInteraction : () => {}}
+					onSelect={onSelect}
+					onMove={onMove}
 					key={match.id}
 					fen={previewFen || activeFen}
 					viewOnly={false}

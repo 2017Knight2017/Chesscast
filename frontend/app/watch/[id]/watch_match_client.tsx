@@ -5,7 +5,6 @@ import { ChessBoard } from '@/app/watch/[id]/chess_board';
 import { UserAnalysisBoard, UserAnalysisBoardRef } from '@/app/watch/[id]/user_analysis_board';
 import { MoveList } from '@/app/watch/[id]/move_list';
 import { SpectatorList } from '@/app/watch/[id]/spectator_list';
-import { AnalysisPrompt } from '@/app/watch/[id]/analysis_prompts';
 import { Match } from '@/types/types';
 import { useBroadcast } from '@/hooks/use_broadcast';
 import { useAnalysisState } from '@/context/analysis_context';
@@ -17,23 +16,19 @@ export default function WatchMatchClient({ match }: {match: Match}) {
 		isAnalysisMode,
 		setMatchId,
 		checkExistingAnalysis,
-		inspectedUserId
 	} = useAnalysisState();
 
 	const [hasExistingAnalysis, setHasExistingAnalysis] = useState(false);
 	const [userId, setUserId] = useState<number | null>(null);
 	const {
-        showBeginPrompt,
-        setShowBeginPrompt,
-        handleMoveOnMainBoard,
-        handleMainBoardClick,
-        handleBeginAnalysis,
-        handleInspectUser
-    } = useAnalysisSync({ 
-        match, 
-        userId, 
-        hasExistingAnalysis 
-    });
+		handleInteractionOnMainBoard,
+		handleMainBoardClick,
+		handleInspectUser
+	} = useAnalysisSync({ 
+		match, 
+		userId, 
+		hasExistingAnalysis 
+	});
 
 	const [isManualStarted, setIsManualStarted] = useState<boolean>(false);
 	const isBroadcastActive = match.status === "in_progress" || isManualStarted;
@@ -62,14 +57,6 @@ export default function WatchMatchClient({ match }: {match: Match}) {
 
 	return (
 		<main className="h-screen w-screen bg-size-[100%_100%] overflow-hidden">
-			{showBeginPrompt && (
-				<AnalysisPrompt
-					isBegin={!hasExistingAnalysis}
-					onYes={handleBeginAnalysis}
-					onNo={() => setShowBeginPrompt(false)}
-				/>
-			)}
-
 			<div className='grid size-full items-center px-10 gap-8 relative z-10 grid-cols-[300px_1fr_300px]'>
 				<aside className="h-[75vh] flex flex-col"> 
 					<div className="bg-[#f4ead5]/20 backdrop-blur-sm p-4 flex-1 min-h-0 border border-[#8b5e34]/20 shadow-lg overflow-hidden">
@@ -79,11 +66,11 @@ export default function WatchMatchClient({ match }: {match: Match}) {
 					{isAnalysisMode && (
 						<div className='w-full p-6 shrink-0 flex items-center justify-center max-w-[40vh] aspect-square'>
 							<ChessBoard 
-								onInteraction={handleMainBoardClick}
-								match={match}
-								currentMoveData={currentMoveData}
+								onSelect={handleMainBoardClick}
 								setIsManualStarted={setIsManualStarted}
 								isManualStarted={isManualStarted}
+								match={match}
+								currentMoveData={currentMoveData}
 								isBroadcastActive={isBroadcastActive}
 								finalIsEnded={finalIsEnded}
 								outcome={outcome}
@@ -96,7 +83,8 @@ export default function WatchMatchClient({ match }: {match: Match}) {
 					{!isAnalysisMode && (
 						<div className='w-full shadow-2xl flex items-center justify-center max-w-[70vh] aspect-square'>
 							<ChessBoard 
-								onInteraction={handleMoveOnMainBoard}
+								onMove={() => handleInteractionOnMainBoard("move")}
+								onSelect={() => handleInteractionOnMainBoard("select")}
 								setIsManualStarted={setIsManualStarted}
 								isManualStarted={isManualStarted}
 								match={match} 
@@ -104,7 +92,6 @@ export default function WatchMatchClient({ match }: {match: Match}) {
 								isBroadcastActive={isBroadcastActive}
 								finalIsEnded={finalIsEnded}
 								outcome={outcome}
-								isOnMove={true}
 							/>
 						</div>
 					)}

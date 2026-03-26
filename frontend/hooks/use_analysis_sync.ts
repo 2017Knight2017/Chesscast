@@ -26,9 +26,9 @@ export function useAnalysisSync({ match, userId, hasExistingAnalysis }: UseAnaly
 		resetAnalysis,
 		loadAnalysis,
 		syncAnalysisToServer,
+		analysisTree,
+		discardAnalysis
 	} = useAnalysisState();
-
-	const [showBeginPrompt, setShowBeginPrompt] = useState(false);
 
 	const socket = useSocket();
 
@@ -57,35 +57,34 @@ export function useAnalysisSync({ match, userId, hasExistingAnalysis }: UseAnaly
 		}
 	}, [currentPath, isAnalysisMode, match?.id, userId, inspectedUserId, syncAnalysisToServer]);
 
-	const handleMoveOnMainBoard = useCallback(() => {
-		setSelectedMoveIndex(null);
-		if (!isAnalysisMode && !showBeginPrompt && match && userId) {
-			setShowBeginPrompt(true);
+	const handleInteractionOnMainBoard = useCallback(async (type: 'move' | 'select') => {
+		const canStart = (type === 'move' && !hasExistingAnalysis) || 
+						 (type === 'select' && hasExistingAnalysis);
+
+		if (canStart && match && userId) {
+			setAnalysisMode(true);
+			setInspectedUserId(null);
+
+			if (hasExistingAnalysis && match?.id && userId) {
+				await loadAnalysis(match.id, userId);
+			}
+
+			socket.emit('joinAnalysisStream', { matchId: match?.id, userId });
 		}
-	}, [isAnalysisMode, showBeginPrompt, match, userId, setSelectedMoveIndex]);
+	}, [isAnalysisMode, hasExistingAnalysis, match, userId]);
 
 	const handleMainBoardClick = useCallback(async () => {
-		setSelectedMoveIndex(null);
-		if (isAnalysisMode && match?.id && userId && inspectedUserId === null) {
+		if (userId && Object.keys(analysisTree).length === 0) {
+			await discardAnalysis(match.id, userId);
+		} else {
 			await saveDraft(match.id);
-			resetAnalysis();
-			socket.emit('leaveAnalysisStream', { matchId: match.id, userId });
-		} else if (isAnalysisMode) {
-			resetAnalysis();
 		}
-	}, [isAnalysisMode, match?.id, userId, inspectedUserId, saveDraft, resetAnalysis, setSelectedMoveIndex, socket]);
-
-	const handleBeginAnalysis = async () => {
-		setShowBeginPrompt(false);
-		setAnalysisMode(true);
-		setInspectedUserId(null);
-
-		if (hasExistingAnalysis && match?.id && userId) {
-			await loadAnalysis(match.id, userId);
-		}
-
-		socket.emit('joinAnalysisStream', { matchId: match?.id, userId });
-	};
+		
+		setSelectedMoveIndex(null);
+		resetAnalysis();
+		socket.emit('leaveAnalysisStream', { matchId: match.id, userId });
+		
+	}, [isAnalysisMode, match?.id, userId, inspectedUserId, analysisTree, saveDraft, resetAnalysis, setSelectedMoveIndex, socket]);
 
 	const handleInspectUser = async (username: string) => {
 		const result = await getPlayerByUsernameAction(username);
@@ -109,11 +108,8 @@ export function useAnalysisSync({ match, userId, hasExistingAnalysis }: UseAnaly
 	};
 
 	return {
-		showBeginPrompt,
-		setShowBeginPrompt,
-		handleMoveOnMainBoard,
+		handleInteractionOnMainBoard,
 		handleMainBoardClick,
-		handleBeginAnalysis,
 		handleInspectUser
 	};
 }

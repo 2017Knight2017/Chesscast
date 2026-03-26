@@ -11,7 +11,6 @@ import {
 	saveAnalysisDraftAction
 } from '@/actions/analysis_actions';
 
-
 interface AnalysisContextType {
 	isAnalysisMode: boolean;
 	inspectedUserId: number | null;
@@ -79,7 +78,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 		if (isAnalysisMode && matchId && inspectedUserId === null) {
 			autoSaveTimerRef.current = setInterval(() => {
 				saveDraft(matchId);
-			}, 30000); // Auto-save every 30 seconds
+			}, 30000);
 		} else {
 			if (autoSaveTimerRef.current) {
 				clearInterval(autoSaveTimerRef.current);
@@ -92,32 +91,6 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 			}
 		};
 	}, [isAnalysisMode, matchId, inspectedUserId, saveDraft]);
-
-	useEffect(() => {
-		const handleBeforeUnload = () => {
-			if (isAnalysisMode && matchId && inspectedUserId === null) {
-				const token = localStorage.getItem('token');
-				if (token) {
-					const url = `${process.env.NEXT_PUBLIC_NEST_API_URL || 'http://localhost:3001'}/user-analysis/save-draft`;
-					const headers = {
-						'Content-Type': 'application/json',
-						'Authorization': `Bearer ${token}`
-					};
-					const blob = new Blob([JSON.stringify({ matchId })], { type: 'application/json' });
-					
-					fetch(url, {
-						method: 'POST',
-						headers,
-						body: JSON.stringify({ matchId }),
-						keepalive: true
-					});
-				}
-			}
-		};
-
-		window.addEventListener('beforeunload', handleBeforeUnload);
-		return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-	}, [isAnalysisMode, matchId, inspectedUserId]);
 
 	const addMoveToTree = useCallback((move: string, branchRootIndex: number, parentPath: number[] = []) => {
 		setAnalysisTree((prevTree) => {
@@ -148,10 +121,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 				targetIdx = existingMoveIndex;
 			}
 
-			setTimeout(() => {
-				setCurrentPath([...parentPath, targetIdx]);
-			}, 0);
-
+			setCurrentPath([...parentPath, targetIdx]);
 			return newTree;
 		});
 	}, [setCurrentPath]);
@@ -176,7 +146,6 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 			if (currentLevel[indexToDelete]) {
 				currentLevel.splice(indexToDelete, 1);
 				
-				// If the root branch is empty, we can delete the key
 				if (path.length === 1 && currentLevel.length === 0) {
 					delete newTree[branchRootIndex];
 				}
@@ -201,7 +170,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 		setSelectedMoveIndex(null);
 	}, []);
 
-	const saveAnalysis = useCallback(async (currentMatchId: string, userId: number) => {
+	const saveAnalysis = useCallback(async (currentMatchId: string) => {
 		try {
 			const token = localStorage.getItem('token');
 			await saveAnalysisAction(currentMatchId, analysisTree, token);
@@ -211,15 +180,11 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 		}
 	}, [analysisTree, resetAnalysis]);
 
-	const discardAnalysis = useCallback(async (currentMatchId: string, userId: number) => {
+	const discardAnalysis = useCallback(async (currentMatchId: string) => {
 		try {
 			const token = localStorage.getItem('token');
 			await discardAnalysisAction(currentMatchId, token);
-			
-			setAnalysisTree({});
-			setAnalysisMode(false);
-			setInspectedUserId(null);
-			setCurrentPath([]);
+			resetAnalysis();
 		} catch (error) {
 			console.error("Failed to discard analysis:", error);
 		}

@@ -38,7 +38,7 @@ export async function discardAnalysisAction(matchId: string, token: string | nul
 		body: JSON.stringify({ matchId }),
 	});
 
-	if (!res.ok) throw new Error('Failed to discard analysis');
+	if (!res.ok) throw new Error('Failed to discard analysis ' + res.status);
 	return res.json();
 }
 
