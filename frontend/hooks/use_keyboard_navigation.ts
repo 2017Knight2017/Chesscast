@@ -42,7 +42,7 @@ export function useKeyboardNavigation(totalMoves: number) {
 								setCurrentPath([...currentPath, 0]);
 							}
 						} else {
-							const idx = selectedMoveIndex ?? -1;
+							const idx = selectedMoveIndex ?? totalMoves - 1;
 							if (idx < totalMoves - 1) {
 								setSelectedMoveIndex(idx + 1);
 							} else {
