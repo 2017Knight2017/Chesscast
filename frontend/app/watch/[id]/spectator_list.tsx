@@ -1,20 +1,20 @@
 'use client'
 
-import { useViewerCounts } from "@/hooks/use_viewer_counts";
+import { useViewerCounts, ViewerStatus } from "@/hooks/use_viewer_counts";
 import { useState, useEffect } from "react";
 import Chessground from "@bezalel6/react-chessground";
 import { getPlayerByUsernameAction, loadAnalysisAction } from "@/actions/analysis_actions";
 
 interface SpectatorListProps {
 	id: string;
-	onInspectUser?: (username: string) => void;
+	onInspectUser?: (status: ViewerStatus) => void;
 }
 
 export function SpectatorList({ id, onInspectUser }: SpectatorListProps) {
 	const [selectedSpectator, setSelectedSpectator] = useState<string | null>(null);
 	const [previewFen, setPreviewFen] = useState<string | null>(null);
 	const { usernames, guestCount } = useViewerCounts([id]);
-	let resolvedUsernames: string[] = [];
+	let resolvedUsernames: ViewerStatus[] = [];
 	let resolvedGuestCount = 0;
 	if (usernames) resolvedUsernames = usernames[id] || [];
 	if (guestCount) resolvedGuestCount = guestCount[id] || 0;
@@ -26,6 +26,13 @@ export function SpectatorList({ id, onInspectUser }: SpectatorListProps) {
 				return;
 			}
 
+			// First check if we already have the broadcasted FEN
+			const status = resolvedUsernames.find(u => u.username === selectedSpectator);
+			if (status?.currentFen) {
+				setPreviewFen(status.currentFen);
+				return;
+			}
+
 			const playerResult = await getPlayerByUsernameAction(selectedSpectator);
 			if (!playerResult.success || !playerResult.data) {
 				setPreviewFen(null);
@@ -34,24 +41,25 @@ export function SpectatorList({ id, onInspectUser }: SpectatorListProps) {
 			
 			const analysisData = await loadAnalysisAction(id, playerResult.data.userId);
 			
-			if (analysisData.data && analysisData.data.length > 0) {
+			if (analysisData.data && Object.keys(analysisData.data).length > 0) {
 				const { Chess } = await import('chess.js');
 				const chess = new Chess();
 				
-				const applyMainLine = (tree: any[]) => {
-					let current = tree;
-					while (current && current.length > 0) {
-						const node = current[0];
-						try {
-							chess.move(node.m);
-							current = node.s || [];
-						} catch (e) {
-							break;
-						}
-					}
-				};
+				// Apply main line (first branch)
+				const tree = analysisData.data;
+				const firstKey = Object.keys(tree)[0];
+				let current = tree[parseInt(firstKey)];
 				
-				applyMainLine(analysisData.data);
+				while (current && current.length > 0) {
+					const node = current[0];
+					try {
+						chess.move(node.m);
+						current = node.s || [];
+					} catch (e) {
+						break;
+					}
+				}
+				
 				setPreviewFen(chess.fen());
 			} else {
 				setPreviewFen(null);
@@ -59,11 +67,19 @@ export function SpectatorList({ id, onInspectUser }: SpectatorListProps) {
 		};
 
 		fetchUserFen();
-	}, [selectedSpectator, id]);
+	}, [selectedSpectator, id, resolvedUsernames]);
 
 	const handleSpectatorClick = (username: string) => {
 		setSelectedSpectator(prev => prev === username ? null : username);
-		onInspectUser?.(username);
+	};
+
+	const handleViewFullAnalysis = () => {
+		if (selectedSpectator && onInspectUser) {
+			const status = resolvedUsernames.find(u => u.username === selectedSpectator);
+			if (status) {
+				onInspectUser(status);
+			}
+		}
 	};
 
 	return (
@@ -75,15 +91,20 @@ export function SpectatorList({ id, onInspectUser }: SpectatorListProps) {
 
 			<div className="shrink-0 flex flex-row overflow-x-auto overflow-y-hidden gap-3 pb-2 mb-2 scrollbar-thin scrollbar-thumb-[#8b5e34]/30">
 				{resolvedUsernames.length > 0 ? (
-					resolvedUsernames.map((username) => (
+					resolvedUsernames.map((status) => (
 						<button
-							key={username}
-							onClick={() => selectedSpectator === null ? handleSpectatorClick(username) : setSelectedSpectator(null)}
-							className="shrink-0 whitespace-nowrap flex items-center gap-1 text-[#5a3e2b] hover:text-[#8b5e34] transition-colors group px-2 py-1 bg-[#e8dac0]/40 rounded border border-[#8b5e34]/10 hover:border-[#8b5e34]/40"
+							key={status.username}
+							onClick={() => handleSpectatorClick(status.username)}
+							className={`shrink-0 whitespace-nowrap flex items-center gap-1 transition-colors group px-2 py-1 rounded border ${
+								selectedSpectator === status.username 
+									? "bg-[#8b5e34]/20 border-[#8b5e34]/40 text-[#3e2b1d]" 
+									: "bg-[#e8dac0]/40 border-[#8b5e34]/10 text-[#5a3e2b] hover:text-[#8b5e34] hover:border-[#8b5e34]/40"
+							}`}
 						>
 							<span className="opacity-40 text-xs">❧</span>
 							<span className="border-b border-transparent group-hover:border-[#8b5e34] py-0.5 text-sm">
-								{username}
+								{status.username}
+								{status.isAnalyzing && <span className="ml-1 text-[#8b5e34] font-bold">*</span>}
 							</span>
 						</button>
 					))
@@ -97,12 +118,16 @@ export function SpectatorList({ id, onInspectUser }: SpectatorListProps) {
 					<div className="mt-2 p-3 bg-[#e8dac0] border-2 border-double border-[#8b5e34]/40 flex flex-col items-center animate-in fade-in slide-in-from-top-2">
 						<div className="flex justify-between w-full items-start mb-2">
 							<h4 className="font-bold text-[#3e2b1d] text-sm truncate pr-2">
-								Analysis by {selectedSpectator}
+								Preview: {selectedSpectator}
 							</h4>
 						</div>
 
 						{previewFen && (
-							<div className="w-full aspect-square max-w-[160px] mx-auto mb-2 border-2 border-[#8b5e34]/30 shrink-0">
+							<div 
+								className="w-full aspect-square max-w-[160px] mx-auto mb-3 border-2 border-[#8b5e34]/30 shrink-0 cursor-pointer hover:border-[#8b5e34] transition-colors"
+								onClick={handleViewFullAnalysis}
+								title="Click to view full analysis"
+							>
 								<Chessground
 									fen={previewFen}
 									viewOnly={true}
@@ -113,16 +138,16 @@ export function SpectatorList({ id, onInspectUser }: SpectatorListProps) {
 							</div>
 						)}
 
-						<p className="text-xs leading-relaxed italic opacity-80 text-center">
-							{previewFen 
-								? 'Click to view full analysis' 
-								: 'No analysis data yet'}
-						</p>
+						<button
+							onClick={handleViewFullAnalysis}
+							className="w-full py-1.5 px-3 bg-[#8b5e34] text-[#f2e6d0] text-xs font-bold uppercase tracking-wider rounded hover:bg-[#3e2b1d] transition-colors shadow-sm"
+						>
+							View Full Analysis
+						</button>
 					</div>
 				)}
 			</div>
 
-			{/* 3. Подвал (не сжимается, прибит к низу) */}
 			<div className="shrink-0 mt-3 pt-2 border-t border-[#8b5e34]/10 flex justify-between items-center text-xs text-[#5a3e2b] opacity-60">
 				<div className="flex items-center gap-1">
 					<span className="text-base">👥</span>

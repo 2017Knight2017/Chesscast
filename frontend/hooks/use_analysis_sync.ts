@@ -1,10 +1,9 @@
-'use client';
-
 import { useEffect, useCallback } from 'react';
 import { useSocket } from '@/context/socket_context';
 import { useAnalysisState } from '../context/analysis_context';
 import { Match } from '@/types/types';
 import { getPlayerByUsernameAction } from '@/actions/analysis_actions';
+import { ViewerStatus } from './use_viewer_counts';
 
 interface UseAnalysisSyncProps {
 	match: Match;
@@ -44,12 +43,21 @@ export function useAnalysisSync({ match, userId, hasExistingAnalysis }: UseAnaly
 			}
 		};
 
+		const handleStreamEnded = (data: { matchId: string; username: string }) => {
+			if (data.matchId === match?.id && inspectedUserId !== null) {
+				alert(`Analysis by ${data.username} has ended.`);
+				resetAnalysis();
+			}
+		};
+
 		socket.on('analysisUpdate', handleAnalysisUpdate);
+		socket.on('analysisStreamEnded', handleStreamEnded);
 
 		return () => {
 			socket.off('analysisUpdate', handleAnalysisUpdate);
+			socket.off('analysisStreamEnded', handleStreamEnded);
 		};
-	}, [inspectedUserId, setAnalysisTree, setCurrentPath, socket, match?.id]);
+	}, [inspectedUserId, setAnalysisTree, setCurrentPath, socket, match?.id, resetAnalysis]);
 
 	useEffect(() => {
 		if (isAnalysisMode && match?.id && userId && inspectedUserId === null) {
@@ -69,28 +77,48 @@ export function useAnalysisSync({ match, userId, hasExistingAnalysis }: UseAnaly
 				await loadAnalysis(match.id, userId);
 			}
 
-			socket.emit('joinAnalysisStream', { matchId: match?.id, userId });
+			const username = localStorage.getItem('username');
+			socket.emit('joinAnalysisStream', { matchId: match?.id, userId, username });
 		}
-	}, [isAnalysisMode, hasExistingAnalysis, match, userId]);
+	}, [isAnalysisMode, hasExistingAnalysis, match, userId, socket, setAnalysisMode, setInspectedUserId, loadAnalysis]);
 
 	const handleMainBoardClick = useCallback(async () => {
-		let hasExistingAnalysis: boolean;
-		if (userId && Object.keys(analysisTree).length === 0) {
+		let hasExistingAnalysisResult: boolean;
+		const targetIdToLeave = inspectedUserId || userId;
+
+		if (inspectedUserId) {
+			// If we were inspecting, the 'hasExistingAnalysis' state for OUR OWN analysis remains unchanged
+			hasExistingAnalysisResult = hasExistingAnalysis;
+		} else if (userId && Object.keys(analysisTree).length === 0) {
 			await discardAnalysis(match.id, userId);
-			hasExistingAnalysis = false;
+			hasExistingAnalysisResult = false;
 		} else {
-			await saveDraft(match.id);
-			hasExistingAnalysis = true
+			if (userId) {
+				await saveDraft(match.id);
+			}
+			hasExistingAnalysisResult = true;
 		}
-		
+
 		setSelectedMoveIndex(null);
+		
+		const prevInspectedUserId = inspectedUserId;
+		const username = localStorage.getItem('username');
+
 		resetAnalysis();
-		socket.emit('leaveAnalysisStream', { matchId: match.id, userId });
-		return hasExistingAnalysis;
 
-	}, [isAnalysisMode, match?.id, userId, inspectedUserId, analysisTree, saveDraft, resetAnalysis, setSelectedMoveIndex, socket]);
+		if (match.id && targetIdToLeave) {
+			socket.emit('leaveAnalysisStream', { 
+				matchId: match.id, 
+				userId: targetIdToLeave,
+				username: prevInspectedUserId ? (document.querySelector(`button[data-username]`) as any)?.dataset.username : username // This is a bit hacky, better pass username directly
+			});
+		}
 
-	const handleInspectUser = async (username: string) => {
+		return hasExistingAnalysisResult;
+	}, [match?.id, userId, inspectedUserId, analysisTree, saveDraft, resetAnalysis, setSelectedMoveIndex, socket, discardAnalysis, hasExistingAnalysis]);
+
+	const handleInspectUser = async (status: ViewerStatus | string) => {
+		let username = typeof status === 'string' ? status : status.username;
 		const result = await getPlayerByUsernameAction(username);
 
 		if (!result.success || !result.data) {
@@ -101,12 +129,14 @@ export function useAnalysisSync({ match, userId, hasExistingAnalysis }: UseAnaly
 		const playerData = result.data;
 
 		setInspectedUserId(playerData.userId);
+		setAnalysisMode(true);
 
 		if (match.id) {
 			await loadAnalysis(match.id, playerData.userId);
 			socket.emit('joinAnalysisStream', { 
 				matchId: match.id, 
-				userId: playerData.userId 
+				userId: playerData.userId,
+				username: username
 			});
 		}
 	};

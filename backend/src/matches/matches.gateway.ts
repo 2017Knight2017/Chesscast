@@ -32,13 +32,30 @@ export class MatchesGateway
 
 		const matchId = client.data?.matchId;
 		const guestId = client.data?.guestId;
+		const username = client.data?.username;
 
-		if (matchId && guestId) {
-			await this.redisService.removeGuestViewer(matchId, guestId);
-			const counts = await this.redisService.getViewerData(matchId);
-			this.server
-				.to(`counter:${matchId}`)
-				.emit('viewer_count_update', { matchId, ...counts });
+		if (matchId) {
+			if (username) {
+				await this.redisService.removeViewer(matchId, username);
+				await this.redisService.removeUserStatus(matchId, username);
+				
+				// Notify inspectors that the stream has ended
+				this.server.to(`analysis_stream_status:${matchId}:${username}`).emit('analysisStreamEnded', {
+					matchId,
+					username,
+				});
+
+				const counts = await this.redisService.getViewerData(matchId);
+				this.server
+					.to(`counter:${matchId}`)
+					.emit('viewer_count_update', { matchId, ...counts });
+			} else if (guestId) {
+				await this.redisService.removeGuestViewer(matchId, guestId);
+				const counts = await this.redisService.getViewerData(matchId);
+				this.server
+					.to(`counter:${matchId}`)
+					.emit('viewer_count_update', { matchId, ...counts });
+			}
 		}
 	}
 
@@ -54,6 +71,7 @@ export class MatchesGateway
 		console.log(`Client ${client.id} joined room: ${data.matchId}`);
 
 		if (data.username) {
+			client.data.username = data.username;
 			await this.redisService.addViewer(data.matchId, data.username);
 		} else if (data.guestId) {
 			client.data.guestId = data.guestId;
@@ -86,12 +104,66 @@ export class MatchesGateway
 
 		if (data.username) {
 			await this.redisService.removeViewer(data.matchId, data.username);
+			await this.redisService.removeUserStatus(data.matchId, data.username);
+
+			this.server.to(`analysis_stream_status:${data.matchId}:${data.username}`).emit('analysisStreamEnded', {
+				matchId: data.matchId,
+				username: data.username,
+			});
 		} else if (data.guestId) {
 			await this.redisService.removeGuestViewer(data.matchId, data.guestId);
 		}
 
 		const counts = await this.redisService.getViewerData(data.matchId);
+		this.server
+			.to(`counter:${data.matchId}`)
+			.emit('viewer_count_update', { matchId: data.matchId, ...counts });
+		
 		client.emit('viewer_count_update', { matchId: data.matchId, ...counts });
+	}
+
+	@SubscribeMessage('userStartedAnalysis')
+	async handleUserStartedAnalysis(
+		@MessageBody() data: { matchId: string; username: string },
+	) {
+		await this.redisService.setUserStatus(data.matchId, data.username, {
+			isAnalyzing: true,
+		});
+		const counts = await this.redisService.getViewerData(data.matchId);
+		this.server
+			.to(`counter:${data.matchId}`)
+			.emit('viewer_count_update', { matchId: data.matchId, ...counts });
+	}
+
+	@SubscribeMessage('userStoppedAnalysis')
+	async handleUserStoppedAnalysis(
+		@MessageBody() data: { matchId: string; username: string },
+	) {
+		await this.redisService.removeUserStatus(data.matchId, data.username);
+
+		this.server.to(`analysis_stream_status:${data.matchId}:${data.username}`).emit('analysisStreamEnded', {
+			matchId: data.matchId,
+			username: data.username,
+		});
+
+		const counts = await this.redisService.getViewerData(data.matchId);
+		this.server
+			.to(`counter:${data.matchId}`)
+			.emit('viewer_count_update', { matchId: data.matchId, ...counts });
+	}
+
+	@SubscribeMessage('broadcastAnalysisPosition')
+	async handleBroadcastAnalysisPosition(
+		@MessageBody() data: { matchId: string; username: string; fen: string },
+	) {
+		await this.redisService.setUserStatus(data.matchId, data.username, {
+			isAnalyzing: true,
+			currentFen: data.fen,
+		});
+		const counts = await this.redisService.getViewerData(data.matchId);
+		this.server
+			.to(`counter:${data.matchId}`)
+			.emit('viewer_count_update', { matchId: data.matchId, ...counts });
 	}
 
 	@SubscribeMessage('subscribeToCounts')
@@ -112,18 +184,24 @@ export class MatchesGateway
 
 	@SubscribeMessage('joinAnalysisStream')
 	handleJoinAnalysisStream(
-		@MessageBody() data: { matchId: string; userId: number },
+		@MessageBody() data: { matchId: string; userId: number; username: string },
 		@ConnectedSocket() client: Socket,
 	) {
 		client.join(`analysis_stream:${data.matchId}:user:${data.userId}`);
+		if (data.username) {
+			client.join(`analysis_stream_status:${data.matchId}:${data.username}`);
+		}
 	}
 
 	@SubscribeMessage('leaveAnalysisStream')
 	handleLeaveAnalysisStream(
-		@MessageBody() data: { matchId: string; userId: number },
+		@MessageBody() data: { matchId: string; userId: number; username: string },
 		@ConnectedSocket() client: Socket,
 	) {
 		client.leave(`analysis_stream:${data.matchId}:user:${data.userId}`);
+		if (data.username) {
+			client.leave(`analysis_stream_status:${data.matchId}:${data.username}`);
+		}
 	}
 
 	@SubscribeMessage('syncUserAnalysis')

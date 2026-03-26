@@ -33,12 +33,13 @@ interface AnalysisContextType {
 	checkExistingAnalysis: (matchId: string, userId: number) => Promise<boolean>;
 	loadAnalysis: (matchId: string, userId: number) => Promise<void>;
 	saveDraft: (matchId: string) => Promise<void>;
+	broadcastFen: (fen: string) => void;
 }
 
 const AnalysisContext = createContext<AnalysisContextType | undefined>(undefined);
 
 export function AnalysisProvider({ children }: { children: ReactNode }) {
-	const [isAnalysisMode, setAnalysisMode] = useState(false);
+	const [isAnalysisMode, setAnalysisModeState] = useState(false);
 	const [inspectedUserId, setInspectedUserId] = useState<number | null>(null);
 	const [analysisTree, setAnalysisTree] = useState<Record<number, MoveTreeNode[]>>({});
 	const [currentPath, setCurrentPath] = useState<number[]>([]);
@@ -48,6 +49,29 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 	const socket = useSocket();
 	const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 	const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+	const setAnalysisMode = useCallback((mode: boolean) => {
+		setAnalysisModeState(mode);
+		if (matchId) {
+			const username = localStorage.getItem('username');
+			if (username) {
+				if (mode) {
+					socket.emit('userStartedAnalysis', { matchId, username });
+				} else {
+					socket.emit('userStoppedAnalysis', { matchId, username });
+				}
+			}
+		}
+	}, [matchId, socket]);
+
+	const broadcastFen = useCallback((fen: string) => {
+		if (matchId) {
+			const username = localStorage.getItem('username');
+			if (username) {
+				socket.emit('broadcastAnalysisPosition', { matchId, username, fen });
+			}
+		}
+	}, [matchId, socket]);
 
 	const syncAnalysisToServer = useCallback((matchId: string, userId: number, tree?: Record<number, MoveTreeNode[]>, path?: number[]) => {
 		if (debounceTimerRef.current) {
@@ -168,7 +192,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 		setCurrentPath([]);
 		setMatchId(null);
 		setSelectedMoveIndex(null);
-	}, []);
+	}, [setAnalysisMode]);
 
 	const saveAnalysis = useCallback(async (currentMatchId: string) => {
 		try {
@@ -188,7 +212,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 		} catch (error) {
 			console.error("Failed to discard analysis:", error);
 		}
-	}, []);
+	}, [resetAnalysis]);
 
 	const checkExistingAnalysis = useCallback(async (currentMatchId: string, userId: number): Promise<boolean> => {
 		try {
@@ -234,6 +258,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 				checkExistingAnalysis,
 				loadAnalysis,
 				saveDraft,
+				broadcastFen,
 			}}
 		>
 			{children}

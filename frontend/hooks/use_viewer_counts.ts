@@ -3,9 +3,15 @@
 import { useEffect, useState } from 'react';
 import { useSocket } from '@/context/socket_context';
 
+export interface ViewerStatus {
+	username: string;
+	isAnalyzing: boolean;
+	currentFen?: string;
+}
+
 export const useViewerCounts = (matchIds: string[]) => {
 	const [cumulativeCounts, setCumulativeCounts] = useState<Record<string, number>>({});
-	const [usernames, setUsernames] = useState<Record<string, string[]>>({});
+	const [usernames, setUsernames] = useState<Record<string, ViewerStatus[]>>({});
 	const [guestCount, setGuestCount] = useState<Record<string, number>>({});
 	const socket = useSocket();
 

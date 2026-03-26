@@ -35,12 +35,32 @@ export class RedisService {
   async getViewerData(matchId: string) {
     const authorizedKey = `match:${matchId}:viewers_list`;
     const guestKey = `match:${matchId}:guest_viewers_list`;
-    const [count, usernames, guestCount] = await Promise.all([
+    const statusKey = `match:${matchId}:user_statuses`;
+
+    const [count, usernames, guestCount, statuses] = await Promise.all([
       this.redis.scard(authorizedKey),
       this.redis.smembers(authorizedKey),
-			this.redis.scard(guestKey)
+      this.redis.scard(guestKey),
+      this.redis.hgetall(statusKey),
     ]);
-    return { count, usernames, guestCount };
+
+    const formattedUsernames = usernames.map((username) => {
+      const statusStr = statuses[username];
+      const status = statusStr ? JSON.parse(statusStr) : { isAnalyzing: false };
+      return { username, ...status };
+    });
+
+    return { count, usernames: formattedUsernames, guestCount };
+  }
+
+  async setUserStatus(matchId: string, username: string, status: object) {
+    const statusKey = `match:${matchId}:user_statuses`;
+    await this.redis.hset(statusKey, username, JSON.stringify(status));
+  }
+
+  async removeUserStatus(matchId: string, username: string) {
+    const statusKey = `match:${matchId}:user_statuses`;
+    await this.redis.hdel(statusKey, username);
   }
 
   async setUserAnalysis(

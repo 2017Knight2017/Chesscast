@@ -73,6 +73,14 @@ export const UserAnalysisBoard = forwardRef<UserAnalysisBoardRef, UserAnalysisBo
 
 		const computedFen = computedChess.fen();
 
+		const { broadcastFen } = useAnalysisState();
+
+		useEffect(() => {
+			if (!isReadOnly) {
+				broadcastFen(computedFen);
+			}
+		}, [computedFen, isReadOnly, broadcastFen]);
+
 		useImperativeHandle(ref, () => ({
 			getCurrentFen: () => computedFen,
 		}));

@@ -137,7 +137,8 @@ export function MoveList({ id, matchHistory: propMatchHistory }: { id: string, m
 		setCurrentPath, 
 		selectedMoveIndex, 
 		setSelectedMoveIndex, 
-		deleteBranch 
+		deleteBranch,
+		inspectedUserId
 	} = useAnalysisState();
 	
 	const socketHistory = currentMoveData?.history || [];
@@ -238,7 +239,7 @@ export function MoveList({ id, matchHistory: propMatchHistory }: { id: string, m
 		
 		<div className="shrink-0 flex justify-between items-center border-b mb-2 pb-1">
 			<h3 className="sepia">Moves Record</h3>
-			{isAnalysisMode && currentPath.length > 0 && selectedMoveIndex !== null && (
+			{isAnalysisMode && currentPath.length > 0 && selectedMoveIndex !== null && inspectedUserId === null && (
 				<button 
 					onClick={() => deleteBranch(selectedMoveIndex, currentPath)}
 					className="text-[10px] text-red-500 hover:text-red-700 transition-colors uppercase font-bold flex items-center gap-1"
