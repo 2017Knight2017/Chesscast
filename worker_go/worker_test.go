@@ -51,9 +51,9 @@ func TestReportAnalysis(t *testing.T) {
 	os.Setenv("BACKEND_URL", server.URL)
 
 	evals := []int{10, 20}
-	durs := []float64{3.5, 4.2}
+	time_remaining := []int{3, 4}
 	notes := []string{"e4", "e5"}
 	outcome := "1/2-1/2"
 
-	reportAnalysis("test-id", evals, durs, notes, outcome)
+	reportAnalysis("test-id", evals, time_remaining, notes, outcome)
 }

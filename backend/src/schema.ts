@@ -34,7 +34,7 @@ export const players = pgTable('players', {
 export const analysis = pgTable('analysis', {
 	id:                  uuid('id').defaultRandom().primaryKey(),
 	pgn:                 text("pgn").notNull(),
-	durations:           integer('durations').array().notNull().default(sql`'{}'::integer[]`),
+	timesRemaining:      integer('times_remaining').array().notNull().default(sql`'{}'::integer[]`),
 	evaluations:         integer('evaluations').array().notNull().default(sql`'{}'::integer[]`),
 	notation:            text('notation').array().notNull().default(sql`'{}'::text[]`),
   outcome:             outcomeEnum().notNull().default('1/2-1/2'),
@@ -72,31 +72,17 @@ export const plannedBroadcasts = pgTable('planned_broadcasts', {
 	}, (t) => [ primaryKey({ columns: [t.userId, t.matchId] }) ]
 );
 
-export const followedBroadcasts = pgTable(
-  'followed_broadcasts',
-  {
-    userId: integer('user_id')
-      .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
-    matchId: uuid('match_id')
-      .notNull()
-      .references(() => matches.id, { onDelete: 'cascade' }),
-  },
-  (t) => [primaryKey({ columns: [t.userId, t.matchId] })],
+export const followedBroadcasts = pgTable('followed_broadcasts', {
+  userId:              integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  matchId:             uuid('match_id').notNull().references(() => matches.id, { onDelete: 'cascade' }),
+}, (t) => [ primaryKey({ columns: [t.userId, t.matchId] }) ]
 );
 
-export const userAnalysis = pgTable(
-  'user_analysis',
-  {
+export const userAnalysis = pgTable('user_analysis', {
     id: serial('id').primaryKey(),
-    matchId: uuid('match_id')
-      .references(() => matches.id)
-      .notNull(),
-    userId: integer('user_id')
-      .references(() => users.id)
-      .notNull(),
+    matchId: uuid('match_id').references(() => matches.id).notNull(),
+    userId: integer('user_id').references(() => users.id).notNull(),
     data: jsonb('data').notNull(),
     lastUpdated: timestamp('last_updated').defaultNow(),
-  },
-  (t) => [unique('unique_user_match_analysis').on(t.matchId, t.userId)],
+  }, (t) => [unique('unique_user_match_analysis').on(t.matchId, t.userId)],
 );

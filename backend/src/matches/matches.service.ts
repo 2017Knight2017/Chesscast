@@ -183,13 +183,13 @@ export class MatchesService {
 		return analysis;
 	}
 
-	async handleWorkerReport(id: string, evaluations: number[], durations: number[], notation: string[], outcome: '1/2-1/2'|'1-0'|'0-1') {
-		console.log(id, evaluations, durations, notation)
+	async handleWorkerReport(id: string, evaluations: number[], timesRemaining: number[], notation: string[], outcome: '1/2-1/2'|'1-0'|'0-1') {
+		console.log(id, evaluations, timesRemaining, notation)
 		await this.db
 			.update(sc.analysis)
 			.set({
 				evaluations: evaluations,
-				durations: durations,
+				timesRemaining: timesRemaining,
 				notation: notation,
 				outcome: outcome
 			})
@@ -276,7 +276,7 @@ export class MatchesService {
 			bonusTimeMin,
 			increment,
 			newIncrement,
-			durations
+			timesRemaining
 		} = analysis;
 
 		const {
@@ -291,43 +291,51 @@ export class MatchesService {
 
 		chess.move(move);
 
-		const newFen = chess.fen();
+		const isGameOver = chess.isGameOver();
+		const nextMoveExists = moveIndex + 1 < timesRemaining.length;
 
-		const moveDuration = durations[moveIndex] || 0;
+		const newFen = chess.fen();
 		const isWhiteMove = moveIndex % 2 === 0;
-		const currentIncrement = (moveIndex/2 <= controlMove ? increment : newIncrement) * 1000;
-		let lastControlMoveVar = lastControlMove;
-		let bonusTimeMs = 0;
+
+		const timeBeforeMove = isWhiteMove ? whitePlayerTime : blackPlayerTime;
+		const timeAfterMove = timesRemaining[moveIndex] ?? timeBeforeMove;
+
+		const currentIncrementMs = 1000 * (moveIndex/2 < controlMove && controlMove != 0 ?
+			increment :
+			newIncrement);
 		
+		let bonusTimeMs = 0;
+		let lastControlMoveVar = lastControlMove;
+
 		if (controlMove !== 0) {
-			const moveNumber = Math.floor(moveIndex / 2);
+			const moveNumber = Math.floor(moveIndex / 2) + 1;
 			const nextControl = lastControlMove === 0 
 				? controlMove 
 				: lastControlMove + newControlMoveEvery;
 
 			if (moveNumber === nextControl) {
-				if (!isWhiteMove) lastControlMoveVar = nextControl;
 				bonusTimeMs = bonusTimeMin * 60000;
+				if (!isWhiteMove) lastControlMoveVar = nextControl;
 			}
 		}
+
+		const delay = isGameOver || !nextMoveExists 
+			? 0 
+			: Math.max(0, (timeBeforeMove + currentIncrementMs + bonusTimeMs) - timeAfterMove);
 
 		const [updatedMatch] = await this.db
 			.update(sc.matches)
 			.set({
 				fen: newFen,
-				moveIndex: moveIndex+1,
+				moveIndex: moveIndex + 1,
 				lastControlMove: lastControlMoveVar,
-				whitePlayerTime: isWhiteMove 
-					? whitePlayerTime - moveDuration + currentIncrement + bonusTimeMs
-					: whitePlayerTime,
-				blackPlayerTime: !isWhiteMove 
-					? blackPlayerTime - moveDuration + currentIncrement + bonusTimeMs
-					: blackPlayerTime,
+				whitePlayerTime: isWhiteMove ? timeAfterMove : whitePlayerTime,
+				blackPlayerTime: !isWhiteMove ? timeAfterMove : blackPlayerTime,
 			})
 			.where(eq(sc.matches.id, id))
 			.returning();
 
-		return updatedMatch;
+		return { updatedMatch, delay };
 	}
 
 	async checkGameState(id: string) {

@@ -37,10 +37,10 @@ type Bias struct {
 var archetypesCache map[string]Archetype
 
 type ReportPayload struct {
-	Evaluations []int    `json:"evaluations"`
-	Durations   []int    `json:"durations"`
-	Notation    []string `json:"notation"`
-	Outcome     string   `json:"outcome"`
+	Evaluations   []int    `json:"evaluations"`
+	TimeRemaining []int    `json:"timeRemaining"`
+	Notation      []string `json:"notation"`
+	Outcome       string   `json:"outcome"`
 }
 
 type MateStats struct {
@@ -138,7 +138,7 @@ func ProcessGame(
 	board := chess.NewGame(chess.UseNotation(chess.AlgebraicNotation{}))
 	moves := game.Moves()
 
-	durations := make([]float64, 0, len(moves))
+	timesRemaining := make([]int, 0, len(moves))
 	evaluations := make([]int, 0, len(moves))
 	notation := make([]string, 0, len(moves))
 	isRepeatable := nextControlAfter != 0
@@ -164,7 +164,6 @@ func ProcessGame(
 	isControlMoveReached := false
 
 	engPath := "/usr/games/stockfish"
-
 	eng, err := NewLongLivedEngine(ctx, engPath)
 	if err != nil {
 		return fmt.Errorf("не удалось запустить движок: %v", err)
@@ -222,11 +221,11 @@ func ProcessGame(
 		}
 
 		evaluations = append(evaluations, eval)
-		durations = append(durations, moveTime)
 		lastComplexities[currentPlayer] = complexityMult
 
 		clocks[currentPlayer] -= moveTime
 		clocks[currentPlayer] += currentIncrement
+
 		if clocks[currentPlayer] < 0 {
 			clocks[currentPlayer] = 0
 		}
@@ -243,11 +242,14 @@ func ProcessGame(
 			currentIncrement = float64(newIncrement)
 		}
 
+		timeRemainingMs := int(clocks[currentPlayer] * 1000)
+		timesRemaining = append(timesRemaining, timeRemainingMs)
+
 		movesPlayed++
 		board.Move(move)
 	}
 
-	reportAnalysis(matchID, evaluations, durations, notation, string(game.Outcome()))
+	reportAnalysis(matchID, evaluations, timesRemaining, notation, string(game.Outcome()))
 	logger.Printf("Игра %s обработана: %d полуходов", matchID, len(evaluations))
 	return nil
 }
@@ -553,24 +555,19 @@ func calculateMoveTimeWithEngine(ctx context.Context, eng *LongLivedEngine, time
 	return evalRet, finalTime, complexityMult, nil
 }
 
-func reportAnalysis(matchID string, evaluations []int, durations []float64, notation []string, outcome string) {
+func reportAnalysis(matchID string, evaluations []int, timesRemaining []int, notation []string, outcome string) {
 	url := fmt.Sprintf("%s/matches/%s/report", os.Getenv("BACKEND_URL"), matchID)
 	logger.Printf("Отправляем отчет для матча %s на URL: %s", matchID, url)
-
-	durationsMs := make([]int, len(durations))
-	for i, d := range durations {
-		durationsMs[i] = int(d * 1000)
-	}
 
 	if outcome == "*" {
 		outcome = "1/2-1/2"
 	}
 
 	payload := ReportPayload{
-		Evaluations: evaluations,
-		Durations:   durationsMs,
-		Notation:    notation,
-		Outcome:     outcome,
+		Evaluations:   evaluations,
+		TimeRemaining: timesRemaining,
+		Notation:      notation,
+		Outcome:       outcome,
 	}
 
 	data, err := json.Marshal(payload)

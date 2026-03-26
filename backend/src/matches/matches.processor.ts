@@ -21,43 +21,41 @@ export class MatchesProcessor extends WorkerHost {
 	}
 
 	async process(job: Job<{ matchId: string; moveIndex: number }>): Promise<void> {
-	    const { matchId, moveIndex } = job.data;
+		const { matchId, moveIndex } = job.data;
 
-	    const [analysis] = await this.db
-	        .select()
-	        .from(sc.analysis)
-	        .where(eq(sc.analysis.id, matchId))
-	        .limit(1);
+		const [analysis] = await this.db
+			.select()
+			.from(sc.analysis)
+			.where(eq(sc.analysis.id, matchId))
+			.limit(1);
 
-	    const currentMoveNotation = analysis.notation[moveIndex];
+		const currentMoveNotation = analysis.notation[moveIndex];
 		
-	    const updatedMatch = await this.matchesService.updateGameState(matchId, currentMoveNotation);
+		const {updatedMatch, delay} = await this.matchesService.updateGameState(matchId, currentMoveNotation);
 
-	    this.gateway.server.to(matchId).emit('new_move', {
+		this.gateway.server.to(matchId).emit('new_move', {
 			matchId,
-	        move: currentMoveNotation,
-	        evaluation: analysis.evaluations[moveIndex],
-	        fen: updatedMatch.fen,
-	        whiteTimeMs: updatedMatch.whitePlayerTime,
-	        blackTimeMs: updatedMatch.blackPlayerTime,
-	    });
+			move: currentMoveNotation,
+			evaluation: analysis.evaluations[moveIndex],
+			fen: updatedMatch.fen,
+			whiteTimeMs: updatedMatch.whitePlayerTime,
+			blackTimeMs: updatedMatch.blackPlayerTime,
+		});
 
-	    const nextIndex = moveIndex + 1;
-	    if (nextIndex < analysis.notation.length) {
-	        const delay = analysis.durations[moveIndex] || 1000;
-
-	        await this.timerQueue.add(
-	            'nextStep',
-	            { matchId, moveIndex: nextIndex },
-	            {
-	                delay: delay,
-	                jobId: `timer_${matchId}_${nextIndex}`,
-	                removeOnComplete: true,
-	            },
-	        );
-	    } else {
+		const nextIndex = moveIndex + 1;
+		if (nextIndex < analysis.notation.length) {
+			await this.timerQueue.add(
+				'nextStep',
+				{ matchId, moveIndex: nextIndex },
+				{
+					delay: delay,
+					jobId: `timer_${matchId}_${nextIndex}`,
+					removeOnComplete: true,
+				},
+			);
+		} else {
 			this.gateway.server.to(matchId).emit('match_finished', { matchId, outcome: analysis.outcome });
-	        await this.matchesService.finishGame(matchId);
-	    }
+			await this.matchesService.finishGame(matchId);
+		}
 	}
 }

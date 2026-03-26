@@ -58,9 +58,9 @@ export class MatchesController {
 	@Post(':id/report')
 	async handleWorkerReport(
 		@Param('id') id: string,
-		@Body() data: { evaluations: number[], durations: number[], notation: string[], outcome: '1/2-1/2'|'1-0'|'0-1' }
+		@Body() data: { evaluations: number[], timeRemaining: number[], notation: string[], outcome: '1/2-1/2'|'1-0'|'0-1' }
 	) {
-		return await this.matchesService.handleWorkerReport(id, data['evaluations'], data['durations'], data['notation'], data['outcome'])
+		return await this.matchesService.handleWorkerReport(id, data['evaluations'], data['timeRemaining'], data['notation'], data['outcome'])
 	}
 
 	@Post(':id/start')
