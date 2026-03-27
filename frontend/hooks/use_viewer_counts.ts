@@ -16,30 +16,32 @@ export const useViewerCounts = (matchIds: string[]) => {
 	const socket = useSocket();
 
 	useEffect(() => {
+		const currentSocket = socket;
+		
+		const ids = [...matchIds]; 
+
 		const handleConnect = () => {
-			socket.emit('subscribeToCounts', { matchIds });
+			currentSocket.emit('subscribeToCounts', { matchIds: ids });
 		};
-
-		if (socket.connected) {
-			handleConnect();
-		}
-
-		socket.on('connect', handleConnect);
 
 		const handleUpdate = ({ matchId, count, guestCount, usernames }: any) => {
 			setCumulativeCounts((prev) => ({ ...prev, [matchId]: count + guestCount }));
-			setGuestCount((prev) => ({ ...prev, [matchId]: guestCount }))
+			setGuestCount((prev) => ({ ...prev, [matchId]: guestCount }));
 			setUsernames((prev) => ({ ...prev, [matchId]: usernames }));
 		};
 
-		socket.on('viewer_count_update', handleUpdate);
+		if (currentSocket.connected) {
+			handleConnect();
+		}
+		currentSocket.on('connect', handleConnect);
+		currentSocket.on('viewer_count_update', handleUpdate);
 
 		return () => {
-			socket.emit('unsubscribeFromCounts', { matchIds });
-			socket.off('connect', handleConnect);
-			socket.off('viewer_count_update', handleUpdate);
+			currentSocket.emit('unsubscribeFromCounts', { matchIds: ids });
+			currentSocket.off('connect', handleConnect);
+			currentSocket.off('viewer_count_update', handleUpdate);
 		};
-	}, [matchIds.join(','), socket]);
+	}, [socket, JSON.stringify(matchIds)]);
 
 	return {cumulativeCounts: cumulativeCounts, usernames: usernames, guestCount: guestCount};
 };
