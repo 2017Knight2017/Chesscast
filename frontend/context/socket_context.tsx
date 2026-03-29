@@ -40,5 +40,3 @@ export function useSocket() {
 	}
 	return socket;
 }
-t;
-}

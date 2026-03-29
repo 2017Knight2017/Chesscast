@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as sc from '../schema';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
@@ -9,11 +9,13 @@ export class PlayersService {
 	constructor(
 		@Inject(DrizzleAsyncProvider) private db: NodePgDatabase<typeof sc>,
 	) {
-		console.log('[PlayersService] constructor called');
+		this.logger.log('[PlayersService] constructor called');
 	}
 
+	private readonly logger = new Logger(PlayersService.name);
+
 	async findByName(name: string) {
-		console.log('[PlayersService] findByName called');
+		this.logger.log('[PlayersService] findByName called');
 		return await this.db
 			.select()
 			.from(sc.players)
@@ -23,18 +25,18 @@ export class PlayersService {
 	}
 
 	async updateArchetype(name: string, archetype: string) {
-		console.log('[PlayersService] updateArchetype called');
+		this.logger.log('[PlayersService] updateArchetype called');
 		await this.db
 			.update(sc.players)
 			.set({ archetype: archetype })
 			.where(eq(sc.players.name, name))
 			.execute();
 
-		console.log(`Successfully cached archetype for ${name}: ${archetype}`);
+		this.logger.log(`Successfully cached archetype for ${name}: ${archetype}`);
 	}
 
 	async getArchetypeFromDB(name: string) {
-		console.log('[PlayersService] getArchetypeFromDB called');
+		this.logger.log('[PlayersService] getArchetypeFromDB called');
 		const result = await this.db
 			.select()
 			.from(sc.players)

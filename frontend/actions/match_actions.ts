@@ -71,10 +71,4 @@ export async function createMatchAction(
 export async function launchMatchAction(matchId: string) {
 	console.log("[match_actions.ts:launchMatchAction]", { matchId });
 	await fetch(process.env.NEST_API_URL + `/matches/${matchId}/start`, { method: 'POST' });
-} };
-	}
-}
-
-export async function launchMatchAction(matchId: string) {
-	await fetch(process.env.NEST_API_URL + `/matches/${matchId}/start`, { method: 'POST' });
-}
+} 

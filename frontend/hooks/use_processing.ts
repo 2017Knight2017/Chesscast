@@ -38,6 +38,4 @@ export function useProcessing(match: Match) {
 	}, [match.id, socket]);
 
 	return {isProcessing}
-}ssing}
-}urn {isProcessing}
 }

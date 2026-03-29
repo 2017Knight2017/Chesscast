@@ -147,4 +147,3 @@ export const UserAnalysisBoard = forwardRef<UserAnalysisBoardRef, UserAnalysisBo
 );
 
 UserAnalysisBoard.displayName = 'UserAnalysisBoard';
-lysisBoard.displayName = 'UserAnalysisBoard';

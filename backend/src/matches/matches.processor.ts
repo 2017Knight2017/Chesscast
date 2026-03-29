@@ -1,6 +1,6 @@
 import { Processor, WorkerHost, InjectQueue } from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
-import { Inject, forwardRef } from '@nestjs/common';
+import { Inject, Logger, forwardRef } from '@nestjs/common';
 import { MatchesGateway } from './matches.gateway';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
@@ -18,11 +18,13 @@ export class MatchesProcessor extends WorkerHost {
 		@InjectQueue('timer') private timerQueue: Queue,
 	) {
 		super();
-		console.log('[MatchesProcessor] constructor called');
+		this.logger.log('[MatchesProcessor] constructor called');
 	}
 
+	private readonly logger = new Logger(MatchesProcessor.name);
+
 	async process(job: Job<{ matchId: string; moveIndex: number }>): Promise<void> {
-		console.log('[MatchesProcessor] process called');
+		this.logger.log('[MatchesProcessor] process called');
 		const { matchId, moveIndex } = job.data;
 
 		const [analysis] = await this.db

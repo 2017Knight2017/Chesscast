@@ -123,11 +123,11 @@ export class MatchesService {
 				isArchetypeAiGenerated[0] = res2.isAiGenerated[0];
 				break;
 			case 3:
-				console.log(`Both archetypes were taken from DB or from user input: ${validatedArchetypes}`)
+				this.logger.log(`Both archetypes were taken from DB or from user input: ${validatedArchetypes}`)
 				break;
 		}
 
-		console.log(`Validated archetypes for ${whitePlayer} and ${blackPlayer}:`, validatedArchetypes, "AI Generated Flags:", isArchetypeAiGenerated);
+		this.logger.log(`Validated archetypes for ${whitePlayer} and ${blackPlayer}:`, validatedArchetypes, "AI Generated Flags:", isArchetypeAiGenerated);
 		
 		if (isArchetypeAiGenerated[0] && whitePlayer) {
 			await this.playersService.updateArchetype(whitePlayer, validatedArchetypes[0]!);
@@ -189,7 +189,7 @@ export class MatchesService {
 
 	async handleWorkerReport(id: string, evaluations: number[], timesRemaining: number[], notation: string[], outcome: '1/2-1/2'|'1-0'|'0-1') {
 		this.logger.log('[MatchesService] handleWorkerReport called');
-		console.log(id, evaluations, timesRemaining, notation)
+		this.logger.log(id, evaluations, timesRemaining, notation)
 		await this.db
 			.update(sc.analysis)
 			.set({

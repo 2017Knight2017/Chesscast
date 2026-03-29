@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Param, HttpCode, HttpStatus, Body, Inject, NotFoundException, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Get, Param, HttpCode, HttpStatus, Body, Inject, NotFoundException, UseGuards, Request, Logger } from '@nestjs/common';
 import { MatchesService, Match } from './matches.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
@@ -18,8 +18,10 @@ export class MatchesController {
 		private readonly matchesService: MatchesService,
 		@Inject(DrizzleAsyncProvider) private db: NodePgDatabase<typeof sc>,
 	) {
-		console.log('[MatchesController] constructor called');
+		this.logger.log('[MatchesController] constructor called');
 	}
+
+	private readonly logger = new Logger(MatchesController.name);
 
 	@Post('create')
 	@UseGuards(JwtAuthGuard)
@@ -39,7 +41,7 @@ export class MatchesController {
 		nextControlMoveAfter: number,
 		newTimeIncrement: number
 	}){
-		console.log('[MatchesController] createBroadcast called');
+		this.logger.log('[MatchesController] createBroadcast called');
 		return this.matchesService.createBroadcast(
 			req.user.id, 
 			req.user.username, 
@@ -63,7 +65,7 @@ export class MatchesController {
 		@Param('id') id: string,
 		@Body() data: { evaluations: number[], timeRemaining: number[], notation: string[], outcome: '1/2-1/2'|'1-0'|'0-1' }
 	) {
-		console.log('[MatchesController] handleWorkerReport called');
+		this.logger.log('[MatchesController] handleWorkerReport called');
 		return await this.matchesService.handleWorkerReport(id, data['evaluations'], data['timeRemaining'], data['notation'], data['outcome'])
 	}
 
@@ -71,7 +73,7 @@ export class MatchesController {
 	async startBroadcast(
 		@Param('id') id: string
 	) {
-		console.log('[MatchesController] startBroadcast called');
+		this.logger.log('[MatchesController] startBroadcast called');
 		return await this.matchesService.startBroadcast(id);
 	}
 
@@ -79,14 +81,14 @@ export class MatchesController {
 	async checkGameState(
 		@Param('id') id: string
 	) {
-		console.log('[MatchesController] checkGameState called');
+		this.logger.log('[MatchesController] checkGameState called');
 		return await this.matchesService.checkGameState(id);
 	}
 
 	@Get('my_followed')
 	@UseGuards(JwtAuthGuard)
 	async getMyFollowed(@Request() req) {
-		console.log('[MatchesController] getMyFollowed called');
+		this.logger.log('[MatchesController] getMyFollowed called');
 		return this.matchesService.getMatchesByTable({
 			table: sc.followedBroadcasts,
 			isJoinTable: true, 
@@ -97,7 +99,7 @@ export class MatchesController {
 	@Get('my_planned')
 	@UseGuards(JwtAuthGuard)
 	async getMyPlanned(@Request() req) {
-		console.log('[MatchesController] getMyPlanned called');
+		this.logger.log('[MatchesController] getMyPlanned called');
 		return this.matchesService.getMatchesByTable({
 			table: sc.plannedBroadcasts,
 			isJoinTable: true, 
@@ -107,7 +109,7 @@ export class MatchesController {
 
 	@Get('planned')
 	async getPlanned(@Request() req): Promise<Match[]> {
-		console.log('[MatchesController] getPlanned called');
+		this.logger.log('[MatchesController] getPlanned called');
 		return this.matchesService.getMatchesByTable({
 			table: sc.followedBroadcasts,
 			isJoinTable: false, 
@@ -117,7 +119,7 @@ export class MatchesController {
 
 	@Get('live')
 	async getLiveMatches(): Promise<Match[]> {
-		console.log('[MatchesController] getLiveMatches called');
+		this.logger.log('[MatchesController] getLiveMatches called');
 		return this.matchesService.getMatchesByTable({
 			table: sc.followedBroadcasts,
 			isJoinTable: false, 

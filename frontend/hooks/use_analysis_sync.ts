@@ -147,7 +147,4 @@ export function useAnalysisSync({ match, userId, hasExistingAnalysis }: UseAnaly
 		handleMainBoardClick,
 		handleInspectUser
 	};
-}ck,
-		handleInspectUser
-	};
 }

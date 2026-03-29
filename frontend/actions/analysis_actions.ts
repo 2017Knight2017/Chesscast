@@ -74,6 +74,4 @@ export async function getPlayerByUsernameAction(username: string) {
 		console.error("Action Error:", error);
 		return { success: false, error: 'Internal server error' };
 	}
-}' };
-	}
 }

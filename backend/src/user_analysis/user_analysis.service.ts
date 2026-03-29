@@ -1,4 +1,4 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as sc from '../schema';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
@@ -16,16 +16,18 @@ export class UserAnalysisService {
 		@Inject(DrizzleAsyncProvider) private db: NodePgDatabase<typeof sc>,
 		@Inject(RedisService) private redisService: RedisService,
 	) {
-		console.log('[UserAnalysisService] constructor called');
+		this.logger.log('[UserAnalysisService] constructor called');
 	}
+
+	private readonly logger = new Logger(UserAnalysisService.name);
 
 	async getUserAnalysis(
 		matchId: string,
 		userId: number,
 	): Promise<MoveTreeNode[] | null> {
-		console.log('[UserAnalysisService] getUserAnalysis called');
+		this.logger.log('[UserAnalysisService] getUserAnalysis called');
 		const redisData = await this.redisService.getUserAnalysis(matchId, userId);
-		console.log(redisData);
+		this.logger.log(redisData);
 		if (redisData) {
 			return redisData as MoveTreeNode[];
 		}
@@ -40,7 +42,7 @@ export class UserAnalysisService {
 		if (!dbRecord) {
 			return null;
 		}
-		console.log(dbRecord.data);
+		this.logger.log(dbRecord.data);
 
 		return dbRecord.data as MoveTreeNode[];
 	}
@@ -50,7 +52,7 @@ export class UserAnalysisService {
 		userId: number,
 		data: MoveTreeNode[],
 	): Promise<void> {
-		console.log('[UserAnalysisService] saveUserAnalysis called');
+		this.logger.log('[UserAnalysisService] saveUserAnalysis called');
 		const existingRecord = await this.db.query.userAnalysis.findFirst({
 			where: and(
 				eq(sc.userAnalysis.matchId, matchId),
@@ -59,7 +61,7 @@ export class UserAnalysisService {
 		});
 
 		if (existingRecord) {
-			console.log("There is already a record! Updating...");
+			this.logger.log("There is already a record! Updating...");
 			await this.db
 				.update(sc.userAnalysis)
 				.set({
@@ -68,7 +70,7 @@ export class UserAnalysisService {
 				})
 				.where(eq(sc.userAnalysis.id, existingRecord.id));
 		} else {
-			console.log("There is no existing record! Saving...");
+			this.logger.log("There is no existing record! Saving...");
 			await this.db
 			.insert(sc.userAnalysis)
 			.values({
@@ -82,7 +84,7 @@ export class UserAnalysisService {
 	}
 
 	async saveAnalysisFromRedis(matchId: string, userId: number): Promise<void> {
-		console.log('[UserAnalysisService] saveAnalysisFromRedis called');
+		this.logger.log('[UserAnalysisService] saveAnalysisFromRedis called');
 		const redisData = await this.redisService.getUserAnalysis(matchId, userId);
 		if (redisData) {
 			await this.saveUserAnalysis(matchId, userId, redisData as MoveTreeNode[]);
@@ -90,7 +92,7 @@ export class UserAnalysisService {
 	}
 
 	async discardUserAnalysis(matchId: string, userId: number): Promise<void> {
-		console.log('[UserAnalysisService] discardUserAnalysis called');
+		this.logger.log('[UserAnalysisService] discardUserAnalysis called');
 		try {
 			await this.db
 				.delete(sc.userAnalysis)
@@ -102,13 +104,13 @@ export class UserAnalysisService {
 				);
 			await this.redisService.deleteUserAnalysis(matchId, userId);
 		} catch (error) {
-			console.error(`Failed to discard analysis for user ${userId}: ${error.message}`);
+			this.logger.error(`Failed to discard analysis for user ${userId}: ${error.message}`);
 			throw error;
 		}
 	}
 
 	async isAnalyzing(matchId: string, userId: number): Promise<boolean> {
-		console.log('[UserAnalysisService] isAnalyzing called');
+		this.logger.log('[UserAnalysisService] isAnalyzing called');
 		const redisData = await this.redisService.getUserAnalysis(matchId, userId);
 		if (redisData) return true;
 
@@ -123,7 +125,7 @@ export class UserAnalysisService {
 	}
 
 	async findByUsername(username: string) {
-		console.log('[UserAnalysisService] findByUsername called');
+		this.logger.log('[UserAnalysisService] findByUsername called');
 		const result = await this.db
 			.select({
 				id: sc.users.id,

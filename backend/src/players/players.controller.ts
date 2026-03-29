@@ -1,15 +1,17 @@
-import { Controller, Get, Query, Param } from '@nestjs/common';
+import { Controller, Get, Query, Param, Logger } from '@nestjs/common';
 import { PlayersService } from './players.service';
 
 @Controller('players')
 export class PlayersController {
 	constructor(private readonly playersService: PlayersService) {
-		console.log('[PlayersController] constructor called');
+		this.logger.log('[PlayersController] constructor called');
 	}
+
+	private readonly logger = new Logger(PlayersController.name);
 
 	@Get('search')
 	async searchPlayers(@Query('name') name: string) {
-		console.log('[PlayersController] searchPlayers called');
+		this.logger.log('[PlayersController] searchPlayers called');
     	if (!name || name.length < 2) return [];
 		return this.playersService.findByName(name);
 	}
