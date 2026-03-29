@@ -18,9 +18,11 @@ export class MatchesProcessor extends WorkerHost {
 		@InjectQueue('timer') private timerQueue: Queue,
 	) {
 		super();
+		console.log('[MatchesProcessor] constructor called');
 	}
 
 	async process(job: Job<{ matchId: string; moveIndex: number }>): Promise<void> {
+		console.log('[MatchesProcessor] process called');
 		const { matchId, moveIndex } = job.data;
 
 		const [analysis] = await this.db

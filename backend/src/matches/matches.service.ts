@@ -68,11 +68,14 @@ export class MatchesService {
 		@InjectQueue('timer') private timerQueue: Queue,
 		@Inject(RedisService) private redisService: RedisService,
 		@Inject(forwardRef(() => MatchesGateway)) private readonly gateway: MatchesGateway,
-	) {}
+	) {
+		this.logger.log('[MatchesService] constructor called');
+	}
 
 	private readonly logger = new Logger(MatchesService.name);
 
 	private getValidArchetype(key: string | undefined): string | undefined {
+		this.logger.log('[MatchesService] getValidArchetype called');
 		return archetypeOptions[key as keyof typeof archetypeOptions];
 }
 
@@ -92,6 +95,7 @@ export class MatchesService {
 		nextControlMoveAfter: number,
 		newTimeIncrement: number
 	) {
+		this.logger.log('[MatchesService] createBroadcast called');
 		const [whiteDB, blackDB] = await Promise.all([
 			this.playersService.getArchetypeFromDB(whitePlayer),
 			this.playersService.getArchetypeFromDB(blackPlayer)
@@ -184,6 +188,7 @@ export class MatchesService {
 	}
 
 	async handleWorkerReport(id: string, evaluations: number[], timesRemaining: number[], notation: string[], outcome: '1/2-1/2'|'1-0'|'0-1') {
+		this.logger.log('[MatchesService] handleWorkerReport called');
 		console.log(id, evaluations, timesRemaining, notation)
 		await this.db
 			.update(sc.analysis)
@@ -204,6 +209,7 @@ export class MatchesService {
 	}
 
 	async startBroadcast(id: string) {
+		this.logger.log('[MatchesService] startBroadcast called');
 		await this.db
 			.update(sc.matches)
 			.set({
@@ -228,6 +234,7 @@ export class MatchesService {
 	
 	@Cron(CronExpression.EVERY_MINUTE)
 	async autoCheckAndStartBroadcasts() {
+		this.logger.log('[MatchesService] autoCheckAndStartBroadcasts called');
 		const now = new Date();
 
 		const started = await this.db
@@ -259,6 +266,7 @@ export class MatchesService {
 	}
 
 	async updateGameState(id: string, move: string) {
+		this.logger.log('[MatchesService] updateGameState called');
 		const game = await this.db.query.matches.findFirst({
 			where: eq(sc.matches.id, id),
 		});
@@ -339,6 +347,7 @@ export class MatchesService {
 	}
 
 	async checkGameState(id: string) {
+		this.logger.log('[MatchesService] checkGameState called');
 		const match = await this.db.query.matches.findFirst({
 			where: eq(sc.matches.id, id),
 		});
@@ -389,6 +398,7 @@ export class MatchesService {
 	}
 
 	async finishGame(id: string) {
+		this.logger.log('[MatchesService] finishGame called');
 		await this.db
 			.update(sc.matches)
 			.set({status: "finished"})
@@ -406,6 +416,7 @@ export class MatchesService {
 		userId?: number,
 		status?: "processing"|"waiting"|"in_progress"|"finished"
 	}) {
+		this.logger.log('[MatchesService] getMatchesByTable called');
 		let query = this.db
 			.select({
 				id: sc.matches.id,

@@ -21,10 +21,13 @@ interface userRequest extends Request {
 
 @Controller('user-analysis')
 export class UserAnalysisController {
-	constructor(private readonly userAnalysisService: UserAnalysisService) {}
+	constructor(private readonly userAnalysisService: UserAnalysisService) {
+		console.log('[UserAnalysisController] constructor called');
+	}
 
 	@Get('by-username/:username')
 	async getPlayerByUsername(@Param('username') username: string) {
+		console.log('[UserAnalysisController] getPlayerByUsername called');
 		return this.userAnalysisService.findByUsername(username);
 	}
 
@@ -33,6 +36,7 @@ export class UserAnalysisController {
 		@Param('matchId') matchId: string,
 		@Param('userId') userId: string,
 	) {
+		console.log('[UserAnalysisController] getUserAnalysis called');
 		const data = await this.userAnalysisService.getUserAnalysis(
 			matchId,
 			parseInt(userId),
@@ -46,6 +50,7 @@ export class UserAnalysisController {
 		@Request() req: userRequest,
 		@Body() body: { matchId: string; data: MoveTreeNode[] },
 	) {
+		console.log('[UserAnalysisController] saveUserAnalysis called');
 		await this.userAnalysisService.saveUserAnalysis(
 			body.matchId,
 			req.user.id,
@@ -60,6 +65,7 @@ export class UserAnalysisController {
 		@Request() req: userRequest,
 		@Body() body: { matchId: string },
 	) {
+		console.log('[UserAnalysisController] saveDraft called');
 		await this.userAnalysisService.saveAnalysisFromRedis(
 			body.matchId,
 			req.user.id,
@@ -73,6 +79,7 @@ export class UserAnalysisController {
 		@Request() req: userRequest,
 		@Body() body: { matchId: string },
 	) {
+		console.log('[UserAnalysisController] discardUserAnalysis called');
 		await this.userAnalysisService.discardUserAnalysis(
 			body.matchId,
 			req.user.id,
@@ -85,6 +92,7 @@ export class UserAnalysisController {
 		@Param('matchId') matchId: string,
 		@Param('userId') userId: string,
 	) {
+		console.log('[UserAnalysisController] isAnalyzing called');
 		const result = await this.userAnalysisService.isAnalyzing(
 			matchId,
 			parseInt(userId),

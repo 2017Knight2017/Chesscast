@@ -8,9 +8,12 @@ import { and, eq, ilike, isNotNull } from 'drizzle-orm';
 export class PlayersService {
 	constructor(
 		@Inject(DrizzleAsyncProvider) private db: NodePgDatabase<typeof sc>,
-	) {}
+	) {
+		console.log('[PlayersService] constructor called');
+	}
 
 	async findByName(name: string) {
+		console.log('[PlayersService] findByName called');
 		return await this.db
 			.select()
 			.from(sc.players)
@@ -20,6 +23,7 @@ export class PlayersService {
 	}
 
 	async updateArchetype(name: string, archetype: string) {
+		console.log('[PlayersService] updateArchetype called');
 		await this.db
 			.update(sc.players)
 			.set({ archetype: archetype })
@@ -30,6 +34,7 @@ export class PlayersService {
 	}
 
 	async getArchetypeFromDB(name: string) {
+		console.log('[PlayersService] getArchetypeFromDB called');
 		const result = await this.db
 			.select()
 			.from(sc.players)

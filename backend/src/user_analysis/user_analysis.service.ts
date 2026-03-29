@@ -15,12 +15,15 @@ export class UserAnalysisService {
 	constructor(
 		@Inject(DrizzleAsyncProvider) private db: NodePgDatabase<typeof sc>,
 		@Inject(RedisService) private redisService: RedisService,
-	) {}
+	) {
+		console.log('[UserAnalysisService] constructor called');
+	}
 
 	async getUserAnalysis(
 		matchId: string,
 		userId: number,
 	): Promise<MoveTreeNode[] | null> {
+		console.log('[UserAnalysisService] getUserAnalysis called');
 		const redisData = await this.redisService.getUserAnalysis(matchId, userId);
 		console.log(redisData);
 		if (redisData) {
@@ -47,6 +50,7 @@ export class UserAnalysisService {
 		userId: number,
 		data: MoveTreeNode[],
 	): Promise<void> {
+		console.log('[UserAnalysisService] saveUserAnalysis called');
 		const existingRecord = await this.db.query.userAnalysis.findFirst({
 			where: and(
 				eq(sc.userAnalysis.matchId, matchId),
@@ -78,6 +82,7 @@ export class UserAnalysisService {
 	}
 
 	async saveAnalysisFromRedis(matchId: string, userId: number): Promise<void> {
+		console.log('[UserAnalysisService] saveAnalysisFromRedis called');
 		const redisData = await this.redisService.getUserAnalysis(matchId, userId);
 		if (redisData) {
 			await this.saveUserAnalysis(matchId, userId, redisData as MoveTreeNode[]);
@@ -85,6 +90,7 @@ export class UserAnalysisService {
 	}
 
 	async discardUserAnalysis(matchId: string, userId: number): Promise<void> {
+		console.log('[UserAnalysisService] discardUserAnalysis called');
 		try {
 			await this.db
 				.delete(sc.userAnalysis)
@@ -102,6 +108,7 @@ export class UserAnalysisService {
 	}
 
 	async isAnalyzing(matchId: string, userId: number): Promise<boolean> {
+		console.log('[UserAnalysisService] isAnalyzing called');
 		const redisData = await this.redisService.getUserAnalysis(matchId, userId);
 		if (redisData) return true;
 
@@ -116,6 +123,7 @@ export class UserAnalysisService {
 	}
 
 	async findByUsername(username: string) {
+		console.log('[UserAnalysisService] findByUsername called');
 		const result = await this.db
 			.select({
 				id: sc.users.id,

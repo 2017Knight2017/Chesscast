@@ -112,10 +112,17 @@ const archetypes = [
 	"Psychological Grinder"
 ]
 
-const getBothArchetypesPrompt = (player1: string, player2: string) => instructions + `Which archetype suits ${player1} and ${player2} the best?`
-const getSingleArchetypePrompt = (player: string) => instructions + `Which archetype suits ${player} the best?`
+const getBothArchetypesPrompt = (player1: string, player2: string) => {
+	console.log('[archetype.ts] getBothArchetypesPrompt called');
+	return instructions + `Which archetype suits ${player1} and ${player2} the best?`;
+}
+const getSingleArchetypePrompt = (player: string) => {
+	console.log('[archetype.ts] getSingleArchetypePrompt called');
+	return instructions + `Which archetype suits ${player} the best?`;
+}
 
 const getRandomArchetype = (): string => {
+	console.log('[archetype.ts] getRandomArchetype called');
     const randomIndex = Math.floor(Math.random() * archetypes.length);
     return archetypes[randomIndex];
 };
@@ -135,6 +142,7 @@ interface ArchetypeResponse {
 }
 
 export const requestArchetypes = async (players: params): Promise<ArchetypeResponse> => {
+	console.log('[archetype.ts] requestArchetypes called');
     const expectedCount = (players.player1 && players.player2) ? 2 : 1;
 	let isAiGenerated = Array(expectedCount).fill(false);
 
