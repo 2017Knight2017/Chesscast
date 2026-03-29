@@ -81,6 +81,7 @@ export function ChessBoard({
 	currentMoveData, 
 	outcome,
 }: ChessBoardProps) {
+	console.log("[watch/[id]/chess_board.tsx:ChessBoard]", { onMove, onSelect, isManualStarted, isBroadcastActive, finalIsEnded, match, currentMoveData, outcome });
 	const { selectedMoveIndex, isAnalysisMode } = useAnalysisState();
 	const previewMove = isAnalysisMode ? undefined : (selectedMoveIndex ?? undefined);
 
@@ -93,6 +94,7 @@ export function ChessBoard({
 	const activeFen = currentMoveData.fen;
 	const fenCache = useRef<string[]>([]);		
 	const fenHistory = useMemo(() => {
+		console.log("[watch/[id]/chess_board.tsx:fenHistory]");
 		const history = currentMoveData?.history || [];
 		const cache = fenCache.current;
 
@@ -117,6 +119,7 @@ export function ChessBoard({
 	}, [currentMoveData?.history]);
 
 	const previewFen = useMemo(() => {
+		console.log("[watch/[id]/chess_board.tsx:previewFen]");
 		if (previewMove !== null && previewMove !== undefined) {
 			if (previewMove === -1) {
 				return "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -130,6 +133,7 @@ export function ChessBoard({
 	}, [previewMove, fenHistory]);
 
 	const handleStart = async () => {
+		console.log("[watch/[id]/chess_board.tsx:handleStart]");
 		setIsManualStarted(true);
 		await launchMatchAction(match.id);
 	};

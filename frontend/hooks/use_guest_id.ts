@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 
 export function useGuestId() {
+	console.log("[use_guest_id.ts:useGuestId]");
     const [guestId, setGuestId] = useState<string | null>(null);
 
     useEffect(() => {

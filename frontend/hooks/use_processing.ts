@@ -16,6 +16,7 @@ export function useProcessing(match: Match) {
 		};
 
 		const handleNoMoreProcessing = (data: { matchId: string }) => {
+			console.log("[use_processing.ts:handleNoMoreProcessing]", data);
 			if (data.matchId === match.id) {
 				setIsProcessing(false);
 			}
@@ -37,4 +38,6 @@ export function useProcessing(match: Match) {
 	}, [match.id, socket]);
 
 	return {isProcessing}
+}ssing}
+}urn {isProcessing}
 }

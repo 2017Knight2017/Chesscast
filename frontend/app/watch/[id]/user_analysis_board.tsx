@@ -86,6 +86,7 @@ export const UserAnalysisBoard = forwardRef<UserAnalysisBoardRef, UserAnalysisBo
 		}));
 		
 		const handleMove = (orig: string, dest: string) => {
+			console.log("[watch/[id]/user_analysis_board.tsx:handleMove]", { orig, dest });
 			if (isReadOnly) return;
 
 			const chess = new Chess(computedFen);
@@ -146,3 +147,4 @@ export const UserAnalysisBoard = forwardRef<UserAnalysisBoardRef, UserAnalysisBo
 );
 
 UserAnalysisBoard.displayName = 'UserAnalysisBoard';
+lysisBoard.displayName = 'UserAnalysisBoard';

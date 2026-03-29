@@ -91,6 +91,7 @@ export const useBroadcast = (matchId: string, initialMatch?: Match) => {
 		};
 
 		const handleMatchFinished = (data: { matchId: string; outcome: string }) => {
+			console.log("[use_broadcast.ts:handleMatchFinished]", data);
 			if (data.matchId !== matchId) return;
 			setIsEnded(true);
 			setOutcome(data.outcome);

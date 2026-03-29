@@ -66,6 +66,7 @@ export function useAnalysisSync({ match, userId, hasExistingAnalysis }: UseAnaly
 	}, [currentPath, isAnalysisMode, match?.id, userId, inspectedUserId, syncAnalysisToServer]);
 
 	const handleInteractionOnMainBoard = useCallback(async (type: 'move' | 'select') => {
+		console.log("[use_analysis_sync.ts:handleInteractionOnMainBoard]", { type });
 		const canStart = (type === 'move' && !hasExistingAnalysis) || 
 						 (type === 'select' && hasExistingAnalysis);
 
@@ -144,6 +145,9 @@ export function useAnalysisSync({ match, userId, hasExistingAnalysis }: UseAnaly
 	return {
 		handleInteractionOnMainBoard,
 		handleMainBoardClick,
+		handleInspectUser
+	};
+}ck,
 		handleInspectUser
 	};
 }

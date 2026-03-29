@@ -4,6 +4,7 @@ import { LiveMatchesList } from "@/components/live_matches_list";
 import { Match } from "@/types/types";
 
 export function MemberSection({matches, styles}: {matches: Match[], styles: string}) { 
+	console.log("[member/[username]/member_section.tsx:MemberSection]", { matches, styles });
 	const live = matches.filter(b => b.status === 'in_progress');
 	const planned = matches.filter(b => b.status === 'waiting' || b.status === 'processing')
 

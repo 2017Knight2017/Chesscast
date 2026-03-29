@@ -58,6 +58,7 @@ export async function loadAnalysisAction(matchId: string, userId: number) {
 }
 
 export async function getPlayerByUsernameAction(username: string) {
+	console.log("[analysis_actions.ts:getPlayerByUsernameAction]", { username });
 	try {
 		const res = await fetch(`${process.env.NEST_API_URL}/user-analysis/by-username/${username}`, {
 			cache: 'no-store'
@@ -72,5 +73,7 @@ export async function getPlayerByUsernameAction(username: string) {
 	} catch (error) {
 		console.error("Action Error:", error);
 		return { success: false, error: 'Internal server error' };
+	}
+}' };
 	}
 }

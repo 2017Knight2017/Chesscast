@@ -14,6 +14,7 @@ export function LoginForm({ isRegister } : { isRegister: boolean }) {
 	const router = useRouter();
 
 	const handleSubmit = async (e: SubmitEvent) => {
+		console.log("[login_form.tsx:handleSubmit]", { isRegister, username });
 		e.preventDefault();
 		setError(null);
 		setIsLoading(true);

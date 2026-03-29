@@ -1,6 +1,7 @@
 import { LiveMatchesList } from "@/components/live_matches_list";
 
 export default async function HomePage() {
+	console.log("[page.tsx:HomePage]");
 	const [liveRes, plannedRes] = await Promise.all([
 		fetch(`${process.env.NEST_API_URL}/matches/live`, { headers: { 'Content-Type': 'application/json' } }),
         fetch(`${process.env.NEST_API_URL}/matches/planned`, { headers: { 'Content-Type': 'application/json' } })

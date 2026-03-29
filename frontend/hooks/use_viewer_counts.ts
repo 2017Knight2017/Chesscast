@@ -25,6 +25,7 @@ export const useViewerCounts = (matchIds: string[]) => {
 		};
 
 		const handleUpdate = ({ matchId, count, guestCount, usernames }: any) => {
+			console.log("[use_viewer_counts.ts:handleUpdate]", { matchId, count, guestCount });
 			setCumulativeCounts((prev) => ({ ...prev, [matchId]: count + guestCount }));
 			setGuestCount((prev) => ({ ...prev, [matchId]: guestCount }));
 			setUsernames((prev) => ({ ...prev, [matchId]: usernames }));

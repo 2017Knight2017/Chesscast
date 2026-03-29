@@ -165,6 +165,7 @@ export function MoveList({ id, matchHistory: propMatchHistory }: { id: string, m
 	}, [selectedMoveIndex, currentPath]);
 
 	const handleMoveClick = (moveIndex: number) => {
+		console.log("[watch/[id]/move_list.tsx:handleMoveClick]", { moveIndex });
 		setCurrentPath([]); 
 		setSelectedMoveIndex(moveIndex);
 	};

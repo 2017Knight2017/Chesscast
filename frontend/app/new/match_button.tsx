@@ -33,15 +33,18 @@ export default function CreateMatchButton({
 	newTimeIncrement,
 	scheduledAt 
 }: matchData) {
+	console.log("[new/match_button.tsx:CreateMatchButton]", { pgn, archetypes, whitePlayer, blackPlayer, title, timeControl, controlMove, timeIncrement, bonusTimeMin, nextControlMoveAfter, newTimeIncrement, scheduledAt });
 	const [isPending, startTransition] = useTransition();
 	let errorMessage: string = "";
 
 	const convertTimeControlToSeconds = (timeStr: string): number => {
+		console.log("[new/match_button.tsx:convertTimeControlToSeconds]", { timeStr });
 		const [hours, minutes] = timeStr.split(':').map(Number);
 		return (hours * 3600) + (minutes * 60);
 	};
 
 	const handleClick = () => {
+		console.log("[new/match_button.tsx:handleClick]");
 		if (!pgn.trim()) errorMessage += "PGN не может быть пустым\n";
 		if (!title.trim()) errorMessage += "Название партии не может быть пустым\n";
 		if (!whitePlayer.trim()) errorMessage += "Имя игрока 1 не может быть пустым\n";

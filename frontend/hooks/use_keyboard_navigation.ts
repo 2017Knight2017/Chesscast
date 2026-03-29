@@ -5,7 +5,7 @@ import { useAnalysisState } from '@/context/analysis_context';
 
 
 export function useKeyboardNavigation(totalMoves: number) {
-	
+	console.log("[use_keyboard_navigation.ts:useKeyboardNavigation]", { totalMoves });
 	const { 
 		selectedMoveIndex, 
 		setSelectedMoveIndex, 
@@ -17,6 +17,7 @@ export function useKeyboardNavigation(totalMoves: number) {
 
 	useEffect(() => {
 		const handleKeyDown = (event: KeyboardEvent) => {
+			console.log("[use_keyboard_navigation.ts:handleKeyDown]", { key: event.key, isAnalysisMode });
 			if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
 
 			const branchPoint = selectedMoveIndex !== null ? selectedMoveIndex : totalMoves - 1;

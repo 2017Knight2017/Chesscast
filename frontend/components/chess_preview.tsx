@@ -6,6 +6,7 @@ import { useBroadcast } from '@/hooks/use_broadcast';
 import { useChessClock } from '@/hooks/use_chess_clocks';
 
 export const ChessPreview = ({ match }: { match: Match }) => {
+	console.log("[chess_preview.tsx:ChessPreview]", { matchId: match.id });
 	const {currentMoveData, isEnded} = useBroadcast(match.id);
 	const isLive = match.status === "in_progress";
 	const {whiteTimeFormatted, blackTimeFormatted} = useChessClock(

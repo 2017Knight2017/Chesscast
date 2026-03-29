@@ -52,16 +52,13 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 
 	const setAnalysisMode = useCallback((mode: boolean) => {
 		setAnalysisModeState(mode);
-		if (matchId) {
-			const username = localStorage.getItem('username');
-			if (username) {
-				if (mode) {
-					socket.emit('userStartedAnalysis', { matchId, username });
-				} else {
-					socket.emit('userStoppedAnalysis', { matchId, username });
-				}
-			}
-		}
+
+		const username = localStorage.getItem('username');
+		if (!matchId || !username) return;
+
+		const event = mode ? 'userStartedAnalysis' : 'userStoppedAnalysis';
+		socket.emit(event, { matchId, username });
+		
 	}, [matchId, socket]);
 
 	const broadcastFen = useCallback((fen: string) => {
@@ -272,4 +269,5 @@ export function useAnalysisState() {
 		throw new Error('useAnalysisState must be used within an AnalysisProvider');
 	}
 	return context;
+
 }

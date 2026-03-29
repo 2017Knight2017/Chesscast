@@ -5,6 +5,7 @@ import { LiveCard } from "@/components/live_card";
 import { Match } from '@/types/types';
 
 export function LiveMatchesList({ liveMatches, styles }: { liveMatches: Match[], styles: string }) {
+	console.log("[live_matches_list.tsx:LiveMatchesList]", { matchCount: liveMatches.length });
 	const matchIds = liveMatches.map(m => m.id);
 	const {cumulativeCounts} = useViewerCounts(matchIds);
 

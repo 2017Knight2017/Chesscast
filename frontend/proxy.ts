@@ -8,6 +8,7 @@ const protectedRoutes = ['/new', '/member'];
 const authRoutes = ['/login', '/register'];
 
 export function proxy(request: NextRequest) {
+	console.log("[proxy.ts:proxy]", { pathname: request.nextUrl.pathname });
 	const token = request.cookies.get('token')?.value;
 	const { pathname } = request.nextUrl;
 

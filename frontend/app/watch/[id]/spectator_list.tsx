@@ -11,6 +11,7 @@ interface SpectatorListProps {
 }
 
 export function SpectatorList({ id, onInspectUser }: SpectatorListProps) {
+	console.log("[watch/[id]/spectator_list.tsx:SpectatorList]", { id });
 	const [selectedSpectator, setSelectedSpectator] = useState<string | null>(null);
 	const [previewFen, setPreviewFen] = useState<string | null>(null);
 	const { usernames, guestCount } = useViewerCounts([id]);
@@ -26,7 +27,6 @@ export function SpectatorList({ id, onInspectUser }: SpectatorListProps) {
 				return;
 			}
 
-			// First check if we already have the broadcasted FEN
 			const status = resolvedUsernames.find(u => u.username === selectedSpectator);
 			if (status?.currentFen) {
 				setPreviewFen(status.currentFen);
@@ -45,7 +45,6 @@ export function SpectatorList({ id, onInspectUser }: SpectatorListProps) {
 				const { Chess } = await import('chess.js');
 				const chess = new Chess();
 				
-				// Apply main line (first branch)
 				const tree = analysisData.data;
 				const firstKey = Object.keys(tree)[0];
 				let current = tree[parseInt(firstKey)];
@@ -70,10 +69,12 @@ export function SpectatorList({ id, onInspectUser }: SpectatorListProps) {
 	}, [selectedSpectator, id, resolvedUsernames]);
 
 	const handleSpectatorClick = (username: string) => {
+		console.log("[spectator_list.tsx:handleSpectatorClick]", { username });
 		setSelectedSpectator(prev => prev === username ? null : username);
 	};
 
 	const handleViewFullAnalysis = () => {
+		console.log("[spectator_list.tsx:handleViewFullAnalysis]");
 		if (selectedSpectator && onInspectUser) {
 			const status = resolvedUsernames.find(u => u.username === selectedSpectator);
 			if (status) {

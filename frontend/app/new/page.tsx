@@ -5,6 +5,7 @@ import CreateMatchButton from '@/app/new/match_button';
 import { PlayerInput } from '@/app/new/player_input';
 
 export default function BroadcastPage() {
+	console.log("[new/page.tsx:BroadcastPage]");
 	const [pgnInput, setPgnInput] = useState('');
 	const [title, setTitle] = useState('');
 	const [timeControl, setTimeControl] = useState('1:00');
@@ -23,6 +24,7 @@ export default function BroadcastPage() {
 	const [minDate, setMinDate] = useState("");
 	const [maxDate, setMaxDate] = useState("");
 	useEffect(() => {
+		console.log("[new/page.tsx:useEffect]");
 		const now = new Date();
 		setMinDate(getLocalDateTime(now));
 		const maxDateRaw = new Date();
@@ -48,6 +50,7 @@ export default function BroadcastPage() {
 	const [archetype2, setArchetype2] = useState(archetypeOptions[0]);
 
 	const getLocalDateTime = (date: Date = new Date()): string => {
+		console.log("[new/page.tsx:getLocalDateTime]", { date });
 		const offset = date.getTimezoneOffset() * 60000;
 		const localISOTime = new Date(date.getTime() - offset).toISOString().slice(0, 16);
 		return localISOTime;

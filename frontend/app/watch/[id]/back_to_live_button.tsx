@@ -3,11 +3,13 @@
 import { useAnalysisState } from '@/context/analysis_context';
 
 export function BackToLiveButton() {
+    console.log("[watch/[id]/back_to_live_button.tsx:BackToLiveButton]");
     const { selectedMoveIndex, setSelectedMoveIndex } = useAnalysisState();
 
     const isPreviewing = selectedMoveIndex !== null;
 
     const handleBackToLive = () => {
+        console.log("[watch/[id]/back_to_live_button.tsx:handleBackToLive]");
         setSelectedMoveIndex(null);
     };
 

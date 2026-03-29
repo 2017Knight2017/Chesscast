@@ -3,9 +3,11 @@
 import { useRouter } from 'next/navigation';
 
 export function ExitButton() {
+	console.log("[exit_button.tsx:ExitButton]");
     const router = useRouter();
 
     const handleLogout = () => {
+		console.log("[exit_button.tsx:handleLogout]");
         localStorage.removeItem('token');
         localStorage.removeItem('user');
 

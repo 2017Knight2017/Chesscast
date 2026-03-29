@@ -1,4 +1,5 @@
 export default function Loading() {
+    console.log("[member/[username]/loading.tsx:Loading]");
     return (
         <div className="animate-pulse p-8">
             <div className="h-40 bg-slate-200 rounded-xl mb-4" />

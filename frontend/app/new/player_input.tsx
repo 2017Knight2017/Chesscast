@@ -8,12 +8,14 @@ export interface Player {
 }
 
 export function PlayerInput({ label, onSelect }: { label: string, onSelect: (player: Player) => void }) {
+    console.log("[new/player_input.tsx:PlayerInput]", { label });
     const [query, setQuery] = useState('');
     const [suggestions, setSuggestions] = useState([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [debouncedQuery] = useDebounce(query, 400);
 
     useEffect(() => {
+        console.log("[new/player_input.tsx:useEffect]", { debouncedQuery, showSuggestions });
         if (debouncedQuery.length > 1 && showSuggestions) {
             fetch(process.env.NEXT_PUBLIC_SOCKET_URL + `/players/search?name=${debouncedQuery}`)
                 .then(res => res.json())
@@ -24,11 +26,13 @@ export function PlayerInput({ label, onSelect }: { label: string, onSelect: (pla
     }, [debouncedQuery, showSuggestions]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        console.log("[new/player_input.tsx:handleInputChange]", { value: e.target.value });
         setQuery(e.target.value);
         setShowSuggestions(true);
     };
 
     const handleSelect = (player: Player) => {
+        console.log("[new/player_input.tsx:handleSelect]", { player });
         setQuery(player.name);
         setSuggestions([]);
         setShowSuggestions(false);

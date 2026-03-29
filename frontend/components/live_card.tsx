@@ -6,6 +6,7 @@ import { useProcessing } from '@/hooks/use_processing';
 import Link from 'next/link';
 
 export const LiveCard = ({ match, viewerCount }: { match: Match, viewerCount?: number }) => {
+	console.log("[live_card.tsx:LiveCard]", { matchId: match.id, viewerCount });
 	const { isProcessing } = useProcessing(match);
 	
 	const CardWrapper = isProcessing ? 'div' : Link;

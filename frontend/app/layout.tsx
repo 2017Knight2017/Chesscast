@@ -25,6 +25,7 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
+	console.log("[layout.tsx:RootLayout]", { children });
 	const cookieStore = await cookies();
 	const token = cookieStore.get('token')?.value;
 	let username: string | null = null;

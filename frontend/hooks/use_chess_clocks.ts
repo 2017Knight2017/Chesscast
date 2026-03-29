@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react';
-import { getTurnFromFen } from '@/utils/get_turn_from_fen';
 import { SyncPayload } from '@/types/types';
 
+const getTurnFromFen = (fen: string): 'w' | 'b' => fen.split(' ')[1] === "w" ? "w" : "b";
+
 export const useChessClock = (serverState: SyncPayload | null, initialTimeMs: number) => {
+	console.log("[use_chess_clocks.ts:useChessClock]", { serverStateFen: serverState?.fen, initialTimeMs });
 	const [displayWhite, setDisplayWhite] = useState(initialTimeMs || 0);
 	const [displayBlack, setDisplayBlack] = useState(initialTimeMs || 0);
 
