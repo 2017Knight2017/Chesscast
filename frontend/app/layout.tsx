@@ -51,36 +51,41 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 		<html lang="en">
 			<body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
 				<Providers>
-					<header className="absolute top-0 left-0 w-full h-[6%] flex items-center px-8 z-20">
+					<header className="relative w-full h-16 flex items-center px-8 z-30 bg-[#1a1512] border-b border-[#3e2b1d]/20 shadow-md">
 						<Link href="/">
-							<h1 className="text-3xl font-serif text-[#3e2b1d] opacity-80">Chesscast</h1>
+							<h1 className="text-2xl font-serif text-[#d9c5b2] opacity-90 hover:opacity-100 transition-opacity">
+								Chesscast
+							</h1>
 						</Link>
-
-						<nav className="hidden md:flex items-center gap-6 ml-10">
-							<Link href="/" className="text-[#3e2b1d] opacity-70 hover:opacity-100 transition-opacity">
+							
+						<nav className="hidden md:flex items-center gap-8 ml-10">
+							<Link href="/" className="text-[#d9c5b2]/70 hover:text-[#d9c5b2] transition-colors">
 								Matches
 							</Link>
-							<Link href="/new" className="text-[#3e2b1d] opacity-70 hover:opacity-100 transition-opacity">
+							<Link href="/new" className="text-[#d9c5b2]/70 hover:text-[#d9c5b2] transition-colors">
 								Create
 							</Link>
 							{username ? (
-								<Link href={`/member/${username}`} className="text-[#3e2b1d] opacity-70 hover:opacity-100 transition-opacity">
+								<Link href={`/member/${username}`} className="text-[#d9c5b2]/70 hover:text-[#d9c5b2] transition-colors">
 									Profile ({username})
 								</Link>
 							) : (
 								<>
-									<Link href="/login" className="text-[#3e2b1d] opacity-70 hover:opacity-100 transition-opacity">
+									<Link href="/login" className="text-[#d9c5b2]/70 hover:text-[#d9c5b2] transition-colors">
 										Login
 									</Link>
-									<Link href="/register" className="text-[#3e2b1d] opacity-70 hover:opacity-100 transition-opacity">
+									<Link href="/register" className="text-[#d9c5b2]/70 hover:text-[#d9c5b2] transition-colors">
 										Register
 									</Link>
 								</>
 							)}
 						</nav>
-						<BurgerMenu username={username} token={token} />
-						<div className="hidden md:block">
-							{token && <ExitButton className="absolute top-4 right-4" />}
+						
+						<div className="ml-auto flex items-center gap-4">
+							<BurgerMenu username={username} token={token} />
+							<div className="hidden md:block">
+								{token && <ExitButton />}
+							</div>
 						</div>
 					</header>
 					{children}

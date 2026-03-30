@@ -9,16 +9,23 @@ export default function BroadcastPage() {
 	const [pgnInput, setPgnInput] = useState('');
 	const [title, setTitle] = useState('');
 	const [timeControl, setTimeControl] = useState('1:00');
-	const [controlMove, setControlMove] = useState(0);
 	const [timeIncrement, setTimeIncrement] = useState(5);
 
+	const [isControlMove, setIsControlMove] = useState(false);
+	const [controlMove, setControlMove] = useState(25);
 	const [isRepeatableControlMove, setIsRepeatableControlMove] = useState(false);
 	const [bonusTimeMin, setBonusTimeMin] = useState(30);
 	const [nextControlMoveAfter, setNextControlMoveAfter] = useState(16);
 	const [newTimeIncrement, setNewTimeIncrement] = useState(30);
 
-	const [whitePlayer, setWhitePlayer] = useState('Magnus Carlsen');
-	const [blackPlayer, setBlackPlayer] = useState('Hikaru Nakamura');
+	const isDisabled = !isControlMove;
+	const inputClasses = "w-full p-2 rounded bg-slate-900 border border-slate-700 focus:border-blue-500 outline-none transition-opacity disabled:opacity-50 disabled:cursor-not-allowed";
+	const labelClasses = `block ${isDisabled ? 'opacity-60' : 'opacity-100'} transition-opacity`;
+
+	const [whitePlayer, setWhitePlayer] = useState('');
+	const [blackPlayer, setBlackPlayer] = useState('');
+
+	const [isAdvanced, setIsAdvanced] = useState(false);
 
 	const [scheduledAt, setScheduledAt] = useState("");
 	const [minDate, setMinDate] = useState("");
@@ -58,7 +65,15 @@ export default function BroadcastPage() {
 
 	return (
 		<div className="flex flex-col items-center p-8 bg-slate-900 min-h-screen text-white">
-			<h1 className="text-2xl font-bold mb-6">Creating a broadcast</h1>
+			<div className="w-full max-w-2xl flex justify-between items-center mb-6">
+				<h1 className="text-2xl font-bold">Creating a broadcast</h1>
+				<button 
+					onClick={() => setIsAdvanced(!isAdvanced)}
+					className="px-4 py-2 rounded bg-slate-800 border border-slate-700 hover:bg-slate-700 transition-colors text-sm font-medium"
+				>
+					{isAdvanced ? 'Switch to Basic' : 'Switch to Advanced'}
+				</button>
+			</div>
 
 			<div className="w-full max-w-2xl mb-10 space-y-4">
 				<label className="block">
@@ -91,7 +106,7 @@ export default function BroadcastPage() {
 					/>
 				</label>
 
-				<div className="grid gap-4 grid-cols-3">
+				<div className='grid gap-4 grid-cols-2'>
 					<label className="block">
 						<span className="text-sm">Time Control (H:MM)</span>
 						<input
@@ -126,68 +141,97 @@ export default function BroadcastPage() {
 							onChange={(e) => setTimeIncrement(parseInt(e.target.value) || 0)}
 						/>
 					</label>
-					<div className="col-start-3 row-span-2 p-2 rounded bg-slate-800 border border-slate-700 space-y-4">
-						<label className="block">
-							<span className="text-sm">Control Move</span>
+				</div>
+				
+				{isAdvanced && (
+					<div className="p-4 bg-slate-950 text-slate-100 rounded-lg max-w-7xl mx-auto space-y-4">
+			
+			<div className="bg-slate-800 border border-slate-700 p-4 rounded-t-lg">
+				<label className="flex items-center gap-3 cursor-pointer">
+					<input
+						type="checkbox"
+						className="w-5 h-5 rounded border-slate-600 bg-slate-900 text-blue-500 focus:ring-blue-500 focus:ring-offset-slate-800"
+						checked={isControlMove}
+						onChange={(e) => setIsControlMove(e.target.checked)}
+					/>
+					<span className="text-base font-semibold text-blue-100">
+						Enable Time Control (e.g., specific moves or repeatable increments)
+					</span>
+				</label>
+			</div>
+
+			<div className={`grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 bg-slate-800 border border-slate-700 p-4 rounded-b-lg items-center transition-all duration-300 ${isDisabled ? 'border-slate-700/50' : ''}`}>
+				
+				<label className={labelClasses}>
+					<span className="text-sm block mb-1">Control Move</span>
+					<input
+						type="number"
+						className={inputClasses}
+						value={controlMove}
+						min={25}
+						max={60}
+						onChange={(e) => setControlMove(parseInt(e.target.value) || 0)}
+						disabled={isDisabled} 
+					/>
+				</label>
+
+				<label className={labelClasses}>
+					<span className="text-sm block mb-1">Bonus Time after Control (min)</span>
+					<input
+						type="number"
+						className={inputClasses}
+						value={bonusTimeMin}
+						min={1}
+						max={120}
+						onChange={(e) => setIsRepeatableControlMove(e.target.checked)}
+						disabled={isDisabled}
+					/>
+				</label>
+
+				<label className={labelClasses}>
+					<span className="text-sm block mb-1">Increment after Control (sec)</span>
+					<input
+						type="number"
+						className={inputClasses}
+						value={newTimeIncrement}
+						min={0}
+						max={60}
+						onChange={(e) => setNewTimeIncrement(parseInt(e.target.value) || 0)}
+						disabled={isDisabled}
+					/>
+				</label>
+
+				<div className={`flex items-start gap-3 h-full pt-1 ${labelClasses}`}>
+					<input
+						type="checkbox"
+						className="mt-1 rounded border-slate-600 bg-slate-900 text-blue-500 focus:ring-blue-500 focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
+						checked={isRepeatableControlMove}
+						onChange={(e) => setIsRepeatableControlMove(e.target.checked)}
+						disabled={isDisabled} 
+					/>
+					
+					{isRepeatableControlMove && isControlMove ? (
+						<div className="block flex-1">
+							<span className="text-sm font-medium block mb-1">Next Control Move After</span>
 							<input
 								type="number"
-								className="w-full p-2 rounded bg-slate-900 border border-slate-700 focus:border-blue-500 outline-none"
-								value={controlMove}
-								min={0}
-								max={60}
-								onChange={(e) => setControlMove(parseInt(e.target.value) || 0)}
+								className={inputClasses}
+								value={nextControlMoveAfter}
+								min={1}
+								max={100}
+								onChange={(e) => setNextControlMoveAfter(parseInt(e.target.value) || 16)}
+								disabled={isDisabled} 
 							/>
-						</label>
-						<label className="flex items-center gap-3 cursor-pointer">
-							<input
-								type="checkbox"
-								className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-blue-500 focus:ring-blue-500 focus:ring-offset-slate-800"
-								checked={isRepeatableControlMove}
-								onChange={(e) => setIsRepeatableControlMove(e.target.checked)}
-							/>
-							{isRepeatableControlMove ? (
-								<label className="block">
-									<span className="text-sm font-medium">Next Control Move After</span>
-									<input
-										type="number"
-										className="w-full p-2 rounded bg-slate-900 border border-slate-700 focus:border-blue-500 outline-none"
-										value={nextControlMoveAfter}
-										min={1}
-										max={100}
-										onChange={(e) => setNextControlMoveAfter(parseInt(e.target.value) || 16)}
-									/>
-								</label>
-							) : (
-								<span className="text-sm font-medium leading-16">Repeatable Control Move</span>
-							)}
-						</label>
-					</div>
-					<label className="block">
-						<span className="text-sm">Bonus Time after Control (min)</span>
-						<input
-							type="number"
-							className="w-full p-2 rounded bg-slate-800 border border-slate-700 focus:border-blue-500 outline-none"
-							value={bonusTimeMin}
-							min={1}
-							max={120}
-							onChange={(e) => setBonusTimeMin(parseInt(e.target.value) || 0)}
-						/>
-					</label>
-					<label className="block">
-						<span className="text-sm">Increment after Control (sec)</span>
-						<input
-							type="number"
-							className="w-full p-2 rounded bg-slate-800 border border-slate-700 focus:border-blue-500 outline-none"
-							value={newTimeIncrement}
-							min={0}
-							max={60}
-							onChange={(e) => setNewTimeIncrement(parseInt(e.target.value) || 0)}
-						/>
-					</label>
-					
+						</div>
+					) : (
+						<span className="text-sm font-medium pt-0.5">Repeatable Control Move</span>
+					)}
 				</div>
+			</div>
+		</div>
+				)}
 
-				<div className="grid gap-4 grid-cols-2 grid-rows-2">
+				<div className={`grid gap-4 grid-cols-2 ${isAdvanced ? 'grid-rows-2' : 'grid-rows-1'}`}>
 					<PlayerInput
 						label="White"
 						onSelect={(player) => {
@@ -206,30 +250,34 @@ export default function BroadcastPage() {
 							}
 						}} 
 					/>
-					<label className="block">
-						<span className="text-sm">White Archetype</span>
-						<select
-							className="w-full p-2 rounded bg-slate-800 border border-slate-700 focus:border-blue-500 outline-none"
-							value={archetype1}
-							onChange={(e) => setArchetype1(e.target.value)}
-						>
-							{archetypeOptions.map(opt => (
-								<option key={opt} value={opt}>{opt}</option>
-							))}
-						</select>
-					</label>
-					<label className="block">
-						<span className="text-sm">Black Archetype</span>
-						<select
-							className="w-full p-2 rounded bg-slate-800 border border-slate-700 focus:border-blue-500 outline-none"
-							value={archetype2}
-							onChange={(e) => setArchetype2(e.target.value)}
-						>
-							{archetypeOptions.map(opt => (
-								<option key={opt} value={opt} title="fff">{opt}</option>
-							))}
-						</select>
-					</label>
+					{isAdvanced && (
+						<>
+							<label className="block">
+								<span className="text-sm">White Archetype</span>
+								<select
+									className="w-full p-2 rounded bg-slate-800 border border-slate-700 focus:border-blue-500 outline-none"
+									value={archetype1}
+									onChange={(e) => setArchetype1(e.target.value)}
+								>
+									{archetypeOptions.map(opt => (
+										<option key={opt} value={opt}>{opt}</option>
+									))}
+								</select>
+							</label>
+							<label className="block">
+								<span className="text-sm">Black Archetype</span>
+								<select
+									className="w-full p-2 rounded bg-slate-800 border border-slate-700 focus:border-blue-500 outline-none"
+									value={archetype2}
+									onChange={(e) => setArchetype2(e.target.value)}
+								>
+									{archetypeOptions.map(opt => (
+										<option key={opt} value={opt} title="fff">{opt}</option>
+									))}
+								</select>
+							</label>
+						</>
+					)}
 				</div>		
 				<textarea
 					className="w-full h-32 p-4 rounded bg-slate-800 border border-slate-700 focus:border-blue-500 outline-none transition-all"
