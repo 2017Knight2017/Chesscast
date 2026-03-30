@@ -96,14 +96,14 @@ export function SpectatorList({ id, onInspectUser }: SpectatorListProps) {
 						<button
 							key={status.username}
 							onClick={() => handleSpectatorClick(status.username)}
-							className={`shrink-0 whitespace-nowrap flex items-center gap-1 transition-colors group px-2 py-1 rounded border ${
+							className={`shrink-0 whitespace-nowrap flex items-center gap-1 transition-colors group px-3 py-2 lg:px-2 lg:py-1 rounded border ${
 								selectedSpectator === status.username 
 									? "bg-[#8b5e34]/20 border-[#8b5e34]/40 text-[#3e2b1d]" 
 									: "bg-[#e8dac0]/40 border-[#8b5e34]/10 text-[#5a3e2b] hover:text-[#8b5e34] hover:border-[#8b5e34]/40"
 							}`}
 						>
 							<span className="opacity-40 text-xs">❧</span>
-							<span className="border-b border-transparent group-hover:border-[#8b5e34] py-0.5 text-sm">
+							<span className="border-b border-transparent group-hover:border-[#8b5e34] py-1 lg:py-0.5 text-sm lg:text-sm">
 								{status.username}
 								{status.isAnalyzing && <span className="ml-1 text-[#8b5e34] font-bold">*</span>}
 							</span>

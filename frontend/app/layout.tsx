@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import 'chessground/assets/chessground.base.css';
@@ -8,6 +8,7 @@ import { ExitButton } from "@/components/exit_button";
 import { cookies } from "next/headers";
 import { Providers } from "@/components/providers";
 import Link from "next/link";
+import { BurgerMenu } from "@/components/burger_menu";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -22,6 +23,13 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
 	title: "Chesscast - Платформа для онлайн-трансляций шахматных турниров",
 	description: "Chesscast — это платформа для трансляций шахматных партий мастеров прошлого. Думайте над следующим ходом вместе с гроссмейстером!",
+};
+
+export const viewport: Viewport = {
+	width: "device-width",
+	initialScale: 1.0,
+	maximumScale: 1.0,
+	userScalable: false,
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -48,7 +56,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 							<h1 className="text-3xl font-serif text-[#3e2b1d] opacity-80">Chesscast</h1>
 						</Link>
 
-						<nav className="flex items-center gap-6 ml-10">
+						<nav className="hidden md:flex items-center gap-6 ml-10">
 							<Link href="/" className="text-[#3e2b1d] opacity-70 hover:opacity-100 transition-opacity">
 								Matches
 							</Link>
@@ -70,7 +78,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 								</>
 							)}
 						</nav>
-						{token && <ExitButton />}
+						<BurgerMenu username={username} token={token} />
+						<div className="hidden md:block">
+							{token && <ExitButton />}
+						</div>
 					</header>
 					{children}
 				</Providers>

@@ -1,5 +1,7 @@
-import { Injectable } from '@nestjs/common';
 import { GoogleGenAI } from "@google/genai";
+import { Logger } from "@nestjs/common";
+
+const logger = new Logger();
 
 const instructions = `
 Role: You are an expert in chess history and an analyst of playing styles.
@@ -113,16 +115,16 @@ const archetypes = [
 ]
 
 const getBothArchetypesPrompt = (player1: string, player2: string) => {
-	this.logger.log('[archetype.ts] getBothArchetypesPrompt called');
+	logger.log('[archetype.ts] getBothArchetypesPrompt called');
 	return instructions + `Which archetype suits ${player1} and ${player2} the best?`;
 }
 const getSingleArchetypePrompt = (player: string) => {
-	this.logger.log('[archetype.ts] getSingleArchetypePrompt called');
+    logger.log('[archetype.ts] getSingleArchetypePrompt called');
 	return instructions + `Which archetype suits ${player} the best?`;
 }
 
 const getRandomArchetype = (): string => {
-	this.logger.log('[archetype.ts] getRandomArchetype called');
+	logger.log('[archetype.ts] getRandomArchetype called');
     const randomIndex = Math.floor(Math.random() * archetypes.length);
     return archetypes[randomIndex];
 };
@@ -142,7 +144,7 @@ interface ArchetypeResponse {
 }
 
 export const requestArchetypes = async (players: params): Promise<ArchetypeResponse> => {
-	this.logger.log('[archetype.ts] requestArchetypes called');
+	logger.log('[archetype.ts] requestArchetypes called');
     const expectedCount = (players.player1 && players.player2) ? 2 : 1;
 	let isAiGenerated = Array(expectedCount).fill(false);
 
@@ -158,7 +160,7 @@ export const requestArchetypes = async (players: params): Promise<ArchetypeRespo
         });
 
         const text = response.text;
-		this.logger.log("Raw AI Response:", text);
+		logger.log("Raw AI Response:", text);
         if (!text) throw new Error("Empty AI response");
 
         const parsed = JSON.parse(text);
@@ -175,11 +177,11 @@ export const requestArchetypes = async (players: params): Promise<ArchetypeRespo
         while (validated.length < expectedCount) {
             validated.push(getRandomArchetype());
         }
-		this.logger.log("AI Archetype Response:", validated, "AI Generated Flags:", isAiGenerated);
+		logger.log("AI Archetype Response:", validated, "AI Generated Flags:", isAiGenerated);
         return { results: validated, isAiGenerated: isAiGenerated };
 
     } catch (error) {
-        this.logger.error("AI Archetype Request Failed:", error);
+        logger.error("AI Archetype Request Failed:", error);
         return { 
             results: Array.from({ length: expectedCount }, () => getRandomArchetype()), 
             isAiGenerated: Array(expectedCount).fill(false) 

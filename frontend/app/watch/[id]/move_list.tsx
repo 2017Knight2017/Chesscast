@@ -56,10 +56,10 @@ const MoveNode = ({
 	return (
 		<div className={isVertical ? "flex flex-col w-full" : "inline"}>
 			
-			<div className={isVertical ? "flex items-center h-7" : "inline"}>
+			<div className={isVertical ? "flex items-center h-8 lg:h-7" : "inline"}>
 				<button 
 					onClick={() => onPathClick(branchPoint, path)}
-					className={`inline-block text-[11px] rounded px-1 transition-colors hover:bg-black/5 
+					className={`inline-block text-[11px] rounded px-2 py-1 lg:px-1 lg:py-0 transition-colors hover:bg-black/5 
 						${isActive ? 'bg-amber-400 font-bold text-black' : 'text-slate-700'} 
 						${!isWhite && !isVertical ? 'mr-1' : ''}`}
 				>
@@ -202,7 +202,7 @@ export function MoveList({ id, matchHistory: propMatchHistory }: { id: string, m
 	const MoveBtn = ({ text, isActive, onClick } : MoveBtnProps) => (
 		<button
 			onClick={onClick}
-			className={`flex-1 text-sm rounded px-1 text-left whitespace-nowrap transition-colors ${
+			className={`flex-1 text-sm rounded px-2 py-1.5 lg:px-1 lg:py-0 text-left whitespace-nowrap transition-colors ${
 				isActive ? 'bg-amber-400 font-bold text-black shadow-sm' : 'hover:bg-black/5'
 			}`}
 		>
@@ -211,7 +211,7 @@ export function MoveList({ id, matchHistory: propMatchHistory }: { id: string, m
 	);
 	
 	const MoveRow = ({ num, children }: { num: number; children: React.ReactNode }) => (
-		<div className="flex items-center gap-2 h-6 group">
+		<div className="flex items-center gap-2 h-8 lg:h-6 group">
 			<span className="text-[10px] text-slate-500 w-6 shrink-0">{num}.</span>
 			<div className="flex flex-1 gap-1">{children}</div>
 		</div>

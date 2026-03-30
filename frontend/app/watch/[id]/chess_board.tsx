@@ -19,6 +19,7 @@ interface ChessBoardProps {
 	match: Match,
 	currentMoveData: Move,
 	outcome: string | undefined,
+	hideTimers?: boolean,
 }
 
 interface ChessTimerProps { 
@@ -30,7 +31,7 @@ interface ChessTimerProps {
 
 const ChessTimer = memo(({ data, initial, label, isAnalysisMode }: ChessTimerProps) => {
 	const { whiteTimeFormatted, blackTimeFormatted } = useChessClock(data, initial); 
-		
+
 	const isWhite = label === "White";
 	const time = isWhite ? whiteTimeFormatted : blackTimeFormatted;
 
@@ -53,9 +54,10 @@ const ChessTimer = memo(({ data, initial, label, isAnalysisMode }: ChessTimerPro
 	const baseContainer = "flex transition-all duration-300 shadow-xl border-[#3c3a33] items-center";
 	const colorStyles = isWhite ? "bg-[#f1f1f1]" : "bg-[#262421]";
 
+	// On mobile, always use horizontal layout if not in analysis mode, or simplified layout
 	const orientationClasses = isAnalysisMode
-		? `flex-col py-4 w-10 gap-4 ${isWhite ? "rounded-r-md border-r border-y" : "rounded-l-md border-l border-y"}`
-		: `flex-row px-4 py-1.5 items-center gap-3 ${isWhite ? "rounded-b-md border-b border-x" : "rounded-t-md border-t border-x"}`;
+		? `flex-col py-4 w-10 gap-4 lg:flex-col lg:py-4 lg:w-10 lg:gap-4 ${isWhite ? "rounded-r-md border-r border-y" : "rounded-l-md border-l border-y"}`
+		: `flex-row px-4 py-1 items-center gap-3 lg:px-4 lg:py-1.5 lg:gap-3 ${isWhite ? "rounded-b-md border-b border-x" : "rounded-t-md border-t border-x"}`;
 
 	return (
 		<div className={`${baseContainer} ${colorStyles} ${orientationClasses}`}>
@@ -63,7 +65,7 @@ const ChessTimer = memo(({ data, initial, label, isAnalysisMode }: ChessTimerPro
 				{isAnalysisMode ? label.split('').map((l, i) => <span key={i}>{l}</span>) : label}
 			</span>
 
-			<span className={`font-mono font-bold text-center ${isAnalysisMode ? "flex flex-col text-sm items-center gap-0.5" : "text-xl min-w-20"} ${isWhite ? "text-black" : "text-white"}`}>
+			<span className={`font-mono font-bold text-center ${isAnalysisMode ? "flex flex-col text-sm items-center gap-0.5" : "text-lg lg:text-xl min-w-16 lg:min-w-20"} ${isWhite ? "text-black" : "text-white"}`}>
 				{renderTime()}
 			</span>
 		</div>
@@ -80,15 +82,16 @@ export function ChessBoard({
 	match, 
 	currentMoveData, 
 	outcome,
+	hideTimers = false,
 }: ChessBoardProps) {
-	console.log("[watch/[id]/chess_board.tsx:ChessBoard]", { onMove, onSelect, isManualStarted, isBroadcastActive, finalIsEnded, match, currentMoveData, outcome });
+	console.log("[watch/[id]/chess_board.tsx:ChessBoard]", { onMove, onSelect, isManualStarted, isBroadcastActive, finalIsEnded, match, currentMoveData, outcome, hideTimers });
 	const { selectedMoveIndex, isAnalysisMode } = useAnalysisState();
 	const previewMove = isAnalysisMode ? undefined : (selectedMoveIndex ?? undefined);
 
 	const containerRef = useRef<HTMLDivElement>(null);
 
 	const totalMoves = currentMoveData?.history?.length || 0;
-		
+
 	useKeyboardNavigation(totalMoves);
 
 	const activeFen = currentMoveData.fen;
@@ -113,7 +116,7 @@ export function ChessBoard({
 				return tempChess.fen();
 			}
 		});
-		
+
 		fenCache.current = newHistory;
 		return newHistory;
 	}, [currentMoveData?.history]);
@@ -124,7 +127,7 @@ export function ChessBoard({
 			if (previewMove === -1) {
 				return "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 			}
-		
+
 			if (fenHistory[previewMove]) {
 				return fenHistory[previewMove];
 			}
@@ -140,7 +143,7 @@ export function ChessBoard({
 
 	const clockData = isBroadcastActive ? currentMoveData : null;
 	const initialTime = match.timeControl * 1000;
-	
+
 	let outcomeMessage;
 	switch (outcome) {
 		case "1/2-1/2": 
@@ -153,14 +156,16 @@ export function ChessBoard({
 		outcomeMessage = "Black wins!";
 		break;
 	}
-		
+
 	return (
 		<div ref={containerRef} className='relative w-full h-full flex justify-center items-center flex-col sepia-100 brightness-75 contrast-125'>
-			<div className={`absolute z-10 transition-all duration-300 ${isAnalysisMode ? "top-0 -left-11" : "-top-12 left-0"}`}>
-				<ChessTimer data={clockData} initial={initialTime} label="Black" isAnalysisMode={isAnalysisMode} />
-			</div>
+			{!hideTimers && (
+				<div className={`absolute z-10 transition-all duration-300 ${isAnalysisMode ? "top-0 -left-6 lg:-left-11" : "-top-10 lg:-top-12 left-0"}`}>
+					<ChessTimer data={clockData} initial={initialTime} label="Black" isAnalysisMode={isAnalysisMode} />
+				</div>
+			)}
 			<div className="relative w-full h-full overflow-hidden rounded-md border border-[#8b5e34]/20 shadow-lg">
-			
+
 				{!(isBroadcastActive || finalIsEnded || isManualStarted) && (
 					<button 
 						className='absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 p-3 z-10 border-4 rounded-lg bg-amber-900 border-amber-700 hover:bg-amber-800 hover:border-amber-600' 
@@ -171,8 +176,8 @@ export function ChessBoard({
 				)}
 
 				{finalIsEnded && (
-					<div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 p-3 z-20 rounded-lg bg-amber-900 border-amber-700">
-						<span className='text-gray-300 font-bold text-2xl font-sans'>{`Broadcast is over!\n${outcomeMessage}`}</span>
+					<div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 p-3 z-20 rounded-lg bg-amber-900 border-amber-700 text-center min-w-[200px]">
+						<span className='text-gray-300 font-bold text-xl lg:text-2xl font-sans whitespace-pre-line'>{`Broadcast is over!\n${outcomeMessage}`}</span>
 					</div>
 				)}
 
@@ -189,9 +194,11 @@ export function ChessBoard({
 					animation={{ enabled: true, duration: 500 }}
 				/>
 			</div>
-			<div className={`absolute z-10 transition-all duration-300 ${isAnalysisMode ? "bottom-0 -right-11" : "-bottom-12 right-0"}`}>
-				<ChessTimer data={clockData} initial={initialTime} label="White" isAnalysisMode={isAnalysisMode} />
-			</div>
+			{!hideTimers && (
+				<div className={`absolute z-10 transition-all duration-300 ${isAnalysisMode ? "bottom-0 -right-6 lg:-right-11" : "-bottom-10 lg:-bottom-12 right-0"}`}>
+					<ChessTimer data={clockData} initial={initialTime} label="White" isAnalysisMode={isAnalysisMode} />
+				</div>
+			)}
 		</div>
 	);
 }
