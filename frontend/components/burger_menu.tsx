@@ -15,7 +15,7 @@ export function BurgerMenu({ username, token }: BurgerMenuProps) {
 	const toggleMenu = () => setIsOpen(!isOpen);
 
 	return (
-		<div className="md:hidden ml-auto flex items-center">
+		<div className="md:hidden ml-auto flex items-center relative">
 			<button
 				onClick={toggleMenu}
 				className="p-2 text-[#3e2b1d] opacity-80 hover:opacity-100 transition-opacity z-50"
@@ -35,35 +35,33 @@ export function BurgerMenu({ username, token }: BurgerMenuProps) {
 				)}
 			</button>
 
-			{isOpen && (
-				<div className="fixed inset-0 bg-[#f4ead5] z-40 flex flex-col items-center justify-center gap-8 text-2xl">
-					<Link href="/" onClick={toggleMenu} className="text-[#3e2b1d] opacity-80 hover:opacity-100 transition-opacity">
-						Matches
+			<div className={`absolute top-full right-0 mt-2 min-w-48 bg-[#f4ead5] -z-10 flex flex-col items-start p-6 rounded-lg shadow-xl gap-4 text-xl border border-[#3e2b1d1a] transition-all duration-300 ease-out ${isOpen ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
+				<Link href="/" onClick={toggleMenu} className="text-[#3e2b1d] opacity-80 hover:opacity-100 transition-opacity w-full">
+					Matches
+				</Link>
+				<Link href="/new" onClick={toggleMenu} className="text-[#3e2b1d] opacity-80 hover:opacity-100 transition-opacity w-full">
+					Create
+				</Link>
+				{username ? (
+					<Link href={`/member/${username}`} onClick={toggleMenu} className="text-[#3e2b1d] opacity-80 hover:opacity-100 transition-opacity w-full whitespace-nowrap">
+						Profile ({username})
 					</Link>
-					<Link href="/new" onClick={toggleMenu} className="text-[#3e2b1d] opacity-80 hover:opacity-100 transition-opacity">
-						Create
-					</Link>
-					{username ? (
-						<Link href={`/member/${username}`} onClick={toggleMenu} className="text-[#3e2b1d] opacity-80 hover:opacity-100 transition-opacity">
-							Profile ({username})
+				) : (
+					<>
+						<Link href="/login" onClick={toggleMenu} className="text-[#3e2b1d] opacity-80 hover:opacity-100 transition-opacity w-full">
+							Login
 						</Link>
-					) : (
-						<>
-							<Link href="/login" onClick={toggleMenu} className="text-[#3e2b1d] opacity-80 hover:opacity-100 transition-opacity">
-								Login
-							</Link>
-							<Link href="/register" onClick={toggleMenu} className="text-[#3e2b1d] opacity-80 hover:opacity-100 transition-opacity">
-								Register
-							</Link>
-						</>
-					)}
-					{token && (
-						<div className="mt-4 scale-150">
-							<ExitButton />
-						</div>
-					)}
-				</div>
-			)}
+						<Link href="/register" onClick={toggleMenu} className="text-[#3e2b1d] opacity-80 hover:opacity-100 transition-opacity w-full">
+							Register
+						</Link>
+					</>
+				)}
+				{token && (
+					<div className="mt-2 pt-2 border-t border-[#3e2b1d1a] w-full flex justify-end">
+						<ExitButton />
+					</div>
+				)}
+			</div>
 		</div>
 	);
 }

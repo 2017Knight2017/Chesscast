@@ -80,7 +80,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 						</nav>
 						<BurgerMenu username={username} token={token} />
 						<div className="hidden md:block">
-							{token && <ExitButton />}
+							{token && <ExitButton className="absolute top-4 right-4" />}
 						</div>
 					</header>
 					{children}
