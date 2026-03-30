@@ -1,6 +1,6 @@
 'use client'
 
-import { useViewerCounts, ViewerStatus } from "@/hooks/use_viewer_counts";
+import { ViewerStatus } from "@/hooks/use_viewer_counts";
 import { useState, useEffect } from "react";
 import Chessground from "@bezalel6/react-chessground";
 import { getPlayerByUsernameAction, loadAnalysisAction } from "@/actions/analysis_actions";
@@ -8,13 +8,15 @@ import { getPlayerByUsernameAction, loadAnalysisAction } from "@/actions/analysi
 interface SpectatorListProps {
 	id: string;
 	onInspectUser?: (status: ViewerStatus) => void;
+	usernames: Record<string, ViewerStatus[]>;
+	guestCount: Record<string, number>;
 }
 
-export function SpectatorList({ id, onInspectUser }: SpectatorListProps) {
+export function SpectatorList({ id, onInspectUser, usernames, guestCount }: SpectatorListProps) {
 	console.log("[watch/[id]/spectator_list.tsx:SpectatorList]", { id });
 	const [selectedSpectator, setSelectedSpectator] = useState<string | null>(null);
 	const [previewFen, setPreviewFen] = useState<string | null>(null);
-	const { usernames, guestCount } = useViewerCounts([id]);
+	
 	let resolvedUsernames: ViewerStatus[] = [];
 	let resolvedGuestCount = 0;
 	if (usernames) resolvedUsernames = usernames[id] || [];

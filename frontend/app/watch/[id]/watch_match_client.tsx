@@ -7,6 +7,7 @@ import { MoveList } from '@/app/watch/[id]/move_list';
 import { SpectatorList } from '@/app/watch/[id]/spectator_list';
 import { Match } from '@/types/types';
 import { useBroadcast } from '@/hooks/use_broadcast';
+import { useViewerCounts } from '@/hooks/use_viewer_counts';
 import { useAnalysisState } from '@/context/analysis_context';
 import { useAnalysisSync } from '@/hooks/use_analysis_sync';
 import { MobileBottomPanel } from '@/app/watch/[id]/mobile_bottom_panel';
@@ -14,6 +15,7 @@ import { MobileBottomPanel } from '@/app/watch/[id]/mobile_bottom_panel';
 export default function WatchMatchClient({ match }: {match: Match}) {
 	console.log("[watch/[id]/watch_match_client.tsx:WatchMatchClient]", { matchId: match.id });
 	const { currentMoveData, isEnded, outcome } = useBroadcast(match.id, match);
+	const { usernames, guestCount } = useViewerCounts([match.id]);
 	const {
 		isAnalysisMode,
 		setMatchId,
@@ -63,7 +65,12 @@ export default function WatchMatchClient({ match }: {match: Match}) {
 			<div className='hidden lg:grid size-full items-center px-10 gap-8 relative z-10 grid-cols-[300px_1fr_300px]'>
 				<aside className="h-[75vh] flex flex-col"> 
 					<div className="bg-[#f4ead5]/20 backdrop-blur-sm p-4 flex-1 min-h-0 border border-[#8b5e34]/20 shadow-lg overflow-hidden">
-						<SpectatorList id={match.id} onInspectUser={handleInspectUser} />
+						<SpectatorList 
+							id={match.id} 
+							onInspectUser={handleInspectUser} 
+							usernames={usernames} 
+							guestCount={guestCount} 
+						/>
 					</div>
 
 					{isAnalysisMode && (
@@ -117,7 +124,7 @@ export default function WatchMatchClient({ match }: {match: Match}) {
 
 				<aside className="h-[75vh] flex flex-col justify-center">
 					<div className="bg-[#f4ead5]/20 backdrop-blur-sm p-4 h-full border border-[#8b5e34]/20 shadow-lg">
-						<MoveList id={match.id} />
+						<MoveList id={match.id} currentMoveData={currentMoveData} />
 					</div>
 				</aside>
 			</div>
@@ -173,6 +180,9 @@ export default function WatchMatchClient({ match }: {match: Match}) {
 					<MobileBottomPanel 
 						matchId={match.id} 
 						onInspectUser={handleInspectUser} 
+						currentMoveData={currentMoveData}
+						usernames={usernames}
+						guestCount={guestCount}
 					/>
 				</div>
 			</div>

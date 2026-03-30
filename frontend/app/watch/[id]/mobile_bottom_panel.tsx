@@ -4,13 +4,17 @@ import { useState } from 'react';
 import { MoveList } from './move_list';
 import { SpectatorList } from './spectator_list';
 import { ViewerStatus } from '@/hooks/use_viewer_counts';
+import { Move } from '@/types/types';
 
 interface MobileBottomPanelProps {
 	matchId: string;
 	onInspectUser: (status: ViewerStatus) => void;
+	currentMoveData: Move | null;
+	usernames: Record<string, ViewerStatus[]>;
+	guestCount: Record<string, number>;
 }
 
-export function MobileBottomPanel({ matchId, onInspectUser }: MobileBottomPanelProps) {
+export function MobileBottomPanel({ matchId, onInspectUser, currentMoveData, usernames, guestCount }: MobileBottomPanelProps) {
 	const [activeTab, setActiveTab] = useState<'moves' | 'spectators'>('moves');
 
 	return (
@@ -40,11 +44,16 @@ export function MobileBottomPanel({ matchId, onInspectUser }: MobileBottomPanelP
 			<div className="flex-1 overflow-hidden relative">
 				{activeTab === 'moves' ? (
 					<div className="h-full overflow-auto">
-						<MoveList id={matchId} />
+						<MoveList id={matchId} currentMoveData={currentMoveData} />
 					</div>
 				) : (
 					<div className="h-full overflow-auto">
-						<SpectatorList id={matchId} onInspectUser={onInspectUser} />
+						<SpectatorList 
+							id={matchId} 
+							onInspectUser={onInspectUser} 
+							usernames={usernames} 
+							guestCount={guestCount} 
+						/>
 					</div>
 				)}
 			</div>

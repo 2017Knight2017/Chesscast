@@ -1,7 +1,6 @@
 'use client';
 
-import { useBroadcast } from "@/hooks/use_broadcast";
-import { MoveRecord, MoveTreeNode } from "@/types/types"
+import { Move, MoveRecord, MoveTreeNode } from "@/types/types"
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { BackToLiveButton } from "./back_to_live_button";
 import { useAnalysisState } from "@/context/analysis_context";
@@ -128,8 +127,7 @@ const MoveNode = ({
 	);
 };
 
-export function MoveList({ id, matchHistory: propMatchHistory }: { id: string, matchHistory?: string[] }) {
-	const { currentMoveData } = useBroadcast(id);
+export function MoveList({ id, matchHistory: propMatchHistory, currentMoveData }: { id: string, matchHistory?: string[], currentMoveData: Move | null }) {
 	const { 
 		isAnalysisMode, 
 		analysisTree, 
