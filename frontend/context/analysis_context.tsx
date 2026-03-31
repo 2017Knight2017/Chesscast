@@ -18,7 +18,7 @@ interface AnalysisContextType {
 	currentPath: number[];
 	matchId: string | null;
 	selectedMoveIndex: number | null;
-	setAnalysisMode: (mode: boolean) => void;
+	setAnalysisMode: (mode: boolean, fen?: string) => void;
 	setInspectedUserId: (userId: number | null) => void;
 	setAnalysisTree: (tree: Record<number, MoveTreeNode[]>) => void;
 	setMatchId: (id: string | null) => void;
@@ -39,7 +39,7 @@ interface AnalysisContextType {
 const AnalysisContext = createContext<AnalysisContextType | undefined>(undefined);
 
 export function AnalysisProvider({ children }: { children: ReactNode }) {
-	const [isAnalysisMode, setAnalysisModeState] = useState(false);
+	const [isAnalysisMode, setIsAnalysisMode] = useState(false);
 	const [inspectedUserId, setInspectedUserId] = useState<number | null>(null);
 	const [analysisTree, setAnalysisTree] = useState<Record<number, MoveTreeNode[]>>({});
 	const [currentPath, setCurrentPath] = useState<number[]>([]);
@@ -50,14 +50,18 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 	const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 	const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-	const setAnalysisMode = useCallback((mode: boolean) => {
-		setAnalysisModeState(mode);
+	const setAnalysisMode = useCallback((mode: boolean, fen?: string) => {
+		setIsAnalysisMode(mode);
 
 		const username = localStorage.getItem('username');
 		if (!matchId || !username) return;
 
 		const event = mode ? 'userStartedAnalysis' : 'userStoppedAnalysis';
-		socket.emit(event, { matchId, username });
+		const data: any = { matchId, username };
+		if (mode && fen) {
+			data.currentFen = fen;
+		}
+		socket.emit(event, data);
 		
 	}, [matchId, socket]);
 

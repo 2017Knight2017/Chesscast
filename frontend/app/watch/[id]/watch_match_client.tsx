@@ -31,7 +31,8 @@ export default function WatchMatchClient({ match }: {match: Match}) {
 	} = useAnalysisSync({ 
 		match, 
 		userId, 
-		hasExistingAnalysis 
+		hasExistingAnalysis,
+		currentMoveData
 	});
 
 	const [isManualStarted, setIsManualStarted] = useState<boolean>(false);
@@ -70,6 +71,7 @@ export default function WatchMatchClient({ match }: {match: Match}) {
 							onInspectUser={handleInspectUser} 
 							usernames={usernames} 
 							guestCount={guestCount} 
+							currentMoveData={currentMoveData}
 						/>
 					</div>
 
@@ -155,7 +157,6 @@ export default function WatchMatchClient({ match }: {match: Match}) {
 								matchHistory={currentMoveData.history}
 								currentFen={currentMoveData.fen}
 							/>
-							{/* Mini board for Analysis Mode on Mobile */}
 							<div className="fixed bottom-4 right-4 w-32 h-32 z-50 shadow-2xl border-2 border-[#8b5e34] bg-[#1a0f07] rounded-md overflow-hidden">
 								<ChessBoard 
 									onSelect={async () => {

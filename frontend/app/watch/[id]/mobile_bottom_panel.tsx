@@ -53,6 +53,7 @@ export function MobileBottomPanel({ matchId, onInspectUser, currentMoveData, use
 							onInspectUser={onInspectUser} 
 							usernames={usernames} 
 							guestCount={guestCount} 
+							currentMoveData={currentMoveData}
 						/>
 					</div>
 				)}

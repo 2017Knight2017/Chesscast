@@ -1,7 +1,7 @@
 import { useEffect, useCallback } from 'react';
 import { useSocket } from '@/context/socket_context';
 import { useAnalysisState } from '../context/analysis_context';
-import { Match } from '@/types/types';
+import { Match, Move } from '@/types/types';
 import { getPlayerByUsernameAction } from '@/actions/analysis_actions';
 import { ViewerStatus } from './use_viewer_counts';
 
@@ -9,9 +9,10 @@ interface UseAnalysisSyncProps {
 	match: Match;
 	userId: number | null;
 	hasExistingAnalysis: boolean;
+	currentMoveData: Move | null;
 }
 
-export function useAnalysisSync({ match, userId, hasExistingAnalysis }: UseAnalysisSyncProps) {
+export function useAnalysisSync({ match, userId, hasExistingAnalysis, currentMoveData }: UseAnalysisSyncProps) {
 	const {
 		isAnalysisMode,
 		inspectedUserId,
@@ -71,7 +72,7 @@ export function useAnalysisSync({ match, userId, hasExistingAnalysis }: UseAnaly
 						 (type === 'select' && hasExistingAnalysis);
 
 		if (canStart && match && userId) {
-			setAnalysisMode(true);
+			setAnalysisMode(true, currentMoveData?.fen);
 			setInspectedUserId(null);
 
 			if (hasExistingAnalysis && match?.id && userId) {
@@ -81,7 +82,7 @@ export function useAnalysisSync({ match, userId, hasExistingAnalysis }: UseAnaly
 			const username = localStorage.getItem('username');
 			socket.emit('joinAnalysisStream', { matchId: match?.id, userId, username });
 		}
-	}, [isAnalysisMode, hasExistingAnalysis, match, userId, socket, setAnalysisMode, setInspectedUserId, loadAnalysis]);
+	}, [isAnalysisMode, hasExistingAnalysis, match, userId, socket, setAnalysisMode, setInspectedUserId, loadAnalysis, currentMoveData]);
 
 	const handleMainBoardClick = useCallback(async () => {
 		let hasExistingAnalysisResult: boolean;

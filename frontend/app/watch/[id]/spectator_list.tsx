@@ -4,15 +4,17 @@ import { ViewerStatus } from "@/hooks/use_viewer_counts";
 import { useState, useEffect } from "react";
 import Chessground from "@bezalel6/react-chessground";
 import { getPlayerByUsernameAction, loadAnalysisAction } from "@/actions/analysis_actions";
+import { Move, MoveTreeNode } from "@/types/types";
 
 interface SpectatorListProps {
 	id: string;
 	onInspectUser?: (status: ViewerStatus) => void;
 	usernames: Record<string, ViewerStatus[]>;
 	guestCount: Record<string, number>;
+	currentMoveData?: Move | null;
 }
 
-export function SpectatorList({ id, onInspectUser, usernames, guestCount }: SpectatorListProps) {
+export function SpectatorList({ id, onInspectUser, usernames, guestCount, currentMoveData }: SpectatorListProps) {
 	console.log("[watch/[id]/spectator_list.tsx:SpectatorList]", { id });
 	const [selectedSpectator, setSelectedSpectator] = useState<string | null>(null);
 	const [previewFen, setPreviewFen] = useState<string | null>(null);
@@ -23,52 +25,77 @@ export function SpectatorList({ id, onInspectUser, usernames, guestCount }: Spec
 	if (guestCount) resolvedGuestCount = guestCount[id] || 0;
 
 	useEffect(() => {
+		let isCurrent = true;
 		const fetchUserFen = async () => {
 			if (!selectedSpectator) {
-				setPreviewFen(null);
+				if (isCurrent) setPreviewFen(null);
 				return;
 			}
 
 			const status = resolvedUsernames.find(u => u.username === selectedSpectator);
 			if (status?.currentFen) {
-				setPreviewFen(status.currentFen);
+				if (isCurrent) setPreviewFen(status.currentFen);
 				return;
 			}
 
 			const playerResult = await getPlayerByUsernameAction(selectedSpectator);
 			if (!playerResult.success || !playerResult.data) {
-				setPreviewFen(null);
+				if (isCurrent) setPreviewFen(null);
 				return;
 			}
 			
-			const analysisData = await loadAnalysisAction(id, playerResult.data.userId);
-			
-			if (analysisData.data && Object.keys(analysisData.data).length > 0) {
-				const { Chess } = await import('chess.js');
-				const chess = new Chess();
+			try {
+				const analysisData = await loadAnalysisAction(id, playerResult.data.userId);
+				if (!isCurrent) return;
 				
-				const tree = analysisData.data;
-				const firstKey = Object.keys(tree)[0];
-				let current = tree[parseInt(firstKey)];
-				
-				while (current && current.length > 0) {
-					const node = current[0];
-					try {
-						chess.move(node.m);
-						current = node.s || [];
-					} catch (e) {
-						break;
+				if (analysisData.data && Object.keys(analysisData.data).length > 0) {
+					const { Chess } = await import('chess.js');
+					const tree = analysisData.data as Record<number, MoveTreeNode[]>;
+					
+					const firstKey = Object.keys(tree)[0];
+					const branchRootIndex = parseInt(firstKey);
+					
+					const chess = new Chess();
+					
+					if (currentMoveData && branchRootIndex < currentMoveData.history.length) {
+						for (let i = 0; i <= branchRootIndex; i++) {
+							try {
+								chess.move(currentMoveData.history[i]);
+							} catch (e) {
+								console.error("Failed to apply history move in preview", currentMoveData.history[i]);
+							}
+						}
+					} else if (currentMoveData) {
+						chess.load(currentMoveData.fen);
 					}
+					
+					let current = tree[branchRootIndex];
+					
+					while (current && current.length > 0) {
+						const node = current[0];
+						try {
+							chess.move(node.m);
+							current = node.s || [];
+						} catch (e) {
+							break;
+						}
+					}
+					
+					if (isCurrent) setPreviewFen(chess.fen());
+				} else if (currentMoveData) {
+					if (isCurrent) setPreviewFen(currentMoveData.fen);
+				} else {
+					if (isCurrent) setPreviewFen(null);
 				}
-				
-				setPreviewFen(chess.fen());
-			} else {
-				setPreviewFen(null);
+			} catch (error) {
+				console.error("Error fetching user FEN:", error);
+				if (isCurrent && currentMoveData) setPreviewFen(currentMoveData.fen);
 			}
 		};
 
 		fetchUserFen();
-	}, [selectedSpectator, id, resolvedUsernames]);
+		return () => { isCurrent = false; };
+	}, [selectedSpectator, id, resolvedUsernames, currentMoveData]);
 
 	const handleSpectatorClick = (username: string) => {
 		console.log("[spectator_list.tsx:handleSpectatorClick]", { username });

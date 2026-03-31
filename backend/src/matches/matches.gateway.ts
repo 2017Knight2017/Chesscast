@@ -132,11 +132,12 @@ export class MatchesGateway
 
 	@SubscribeMessage('userStartedAnalysis')
 	async handleUserStartedAnalysis(
-		@MessageBody() data: { matchId: string; username: string },
+		@MessageBody() data: { matchId: string; username: string; currentFen?: string },
 	) {
 		this.logger.log('handleUserStartedAnalysis called');
 		await this.redisService.setUserStatus(data.matchId, data.username, {
 			isAnalyzing: true,
+			...(data.currentFen ? { currentFen: data.currentFen } : {}),
 		});
 		const counts = await this.redisService.getViewerData(data.matchId);
 		this.server
