@@ -18,7 +18,7 @@ export class MatchesController {
 		private readonly matchesService: MatchesService,
 		@Inject(DrizzleAsyncProvider) private db: NodePgDatabase<typeof sc>,
 	) {
-		this.logger.log('[MatchesController] constructor called');
+		this.logger.log('constructor called');
 	}
 
 	private readonly logger = new Logger(MatchesController.name);
@@ -34,30 +34,61 @@ export class MatchesController {
 		title: string,
 		scheduledAt: string,
 		timeControl: number,
-		controlMove: number,
 		timeIncrement: number,
-		isRepeatableControlMove: boolean,
-		bonusTimeMin: number,
-		nextControlMoveAfter: number,
-		newTimeIncrement: number
+		controlMove?: number,
+		bonusTimeMin?: number,
+		nextControlMoveAfter?: number,
+		newTimeIncrement?: number
 	}){
-		this.logger.log('[MatchesController] createBroadcast called');
-		return this.matchesService.createBroadcast(
-			req.user.id, 
-			req.user.username, 
-			body.title, 
-			new Date(body.scheduledAt), 
-			body.pgn, 
-			body.whitePlayer, 
-			body.blackPlayer, 
-			body.archetypes, 
-			body.timeControl,
-			body.controlMove,
-			body.timeIncrement,
-			body.bonusTimeMin,
-			body.nextControlMoveAfter,
-			body.newTimeIncrement
-		);
+		this.logger.log('createBroadcast called');
+		if (body.nextControlMoveAfter) {
+			return this.matchesService.createBroadcast(
+				req.user.id, 
+				req.user.username, 
+				body.title, 
+				new Date(body.scheduledAt), 
+				body.pgn, 
+				body.whitePlayer, 
+				body.blackPlayer, 
+				body.archetypes, 
+				body.timeControl,
+				body.controlMove!,
+				body.timeIncrement,
+				body.bonusTimeMin!,
+				body.nextControlMoveAfter,
+				body.newTimeIncrement!
+			);
+		} else if (body.controlMove && body.bonusTimeMin && body.newTimeIncrement) {
+			return this.matchesService.createBroadcast(
+				req.user.id, 
+				req.user.username, 
+				body.title, 
+				new Date(body.scheduledAt), 
+				body.pgn, 
+				body.whitePlayer, 
+				body.blackPlayer, 
+				body.archetypes, 
+				body.timeControl,
+				body.controlMove,
+				body.timeIncrement,
+				body.bonusTimeMin,
+				body.newTimeIncrement
+			);
+		} else {
+			return this.matchesService.createBroadcast(
+				req.user.id, 
+				req.user.username, 
+				body.title, 
+				new Date(body.scheduledAt), 
+				body.pgn, 
+				body.whitePlayer, 
+				body.blackPlayer, 
+				body.archetypes, 
+				body.timeControl,
+				body.timeIncrement
+			);
+		}
+		
 	}
 	
 	@Post(':id/report')
@@ -65,7 +96,7 @@ export class MatchesController {
 		@Param('id') id: string,
 		@Body() data: { evaluations: number[], timeRemaining: number[], notation: string[], outcome: '1/2-1/2'|'1-0'|'0-1' }
 	) {
-		this.logger.log('[MatchesController] handleWorkerReport called');
+		this.logger.log('handleWorkerReport called');
 		return await this.matchesService.handleWorkerReport(id, data['evaluations'], data['timeRemaining'], data['notation'], data['outcome'])
 	}
 
@@ -73,7 +104,7 @@ export class MatchesController {
 	async startBroadcast(
 		@Param('id') id: string
 	) {
-		this.logger.log('[MatchesController] startBroadcast called');
+		this.logger.log('startBroadcast called');
 		return await this.matchesService.startBroadcast(id);
 	}
 
@@ -81,14 +112,14 @@ export class MatchesController {
 	async checkGameState(
 		@Param('id') id: string
 	) {
-		this.logger.log('[MatchesController] checkGameState called');
+		this.logger.log('checkGameState called');
 		return await this.matchesService.checkGameState(id);
 	}
 
 	@Get('my_followed')
 	@UseGuards(JwtAuthGuard)
 	async getMyFollowed(@Request() req) {
-		this.logger.log('[MatchesController] getMyFollowed called');
+		this.logger.log('getMyFollowed called');
 		return this.matchesService.getMatchesByTable({
 			table: sc.followedBroadcasts,
 			isJoinTable: true, 
@@ -99,7 +130,7 @@ export class MatchesController {
 	@Get('my_planned')
 	@UseGuards(JwtAuthGuard)
 	async getMyPlanned(@Request() req) {
-		this.logger.log('[MatchesController] getMyPlanned called');
+		this.logger.log('getMyPlanned called');
 		return this.matchesService.getMatchesByTable({
 			table: sc.plannedBroadcasts,
 			isJoinTable: true, 
@@ -109,7 +140,7 @@ export class MatchesController {
 
 	@Get('planned')
 	async getPlanned(@Request() req): Promise<Match[]> {
-		this.logger.log('[MatchesController] getPlanned called');
+		this.logger.log('getPlanned called');
 		return this.matchesService.getMatchesByTable({
 			table: sc.followedBroadcasts,
 			isJoinTable: false, 
@@ -119,7 +150,7 @@ export class MatchesController {
 
 	@Get('live')
 	async getLiveMatches(): Promise<Match[]> {
-		this.logger.log('[MatchesController] getLiveMatches called');
+		this.logger.log('getLiveMatches called');
 		return this.matchesService.getMatchesByTable({
 			table: sc.followedBroadcasts,
 			isJoinTable: false, 

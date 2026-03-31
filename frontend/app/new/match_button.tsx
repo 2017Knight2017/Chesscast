@@ -1,23 +1,8 @@
 'use client'
 
 import { createMatchAction } from '@/actions/match_actions';
+import { CreateMatchData } from '@/types/types';
 import { useTransition } from 'react';
-
-interface matchData {
-	pgn: string;
-	archetypes: [string, string];
-	whitePlayer: string;
-	blackPlayer: string;
-	title: string;
-	timeControl: string;
-	controlMove: number;
-	timeIncrement: number;
-	isRepeatableControlMove: boolean;
-	bonusTimeMin: number;
-	nextControlMoveAfter: number;
-	newTimeIncrement: number;
-	scheduledAt: string;
-}
 
 export default function CreateMatchButton({ 
 	pgn, 
@@ -25,15 +10,17 @@ export default function CreateMatchButton({
 	whitePlayer, 
 	blackPlayer, 
 	title, 
-	timeControl, 
+	timeControlStr, 
+	isControlMove,
+	isRepeatableControlMove,
 	controlMove, 
 	timeIncrement,
 	bonusTimeMin,
 	nextControlMoveAfter,
 	newTimeIncrement,
 	scheduledAt 
-}: matchData) {
-	console.log("[new/match_button.tsx:CreateMatchButton]", { pgn, archetypes, whitePlayer, blackPlayer, title, timeControl, controlMove, timeIncrement, bonusTimeMin, nextControlMoveAfter, newTimeIncrement, scheduledAt });
+}: CreateMatchData) {
+	console.log("[new/match_button.tsx:CreateMatchButton]", { pgn, archetypes, whitePlayer, blackPlayer, title, timeControlStr, controlMove, timeIncrement, bonusTimeMin, nextControlMoveAfter, newTimeIncrement, scheduledAt });
 	const [isPending, startTransition] = useTransition();
 	let errorMessage: string = "";
 
@@ -49,7 +36,7 @@ export default function CreateMatchButton({
 		if (!title.trim()) errorMessage += "Название партии не может быть пустым\n";
 		if (!whitePlayer.trim()) errorMessage += "Имя игрока 1 не может быть пустым\n";
 		if (!blackPlayer.trim()) errorMessage += "Имя игрока 2 не может быть пустым\n";
-		if (!/^([0-9]+:)?[0-5]?[0-9]$/.test(timeControl)) errorMessage += "Неверный формат временного контроля\n";
+		if (!/^([0-9]+:)?[0-5]?[0-9]$/.test(timeControlStr!)) errorMessage += "Неверный формат временного контроля\n";
 		const scheduledDate = new Date(scheduledAt);
 		if (isNaN(scheduledDate.getTime()) || scheduledDate < new Date()) errorMessage += "Неверная дата и время трансляции\n";
 		if (errorMessage != "") {
@@ -58,20 +45,22 @@ export default function CreateMatchButton({
 		}
 
 		startTransition(async () => {
-			const result = await createMatchAction(
-				pgn, 
-				archetypes, 
-				whitePlayer, 
-				blackPlayer, 
-				title, 
-				convertTimeControlToSeconds(timeControl), 
-				controlMove,
-				timeIncrement,
-				bonusTimeMin,
-				nextControlMoveAfter,
-				newTimeIncrement,
-				scheduledAt
-			);
+			const result = await createMatchAction({
+				pgn: pgn, 
+				archetypes: archetypes, 
+				whitePlayer: whitePlayer, 
+				blackPlayer: blackPlayer, 
+				title: title, 
+				timeControlNum: convertTimeControlToSeconds(timeControlStr!), 
+				isControlMove: isControlMove,
+				isRepeatableControlMove: isRepeatableControlMove,
+				controlMove: controlMove,
+				timeIncrement: timeIncrement,
+				bonusTimeMin: bonusTimeMin,
+				nextControlMoveAfter: nextControlMoveAfter,
+				newTimeIncrement: newTimeIncrement,
+				scheduledAt: scheduledAt
+			})
 			
 			if (result.success) {
 				alert('Success: ' + result.message); 

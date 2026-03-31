@@ -69,33 +69,18 @@ export class MatchesService {
 		@Inject(RedisService) private redisService: RedisService,
 		@Inject(forwardRef(() => MatchesGateway)) private readonly gateway: MatchesGateway,
 	) {
-		this.logger.log('[MatchesService] constructor called');
+		this.logger.log('constructor called');
 	}
 
 	private readonly logger = new Logger(MatchesService.name);
 
-	private getValidArchetype(key: string | undefined): string | undefined {
-		this.logger.log('[MatchesService] getValidArchetype called');
+	private getValidArchetype(key: string): string | undefined {
+		this.logger.log('getValidArchetype called');
 		return archetypeOptions[key as keyof typeof archetypeOptions];
-}
+	}
 
-	async createBroadcast(
-		authorId: number, 
-		author: string, 
-		title: string, 
-		scheduledAt: Date, 
-		pgn: string, 
-		whitePlayer: string, 
-		blackPlayer: string, 
-		archetypes: [string, string], 
-		timeControl: number,
-		controlMove: number,
-		timeIncrement: number,
-		bonusTimeMin: number,
-		nextControlMoveAfter: number,
-		newTimeIncrement: number
-	) {
-		this.logger.log('[MatchesService] createBroadcast called');
+	private async archetypeValidation(whitePlayer: string, blackPlayer: string, archetypes: [string, string]) {
+		this.logger.log('archetypeValidation called');
 		const [whiteDB, blackDB] = await Promise.all([
 			this.playersService.getArchetypeFromDB(whitePlayer),
 			this.playersService.getArchetypeFromDB(blackPlayer)
@@ -105,7 +90,7 @@ export class MatchesService {
 			this.getValidArchetype(archetypes[1]) || blackDB 
 		];
 		let isArchetypeAiGenerated: boolean[] = [false, false];
-		const archetypeMask = (validatedArchetypes[0] !== undefined ? 1 : 0) + (validatedArchetypes[1] !== undefined ? 2 : 0);
+		const archetypeMask = (validatedArchetypes[0] === undefined ? 0 : 1) + (validatedArchetypes[1] === undefined ? 0 : 2);
 		switch (archetypeMask) {
 			case 0:
 				const { results, isAiGenerated } = await requestArchetypes({player1: whitePlayer, player2: blackPlayer});
@@ -136,6 +121,29 @@ export class MatchesService {
 		if (isArchetypeAiGenerated[1] && blackPlayer) {
 			await this.playersService.updateArchetype(blackPlayer, validatedArchetypes[1]!);
 		}
+
+		return validatedArchetypes;
+	}
+
+	async createBroadcast(
+		authorId: number, 
+		author: string, 
+		title: string, 
+		scheduledAt: Date, 
+		pgn: string, 
+		whitePlayer: string, 
+		blackPlayer: string, 
+		archetypes: [string, string], 
+		timeControl: number,
+		timeIncrement: number,
+		controlMove: number = 0,
+		bonusTimeMin: number = 0,
+		nextControlMoveAfter: number = 0,
+		newTimeIncrement: number = 0
+	) {
+		this.logger.log('createBroadcast called');
+		
+		const validatedArchetypes = await this.archetypeValidation(whitePlayer, blackPlayer, archetypes);
 
 		const [analysis] = await this.db
 			.insert(sc.analysis)
@@ -188,7 +196,7 @@ export class MatchesService {
 	}
 
 	async handleWorkerReport(id: string, evaluations: number[], timesRemaining: number[], notation: string[], outcome: '1/2-1/2'|'1-0'|'0-1') {
-		this.logger.log('[MatchesService] handleWorkerReport called');
+		this.logger.log('handleWorkerReport called');
 		this.logger.log(id, evaluations, timesRemaining, notation)
 		await this.db
 			.update(sc.analysis)
@@ -209,7 +217,7 @@ export class MatchesService {
 	}
 
 	async startBroadcast(id: string) {
-		this.logger.log('[MatchesService] startBroadcast called');
+		this.logger.log('startBroadcast called');
 		await this.db
 			.update(sc.matches)
 			.set({
@@ -234,7 +242,7 @@ export class MatchesService {
 	
 	@Cron(CronExpression.EVERY_MINUTE)
 	async autoCheckAndStartBroadcasts() {
-		this.logger.log('[MatchesService] autoCheckAndStartBroadcasts called');
+		this.logger.log('autoCheckAndStartBroadcasts called');
 		const now = new Date();
 
 		const started = await this.db
@@ -266,7 +274,7 @@ export class MatchesService {
 	}
 
 	async updateGameState(id: string, move: string) {
-		this.logger.log('[MatchesService] updateGameState called');
+		this.logger.log('updateGameState called');
 		const game = await this.db.query.matches.findFirst({
 			where: eq(sc.matches.id, id),
 		});
@@ -308,9 +316,9 @@ export class MatchesService {
 		const timeBeforeMove = isWhiteMove ? whitePlayerTime : blackPlayerTime;
 		const timeAfterMove = timesRemaining[moveIndex] ?? timeBeforeMove;
 
-		const currentIncrementMs = 1000 * (moveIndex/2 < controlMove && controlMove != 0 ?
-			increment :
-			newIncrement);
+		const currentIncrementMs = 1000 * (controlMove == 0 || moveIndex/2 < controlMove ?
+			increment
+			: newIncrement);
 		
 		let bonusTimeMs = 0;
 		let lastControlMoveVar = lastControlMove;
@@ -347,7 +355,7 @@ export class MatchesService {
 	}
 
 	async checkGameState(id: string) {
-		this.logger.log('[MatchesService] checkGameState called');
+		this.logger.log('checkGameState called');
 		const match = await this.db.query.matches.findFirst({
 			where: eq(sc.matches.id, id),
 		});
@@ -398,7 +406,7 @@ export class MatchesService {
 	}
 
 	async finishGame(id: string) {
-		this.logger.log('[MatchesService] finishGame called');
+		this.logger.log('finishGame called');
 		await this.db
 			.update(sc.matches)
 			.set({status: "finished"})
@@ -416,7 +424,7 @@ export class MatchesService {
 		userId?: number,
 		status?: "processing"|"waiting"|"in_progress"|"finished"
 	}) {
-		this.logger.log('[MatchesService] getMatchesByTable called');
+		this.logger.log('getMatchesByTable called');
 		let query = this.db
 			.select({
 				id: sc.matches.id,

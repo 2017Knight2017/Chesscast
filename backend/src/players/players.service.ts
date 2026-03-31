@@ -9,13 +9,13 @@ export class PlayersService {
 	constructor(
 		@Inject(DrizzleAsyncProvider) private db: NodePgDatabase<typeof sc>,
 	) {
-		this.logger.log('[PlayersService] constructor called');
+		this.logger.log('constructor called');
 	}
 
 	private readonly logger = new Logger(PlayersService.name);
 
 	async findByName(name: string) {
-		this.logger.log('[PlayersService] findByName called');
+		this.logger.log('findByName called');
 		return await this.db
 			.select()
 			.from(sc.players)
@@ -25,7 +25,7 @@ export class PlayersService {
 	}
 
 	async updateArchetype(name: string, archetype: string) {
-		this.logger.log('[PlayersService] updateArchetype called');
+		this.logger.log('updateArchetype called');
 		await this.db
 			.update(sc.players)
 			.set({ archetype: archetype })
@@ -36,7 +36,7 @@ export class PlayersService {
 	}
 
 	async getArchetypeFromDB(name: string) {
-		this.logger.log('[PlayersService] getArchetypeFromDB called');
+		this.logger.log('getArchetypeFromDB called');
 		const result = await this.db
 			.select()
 			.from(sc.players)

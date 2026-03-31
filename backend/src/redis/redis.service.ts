@@ -4,7 +4,7 @@ import Redis from 'ioredis';
 @Injectable()
 export class RedisService {
 	constructor() {
-		this.logger.log('[RedisService] constructor called');
+		this.logger.log('constructor called');
 		this.redis = new Redis({
 			host: process.env.REDIS_HOST || 'localhost',
 			port: 6379,
@@ -15,31 +15,31 @@ export class RedisService {
 	private readonly logger = new Logger(RedisService.name);
 
 	async addViewer(matchId: string, username: string) {
-		this.logger.log('[RedisService] addViewer called');
+		this.logger.log('addViewer called');
 		const key = `match:${matchId}:viewers_list`;
 		await this.redis.sadd(key, username);
 	}
 
 	async addGuestViewer(matchId: string, guestId: string) {
-		this.logger.log('[RedisService] addGuestViewer called');
+		this.logger.log('addGuestViewer called');
 		const key = `match:${matchId}:guest_viewers_list`;
 		await this.redis.sadd(key, guestId);
 	}
 
 	async removeGuestViewer(matchId: string, guestId: string) {
-		this.logger.log('[RedisService] removeGuestViewer called');
+		this.logger.log('removeGuestViewer called');
 		const key = `match:${matchId}:guest_viewers_list`;
 		await this.redis.srem(key, guestId);
 	}
 
 	async removeViewer(matchId: string, username: string) {
-		this.logger.log('[RedisService] removeViewer called');
+		this.logger.log('removeViewer called');
 		const key = `match:${matchId}:viewers_list`;
 		await this.redis.srem(key, username);
 	}
 
 	async getViewerData(matchId: string) {
-		this.logger.log('[RedisService] getViewerData called');
+		this.logger.log('getViewerData called');
 		const authorizedKey = `match:${matchId}:viewers_list`;
 		const guestKey = `match:${matchId}:guest_viewers_list`;
 		const statusKey = `match:${matchId}:user_statuses`;
@@ -61,13 +61,13 @@ export class RedisService {
 	}
 
 	async setUserStatus(matchId: string, username: string, status: object) {
-		this.logger.log('[RedisService] setUserStatus called');
+		this.logger.log('setUserStatus called');
 		const statusKey = `match:${matchId}:user_statuses`;
 		await this.redis.hset(statusKey, username, JSON.stringify(status));
 	}
 
 	async removeUserStatus(matchId: string, username: string) {
-		this.logger.log('[RedisService] removeUserStatus called');
+		this.logger.log('removeUserStatus called');
 		const statusKey = `match:${matchId}:user_statuses`;
 		await this.redis.hdel(statusKey, username);
 	}
@@ -78,7 +78,7 @@ export class RedisService {
 		data: object,
 		ttlSeconds: number = 7200,
 	) {
-		this.logger.log('[RedisService] setUserAnalysis called');
+		this.logger.log('setUserAnalysis called');
 		const key = `analysis_cache:match:${matchId}:user:${userId}`;
 		await this.redis.setex(key, ttlSeconds, JSON.stringify(data));
 	}
@@ -87,14 +87,14 @@ export class RedisService {
 		matchId: string,
 		userId: number,
 	): Promise<object | null> {
-		this.logger.log('[RedisService] getUserAnalysis called');
+		this.logger.log('getUserAnalysis called');
 		const key = `analysis_cache:match:${matchId}:user:${userId}`;
 		const data = await this.redis.get(key);
 		return data ? JSON.parse(data) : null;
 	}
 
 	async deleteUserAnalysis(matchId: string, userId: number) {
-		this.logger.log('[RedisService] deleteUserAnalysis called');
+		this.logger.log('deleteUserAnalysis called');
 		const key = `analysis_cache:match:${matchId}:user:${userId}`;
 		await this.redis.del(key);
 	}

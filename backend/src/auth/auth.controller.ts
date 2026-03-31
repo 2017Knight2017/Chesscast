@@ -25,7 +25,7 @@ export class AuthController {
 	@Post('login')
 	async login(@Body() body: LoginData) {
 		const user = await this.authService.validateUser(body.username, body.password);
-		if (!user) throw new UnauthorizedException('Неверные данные');
+		if (!user) throw new UnauthorizedException('Incorrect Data');
 		return this.authService.login(user);
 	}
 

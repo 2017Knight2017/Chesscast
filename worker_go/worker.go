@@ -50,6 +50,18 @@ type MateStats struct {
 	ClosestLoss  int
 }
 
+type MatchData struct {
+	MatchID              string   `json:"id"`
+	PGN                  string   `json:"pgn"`
+	InitialTime          int      `json:"time_control"`
+	ControlMove          *int     `json:"control_move"`
+	TimeIncrement        int      `json:"time_increment"`
+	BonusTimeMin         *int     `json:"bonus_time_min"`
+	NextControlMoveAfter *int     `json:"next_control_move_after"`
+	NewTimeIncrement     *int     `json:"new_time_increment"`
+	Archetypes           []string `json:"archetypes"`
+}
+
 var logger *log.Logger
 
 const VIRTUAL_CONTROL = 40
@@ -115,15 +127,32 @@ func getAbsoluteMax(initialTimeSec, timeLeftSec float64) float64 {
 
 func ProcessGame(
 	ctx context.Context,
-	matchID, pgn string,
+	matchID string,
+	pgn string,
 	initialTime int,
-	controlMove int,
+	controlMoveSrc *int,
 	timeIncrement int,
-	bonusTimeMin int,
-	nextControlAfter int,
-	newIncrement int,
+	bonusTimeMinSrc *int,
+	nextControlAfterSrc *int,
+	newIncrementSrc *int,
 	archNames []string,
 ) error {
+	var controlMove, bonusTimeMin, newIncrement, nextControlAfter int
+	if controlMoveSrc != nil && bonusTimeMinSrc != nil && newIncrementSrc != nil {
+		controlMove = *controlMoveSrc
+		bonusTimeMin = *bonusTimeMinSrc
+		newIncrement = *newIncrementSrc
+	} else {
+		controlMove = 0
+		bonusTimeMin = 0
+		newIncrement = 0
+	}
+	if nextControlAfterSrc != nil {
+		nextControlAfter = *nextControlAfterSrc
+	} else {
+		nextControlAfter = 0
+	}
+
 	logger.Printf("Начинаем обработку матча %s с архетипами %v", matchID, archNames)
 
 	biasWhite := getBias(archNames[0])
@@ -205,19 +234,17 @@ func ProcessGame(
 			currentBias = biasBlack
 		}
 
+		eval, moveTime, complexityMult, err = calculateMoveTimeWithEngine(
+			ctx, eng, clocks[currentPlayer], movesToControl, fen,
+			currentBias, lastComplexities[currentPlayer], math.Min(float64(initialTime)*0.025, clocks[currentPlayer]*0.05),
+			getAbsoluteMax(float64(initialTime), clocks[currentPlayer]),
+		)
+		if err != nil {
+			return err
+		}
+
 		if movesPlayed < openingTill {
-			eval = 0
-			moveTime = rand.Float64()*3 + 2
-			complexityMult = 1.0
-		} else {
-			eval, moveTime, complexityMult, err = calculateMoveTimeWithEngine(
-				ctx, eng, clocks[currentPlayer], movesToControl, fen,
-				currentBias, lastComplexities[currentPlayer], math.Min(float64(initialTime)*0.025, clocks[currentPlayer]*0.05),
-				getAbsoluteMax(float64(initialTime), clocks[currentPlayer]),
-			)
-			if err != nil {
-				return err
-			}
+			moveTime *= 0.05
 		}
 
 		evaluations = append(evaluations, eval)

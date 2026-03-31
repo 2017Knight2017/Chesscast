@@ -18,13 +18,13 @@ export class MatchesProcessor extends WorkerHost {
 		@InjectQueue('timer') private timerQueue: Queue,
 	) {
 		super();
-		this.logger.log('[MatchesProcessor] constructor called');
+		this.logger.log('constructor called');
 	}
 
 	private readonly logger = new Logger(MatchesProcessor.name);
 
 	async process(job: Job<{ matchId: string; moveIndex: number }>): Promise<void> {
-		this.logger.log('[MatchesProcessor] process called');
+		this.logger.log('process called');
 		const { matchId, moveIndex } = job.data;
 
 		const [analysis] = await this.db

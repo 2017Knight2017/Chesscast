@@ -155,7 +155,7 @@ export default function BroadcastPage() {
 						onChange={(e) => setIsControlMove(e.target.checked)}
 					/>
 					<span className="text-base font-semibold text-blue-100">
-						Enable Time Control (e.g., specific moves or repeatable increments)
+						Enable Control Moves (e.g. + 30 minutes after 40th move)
 					</span>
 				</label>
 			</div>
@@ -170,7 +170,7 @@ export default function BroadcastPage() {
 						value={controlMove}
 						min={25}
 						max={60}
-						onChange={(e) => setControlMove(parseInt(e.target.value) || 0)}
+						onChange={(e) => setControlMove(parseInt(e.target.value))}
 						disabled={isDisabled} 
 					/>
 				</label>
@@ -183,7 +183,7 @@ export default function BroadcastPage() {
 						value={bonusTimeMin}
 						min={1}
 						max={120}
-						onChange={(e) => setIsRepeatableControlMove(e.target.checked)}
+						onChange={(e) => setBonusTimeMin(parseInt(e.target.value))}
 						disabled={isDisabled}
 					/>
 				</label>
@@ -217,8 +217,8 @@ export default function BroadcastPage() {
 								type="number"
 								className={inputClasses}
 								value={nextControlMoveAfter}
-								min={1}
-								max={100}
+								min={10}
+								max={30}
 								onChange={(e) => setNextControlMoveAfter(parseInt(e.target.value) || 16)}
 								disabled={isDisabled} 
 							/>
@@ -291,7 +291,8 @@ export default function BroadcastPage() {
 					whitePlayer={whitePlayer}
 					blackPlayer={blackPlayer}
 					title={title}
-					timeControl={timeControl}
+					timeControlStr={timeControl}
+					isControlMove={isControlMove}
 					controlMove={controlMove}
 					timeIncrement={timeIncrement}
 					isRepeatableControlMove={isRepeatableControlMove}

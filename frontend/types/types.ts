@@ -46,3 +46,21 @@ export interface AnalysisState {
 	currentPath: number[];
 	matchId: string | null;
 }
+
+export interface CreateMatchData {
+	pgn: string;
+	archetypes: [string, string];
+	whitePlayer: string;
+	blackPlayer: string;
+	title: string;
+	timeControlNum?: number;
+	timeControlStr?: string;
+	timeIncrement: number;
+	scheduledAt: string;
+	isControlMove: boolean;
+	isRepeatableControlMove: boolean;
+	controlMove: number;
+	bonusTimeMin: number;
+	newTimeIncrement: number;
+	nextControlMoveAfter: number;
+}

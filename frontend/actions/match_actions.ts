@@ -1,54 +1,87 @@
 'use server'
 
+import { CreateMatchData } from '@/types/types';
 import { cookies } from 'next/headers';
 
-interface StartMatchResponse {
+export interface StartMatchResponse {
 	success: boolean;
 	message: string;
 }
 
-export async function createMatchAction(
-	pgn: string, 
-	archetypes: [string, string], 
-	whitePlayer: string, 
-	blackPlayer: string, 
-	title: string, 
-	timeControl: number, 
-	controlMove: number,
-	timeIncrement: number,
-	bonusTimeMin: number,
-	nextControlMoveAfter: number,
-	newTimeIncrement: number,
-	scheduledAt: string
-): Promise<StartMatchResponse> {
+export async function createMatchAction( {
+	pgn,
+	archetypes,
+	whitePlayer,
+	blackPlayer,
+	title,
+	timeControlNum,
+	isControlMove,
+	isRepeatableControlMove,
+	controlMove,
+	timeIncrement,
+	bonusTimeMin,
+	nextControlMoveAfter,
+	newTimeIncrement,
+	scheduledAt
+}: CreateMatchData): Promise<StartMatchResponse> {
 	const cookieStore = await cookies();
 	const token = cookieStore.get('token')?.value;
 
 	if (!token) {
-		return { success: false, message: 'Требуется авторизация' };
+		return { success: false, message: 'Authorization is required' };
 	}
 
 	try {
-		const res = await fetch(`${process.env.NEST_API_URL}/matches/create`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				'Authorization': `Bearer ${token}`,
-			},
-			body: JSON.stringify({ 
+		let queryBody: string;
+		if (isRepeatableControlMove) {
+			queryBody = JSON.stringify({ 
 				pgn: pgn, 
 				archetypes: archetypes, 
 				whitePlayer: whitePlayer, 
 				blackPlayer: blackPlayer, 
 				title: title, 
-				timeControl: timeControl, 
+				timeControl: timeControlNum, 
 				controlMove: controlMove,
 				timeIncrement: timeIncrement,
 				bonusTimeMin: bonusTimeMin,
 				nextControlMoveAfter: nextControlMoveAfter,
 				newTimeIncrement: newTimeIncrement,
 				scheduledAt: scheduledAt
-			}),
+			});
+		} else if (isControlMove) {
+			queryBody = JSON.stringify({ 
+				pgn: pgn, 
+				archetypes: archetypes, 
+				whitePlayer: whitePlayer, 
+				blackPlayer: blackPlayer, 
+				title: title, 
+				timeControl: timeControlNum, 
+				controlMove: controlMove,
+				timeIncrement: timeIncrement,
+				bonusTimeMin: bonusTimeMin,
+				newTimeIncrement: newTimeIncrement,
+				scheduledAt: scheduledAt
+			});
+		} else {
+			queryBody = JSON.stringify({ 
+				pgn: pgn, 
+				archetypes: archetypes, 
+				whitePlayer: whitePlayer, 
+				blackPlayer: blackPlayer, 
+				title: title, 
+				timeControl: timeControlNum, 
+				timeIncrement: timeIncrement,
+				scheduledAt: scheduledAt
+			})
+		}
+
+		const res = await fetch(`${process.env.NEST_API_URL}/matches/create`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'Authorization': `Bearer ${token}`,
+			},
+			body: queryBody,
 			cache: 'no-store'
 		});
 
@@ -56,15 +89,15 @@ export async function createMatchAction(
 			const errorData = await res.json();
 			return { 
 				success: false, 
-				message: errorData.message || 'Ошибка при запуске матча' 
+				message: errorData.message || 'Error on creating a broadcast' 
 			};
 		}
 
-		return { success: true, message: 'Трансляция создана!' };
+		return { success: true, message: 'Broadcast is created!' };
 
 	} catch (error) {
-		console.error('Ошибка связи с API:', error);
-		return { success: false, message: 'Не удалось соединиться с сервером' };
+		console.error('API connection error:', error);
+		return { success: false, message: "Couldn't connect to server" };
 	}
 }
 

@@ -73,17 +73,19 @@ func main() {
 				continue
 			}
 
-			var jobDataPayload struct {
+			type JobDataPayload struct {
 				MatchID              string   `json:"id"`
 				PGN                  string   `json:"pgn"`
 				InitialTime          int      `json:"time_control"`
-				ControlMove          int      `json:"control_move"`
+				ControlMove          *int     `json:"control_move"`
 				TimeIncrement        int      `json:"time_increment"`
-				BonusTimeMin         int      `json:"bonus_time_min"`
-				NextControlMoveAfter int      `json:"next_control_move_after"`
-				NewTimeIncrement     int      `json:"new_time_increment"`
+				BonusTimeMin         *int     `json:"bonus_time_min"`
+				NextControlMoveAfter *int     `json:"next_control_move_after"`
+				NewTimeIncrement     *int     `json:"new_time_increment"`
 				Archetypes           []string `json:"archetypes"`
 			}
+
+			var jobDataPayload JobDataPayload
 
 			if dataStr, exists := jobData["data"]; exists {
 				if err := json.Unmarshal([]byte(dataStr), &jobDataPayload); err != nil {
@@ -99,17 +101,7 @@ func main() {
 
 			sem <- struct{}{}
 			wg.Add(1)
-			go func(payload struct {
-				MatchID              string   `json:"id"`
-				PGN                  string   `json:"pgn"`
-				InitialTime          int      `json:"time_control"`
-				ControlMove          int      `json:"control_move"`
-				TimeIncrement        int      `json:"time_increment"`
-				BonusTimeMin         int      `json:"bonus_time_min"`
-				NextControlMoveAfter int      `json:"next_control_move_after"`
-				NewTimeIncrement     int      `json:"new_time_increment"`
-				Archetypes           []string `json:"archetypes"`
-			}) {
+			go func(payload JobDataPayload) {
 				defer func() {
 					<-sem
 					wg.Done()

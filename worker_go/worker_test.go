@@ -31,7 +31,7 @@ func TestProcessGame(t *testing.T) {
 	fmt.Println("Начинаем тест обработки игры...")
 
 	ctx := context.Background()
-	err := ProcessGame(ctx, matchID, pgn, initialTime, controlMove, timeIncrement, bonusTimeMin, nextControlAfter, newIncrement, archetypes)
+	err := ProcessGame(ctx, matchID, pgn, initialTime, &controlMove, timeIncrement, &bonusTimeMin, &nextControlAfter, &newIncrement, archetypes)
 
 	if err != nil {
 		t.Errorf("Ошибка при обработке игры: %v", err)

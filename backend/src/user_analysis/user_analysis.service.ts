@@ -16,7 +16,7 @@ export class UserAnalysisService {
 		@Inject(DrizzleAsyncProvider) private db: NodePgDatabase<typeof sc>,
 		@Inject(RedisService) private redisService: RedisService,
 	) {
-		this.logger.log('[UserAnalysisService] constructor called');
+		this.logger.log('constructor called');
 	}
 
 	private readonly logger = new Logger(UserAnalysisService.name);
@@ -25,7 +25,7 @@ export class UserAnalysisService {
 		matchId: string,
 		userId: number,
 	): Promise<MoveTreeNode[] | null> {
-		this.logger.log('[UserAnalysisService] getUserAnalysis called');
+		this.logger.log('getUserAnalysis called');
 		const redisData = await this.redisService.getUserAnalysis(matchId, userId);
 		this.logger.log(redisData);
 		if (redisData) {
@@ -52,7 +52,7 @@ export class UserAnalysisService {
 		userId: number,
 		data: MoveTreeNode[],
 	): Promise<void> {
-		this.logger.log('[UserAnalysisService] saveUserAnalysis called');
+		this.logger.log('saveUserAnalysis called');
 		const existingRecord = await this.db.query.userAnalysis.findFirst({
 			where: and(
 				eq(sc.userAnalysis.matchId, matchId),
@@ -84,7 +84,7 @@ export class UserAnalysisService {
 	}
 
 	async saveAnalysisFromRedis(matchId: string, userId: number): Promise<void> {
-		this.logger.log('[UserAnalysisService] saveAnalysisFromRedis called');
+		this.logger.log('saveAnalysisFromRedis called');
 		const redisData = await this.redisService.getUserAnalysis(matchId, userId);
 		if (redisData) {
 			await this.saveUserAnalysis(matchId, userId, redisData as MoveTreeNode[]);
@@ -92,7 +92,7 @@ export class UserAnalysisService {
 	}
 
 	async discardUserAnalysis(matchId: string, userId: number): Promise<void> {
-		this.logger.log('[UserAnalysisService] discardUserAnalysis called');
+		this.logger.log('discardUserAnalysis called');
 		try {
 			await this.db
 				.delete(sc.userAnalysis)
@@ -110,7 +110,7 @@ export class UserAnalysisService {
 	}
 
 	async isAnalyzing(matchId: string, userId: number): Promise<boolean> {
-		this.logger.log('[UserAnalysisService] isAnalyzing called');
+		this.logger.log('isAnalyzing called');
 		const redisData = await this.redisService.getUserAnalysis(matchId, userId);
 		if (redisData) return true;
 
@@ -125,7 +125,7 @@ export class UserAnalysisService {
 	}
 
 	async findByUsername(username: string) {
-		this.logger.log('[UserAnalysisService] findByUsername called');
+		this.logger.log('findByUsername called');
 		const result = await this.db
 			.select({
 				id: sc.users.id,

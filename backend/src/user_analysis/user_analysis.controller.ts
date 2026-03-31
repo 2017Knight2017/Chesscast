@@ -23,14 +23,14 @@ interface userRequest extends Request {
 @Controller('user-analysis')
 export class UserAnalysisController {
 	constructor(private readonly userAnalysisService: UserAnalysisService) {
-		this.logger.log('[UserAnalysisController] constructor called');
+		this.logger.log('constructor called');
 	}
 
 	private readonly logger = new Logger(UserAnalysisController.name);
 
 	@Get('by-username/:username')
 	async getPlayerByUsername(@Param('username') username: string) {
-		this.logger.log('[UserAnalysisController] getPlayerByUsername called');
+		this.logger.log('getPlayerByUsername called');
 		return this.userAnalysisService.findByUsername(username);
 	}
 
@@ -39,7 +39,7 @@ export class UserAnalysisController {
 		@Param('matchId') matchId: string,
 		@Param('userId') userId: string,
 	) {
-		this.logger.log('[UserAnalysisController] getUserAnalysis called');
+		this.logger.log('getUserAnalysis called');
 		const data = await this.userAnalysisService.getUserAnalysis(
 			matchId,
 			parseInt(userId),
@@ -53,7 +53,7 @@ export class UserAnalysisController {
 		@Request() req: userRequest,
 		@Body() body: { matchId: string; data: MoveTreeNode[] },
 	) {
-		this.logger.log('[UserAnalysisController] saveUserAnalysis called');
+		this.logger.log('saveUserAnalysis called');
 		await this.userAnalysisService.saveUserAnalysis(
 			body.matchId,
 			req.user.id,
@@ -68,7 +68,7 @@ export class UserAnalysisController {
 		@Request() req: userRequest,
 		@Body() body: { matchId: string },
 	) {
-		this.logger.log('[UserAnalysisController] saveDraft called');
+		this.logger.log('saveDraft called');
 		await this.userAnalysisService.saveAnalysisFromRedis(
 			body.matchId,
 			req.user.id,
@@ -82,7 +82,7 @@ export class UserAnalysisController {
 		@Request() req: userRequest,
 		@Body() body: { matchId: string },
 	) {
-		this.logger.log('[UserAnalysisController] discardUserAnalysis called');
+		this.logger.log('discardUserAnalysis called');
 		await this.userAnalysisService.discardUserAnalysis(
 			body.matchId,
 			req.user.id,
@@ -95,7 +95,7 @@ export class UserAnalysisController {
 		@Param('matchId') matchId: string,
 		@Param('userId') userId: string,
 	) {
-		this.logger.log('[UserAnalysisController] isAnalyzing called');
+		this.logger.log('isAnalyzing called');
 		const result = await this.userAnalysisService.isAnalyzing(
 			matchId,
 			parseInt(userId),

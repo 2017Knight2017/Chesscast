@@ -23,19 +23,17 @@ export class MatchesGateway
 		@InjectQueue('timer') private readonly timerQueue: Queue,
 		private readonly redisService: RedisService,
 	) {
-		this.logger.log('[MatchesGateway] constructor called');
+		this.logger.log('constructor called');
 	}
 
 	private readonly logger = new Logger(MatchesGateway.name);
 
 	handleConnection(client: Socket) {
 		this.logger.log(`[Socket] Client connected: ${client.id}`);
-		this.logger.log('[MatchesGateway] handleConnection called');
 	}
 
 	async handleDisconnect(client: Socket) {
 		this.logger.log(`[Socket] Client disconnected: ${client.id}`);
-		this.logger.log('[MatchesGateway] handleDisconnect called');
 
 		const matchId = client.data?.matchId;
 		const guestId = client.data?.guestId;
@@ -72,7 +70,7 @@ export class MatchesGateway
 		data: { matchId: string; username?: string; guestId?: string },
 		@ConnectedSocket() client: Socket,
 	) {
-		this.logger.log('[MatchesGateway] handleJoinMatch called');
+		this.logger.log('handleJoinMatch called');
 		client.join(data.matchId);
 		client.data.matchId = data.matchId;
 
@@ -94,7 +92,7 @@ export class MatchesGateway
 
 	@SubscribeMessage('startBroadcast')
 	async handleStart(@MessageBody() data: { matchId: string }) {
-		this.logger.log('[MatchesGateway] handleStart called');
+		this.logger.log('handleStart called');
 		await this.timerQueue.add(
 			'nextStep',
 			{ matchId: data.matchId, moveIndex: 0 },
@@ -108,7 +106,7 @@ export class MatchesGateway
 		data: { matchId: string; username?: string; guestId?: string },
 		@ConnectedSocket() client: Socket,
 	) {
-		this.logger.log('[MatchesGateway] handleLeaveMatch called');
+		this.logger.log('handleLeaveMatch called');
 		client.leave(data.matchId);
 		this.logger.log(`[Socket] Client ${client.id} left match ${data.matchId}`);
 
@@ -136,7 +134,7 @@ export class MatchesGateway
 	async handleUserStartedAnalysis(
 		@MessageBody() data: { matchId: string; username: string },
 	) {
-		this.logger.log('[MatchesGateway] handleUserStartedAnalysis called');
+		this.logger.log('handleUserStartedAnalysis called');
 		await this.redisService.setUserStatus(data.matchId, data.username, {
 			isAnalyzing: true,
 		});
@@ -150,7 +148,7 @@ export class MatchesGateway
 	async handleUserStoppedAnalysis(
 		@MessageBody() data: { matchId: string; username: string },
 	) {
-		this.logger.log('[MatchesGateway] handleUserStoppedAnalysis called');
+		this.logger.log('handleUserStoppedAnalysis called');
 		await this.redisService.removeUserStatus(data.matchId, data.username);
 
 		this.server.to(`analysis_stream_status:${data.matchId}:${data.username}`).emit('analysisStreamEnded', {
@@ -168,7 +166,7 @@ export class MatchesGateway
 	async handleBroadcastAnalysisPosition(
 		@MessageBody() data: { matchId: string; username: string; fen: string },
 	) {
-		this.logger.log('[MatchesGateway] handleBroadcastAnalysisPosition called');
+		this.logger.log('handleBroadcastAnalysisPosition called');
 		await this.redisService.setUserStatus(data.matchId, data.username, {
 			isAnalyzing: true,
 			currentFen: data.fen,
@@ -181,7 +179,7 @@ export class MatchesGateway
 
 	@SubscribeMessage('subscribeToCounts')
 	async handleSubscribe(client: Socket, data: { matchIds: string[] }) {
-		this.logger.log('[MatchesGateway] handleSubscribe called');
+		this.logger.log('handleSubscribe called');
 		for (const id of data.matchIds) {
 			client.join(`counter:${id}`);
 			const counts = await this.redisService.getViewerData(id);
@@ -191,7 +189,7 @@ export class MatchesGateway
 
 	@SubscribeMessage('unsubscribeFromCounts')
 	handleUnsubscribe(client: Socket, data: { matchIds: string[] }) {
-		this.logger.log('[MatchesGateway] handleUnsubscribe called');
+		this.logger.log('handleUnsubscribe called');
 		data.matchIds.forEach((id) => {
 			client.leave(`counter:${id}`);
 		});
@@ -202,7 +200,7 @@ export class MatchesGateway
 		@MessageBody() data: { matchId: string; userId: number; username: string },
 		@ConnectedSocket() client: Socket,
 	) {
-		this.logger.log('[MatchesGateway] handleJoinAnalysisStream called');
+		this.logger.log('handleJoinAnalysisStream called');
 		client.join(`analysis_stream:${data.matchId}:user:${data.userId}`);
 		if (data.username) {
 			client.join(`analysis_stream_status:${data.matchId}:${data.username}`);
@@ -214,7 +212,7 @@ export class MatchesGateway
 		@MessageBody() data: { matchId: string; userId: number; username: string },
 		@ConnectedSocket() client: Socket,
 	) {
-		this.logger.log('[MatchesGateway] handleLeaveAnalysisStream called');
+		this.logger.log('handleLeaveAnalysisStream called');
 		client.leave(`analysis_stream:${data.matchId}:user:${data.userId}`);
 		if (data.username) {
 			client.leave(`analysis_stream_status:${data.matchId}:${data.username}`);
@@ -232,7 +230,7 @@ export class MatchesGateway
 		},
 		@ConnectedSocket() client: Socket,
 	) {
-		this.logger.log('[MatchesGateway] handleSyncUserAnalysis called');
+		this.logger.log('handleSyncUserAnalysis called');
 		await this.redisService.setUserAnalysis(
 			data.matchId,
 			data.userId,
@@ -254,7 +252,7 @@ export class MatchesGateway
 		@MessageBody() data: { matchId: string },
 		@ConnectedSocket() client: Socket,
 	) {
-		this.logger.log('[MatchesGateway] handlejoinMatchProcessing called');
+		this.logger.log('handlejoinMatchProcessing called');
 		client.join(`is_processing:${data.matchId}`);
 	}
 
@@ -263,7 +261,7 @@ export class MatchesGateway
 		@MessageBody() data: { matchId: string },
 		@ConnectedSocket() client: Socket,
 	) {
-		this.logger.log('[MatchesGateway] handleleaveMatchProcessing called');
+		this.logger.log('handleleaveMatchProcessing called');
 		client.leave(`is_processing:${data.matchId}`);
 	}
 }
