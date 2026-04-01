@@ -44,7 +44,6 @@ export class MatchesGateway
 				await this.redisService.removeViewer(matchId, username);
 				await this.redisService.removeUserStatus(matchId, username);
 				
-				// Notify inspectors that the stream has ended
 				this.server.to(`analysis_stream_status:${matchId}:${username}`).emit('analysisStreamEnded', {
 					matchId,
 					username,

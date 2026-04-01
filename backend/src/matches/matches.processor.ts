@@ -6,13 +6,15 @@ import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import * as sc from '../schema';
 import { eq } from 'drizzle-orm';
-import { MatchesService } from './matches.service';
+import { LifecycleService } from './lifecycle.service';
+import { EngineService } from './engine.service';
 
 
 @Processor('timer')
 export class MatchesProcessor extends WorkerHost {
 	constructor(
-		private readonly matchesService: MatchesService,
+		private readonly lifecycleService: LifecycleService,
+		private readonly engineService: EngineService,
 		@Inject(forwardRef(() => MatchesGateway)) private readonly gateway: MatchesGateway,
 		@Inject(DrizzleAsyncProvider) private db: NodePgDatabase<typeof sc>,
 		@InjectQueue('timer') private timerQueue: Queue,
@@ -35,7 +37,7 @@ export class MatchesProcessor extends WorkerHost {
 
 		const currentMoveNotation = analysis.notation[moveIndex];
 		
-		const {updatedMatch, delay} = await this.matchesService.updateGameState(matchId, currentMoveNotation);
+		const {updatedMatch, delay} = await this.engineService.processMove(matchId, currentMoveNotation);
 
 		this.gateway.server.to(matchId).emit('new_move', {
 			matchId,
@@ -60,7 +62,7 @@ export class MatchesProcessor extends WorkerHost {
 			);
 		} else {
 			this.gateway.server.to(matchId).emit('match_finished', { matchId, outcome: analysis.outcome });
-			await this.matchesService.finishGame(matchId);
+			await this.lifecycleService.finishGame(matchId);
 		}
 	}
 }

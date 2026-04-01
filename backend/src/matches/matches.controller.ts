@@ -1,9 +1,11 @@
 import { Controller, Post, Get, Param, HttpCode, HttpStatus, Body, Inject, NotFoundException, UseGuards, Request, Logger } from '@nestjs/common';
-import { MatchesService, Match } from './matches.service';
+import { MatchesService } from './matches.service';
+import { Match } from './matches.types';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DrizzleAsyncProvider } from 'src/drizzle/drizzle.provider';
 import * as sc from '../schema';
+import { LifecycleService } from './lifecycle.service';
 
 interface userRequest extends Request {
 	user: {
@@ -16,6 +18,7 @@ interface userRequest extends Request {
 export class MatchesController {
 	constructor(
 		private readonly matchesService: MatchesService,
+		private readonly lifecycleService: LifecycleService,
 		@Inject(DrizzleAsyncProvider) private db: NodePgDatabase<typeof sc>,
 	) {
 		this.logger.log('constructor called');
@@ -97,7 +100,7 @@ export class MatchesController {
 		@Body() data: { evaluations: number[], timeRemaining: number[], notation: string[], outcome: '1/2-1/2'|'1-0'|'0-1' }
 	) {
 		this.logger.log('handleWorkerReport called');
-		return await this.matchesService.handleWorkerReport(id, data['evaluations'], data['timeRemaining'], data['notation'], data['outcome'])
+		return await this.lifecycleService.handleWorkerReport(id, data['evaluations'], data['timeRemaining'], data['notation'], data['outcome'])
 	}
 
 	@Post(':id/start')
@@ -105,7 +108,7 @@ export class MatchesController {
 		@Param('id') id: string
 	) {
 		this.logger.log('startBroadcast called');
-		return await this.matchesService.startBroadcast(id);
+		return await this.lifecycleService.startBroadcast(id);
 	}
 
 	@Get(':id/state')

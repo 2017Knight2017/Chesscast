@@ -7,6 +7,9 @@ import { MatchesGateway } from './matches.gateway';
 import { DrizzleModule } from 'src/drizzle/drizzle.module';
 import { PlayersModule } from 'src/players/players.module';
 import { RedisModule } from 'src/redis/redis.module';
+import { LifecycleService } from './lifecycle.service';
+import { EngineService } from './engine.service';
+import { ArchetypeService } from './archetype.service';
 
 @Module({
 	imports: [
@@ -33,7 +36,10 @@ import { RedisModule } from 'src/redis/redis.module';
 	providers: [
 		MatchesService, 
 		MatchesProcessor,
-		MatchesGateway
+		MatchesGateway,
+		LifecycleService,
+		EngineService,
+		ArchetypeService
 	],
 	exports: [MatchesService],
 })
