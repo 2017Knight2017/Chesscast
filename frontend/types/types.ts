@@ -11,6 +11,7 @@ export interface Match {
 	history?: string[];
 	evaluations?: number[];
 	outcome?: string;
+	newestMoveAt?: number;
 }
 
 export interface Move {
@@ -20,6 +21,7 @@ export interface Move {
 	fen: string;
 	whiteTimeMs: number;
 	blackTimeMs: number;
+	newestMoveAt: number;
 }
 
 export interface MoveRecord {
@@ -32,6 +34,7 @@ export interface SyncPayload {
 	fen: string;
 	whiteTimeMs: number;
 	blackTimeMs: number;
+	newestMoveAt: number;
 }
 
 export interface MoveTreeNode {

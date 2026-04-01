@@ -59,7 +59,8 @@ export const matches = pgTable('matches', {
   lastControlMove:     integer('last_control_move').notNull().default(0),
 	fen:                 text('fen').notNull().default('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'),
 	status:              statusEnum().notNull().default('processing'),
-	scheduledAt:         timestamp('scheduled_time').notNull(),
+  newestMoveAt:        timestamp('newest_move_at').notNull().defaultNow(),
+	scheduledAt:         timestamp('scheduled_time').notNull().defaultNow(),
 	createdAt:           timestamp('created_at').notNull().defaultNow(),
 },  (t) => [
     index('scheduled_at_idx').on(t.scheduledAt),

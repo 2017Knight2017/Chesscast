@@ -44,6 +44,7 @@ export class MatchesProcessor extends WorkerHost {
 			fen: updatedMatch.fen,
 			whiteTimeMs: updatedMatch.whitePlayerTime,
 			blackTimeMs: updatedMatch.blackPlayerTime,
+			newestMoveAt: updatedMatch.newestMoveAt.getTime()
 		});
 
 		const nextIndex = moveIndex + 1;
@@ -63,3 +64,4 @@ export class MatchesProcessor extends WorkerHost {
 		}
 	}
 }
+

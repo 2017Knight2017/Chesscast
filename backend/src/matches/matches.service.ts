@@ -30,7 +30,8 @@ export interface Match {
 	viewerCount: number,
 	history?: string[] | null,
 	evaluations?: number[] | null
-	outcome?: string
+	outcome?: string,
+	newestMoveAt?: number
 }
 
 const archetypeOptions = {
@@ -222,7 +223,8 @@ export class MatchesService {
 			.update(sc.matches)
 			.set({
 				status: "in_progress",
-				moveIndex: 0
+				moveIndex: 0,
+				newestMoveAt: new Date()
 			})
 			.where(eq(sc.matches.id, id))
 			.returning();
@@ -249,7 +251,8 @@ export class MatchesService {
 			.update(sc.matches)
 			.set({
 				status: 'in_progress',
-				moveIndex: 0
+				moveIndex: 0,
+				newestMoveAt: new Date()
 			})
 			.where(
 				and(
@@ -347,6 +350,7 @@ export class MatchesService {
 				lastControlMove: lastControlMoveVar,
 				whitePlayerTime: isWhiteMove ? timeAfterMove : whitePlayerTime,
 				blackPlayerTime: !isWhiteMove ? timeAfterMove : blackPlayerTime,
+				newestMoveAt: new Date()
 			})
 			.where(eq(sc.matches.id, id))
 			.returning();
@@ -399,7 +403,8 @@ export class MatchesService {
 			fen: match.fen || '',
 			viewerCount: viewers,
 			history: analysis.notation.slice(0, match.moveIndex) || [],
-			outcome: analysis.outcome
+			outcome: analysis.outcome,
+			newestMoveAt: match.newestMoveAt.getTime()
 		};
 
 		return dto;
@@ -436,7 +441,8 @@ export class MatchesService {
 				whitePlayerTime: sc.matches.whitePlayerTime,
 				blackPlayerTime: sc.matches.blackPlayerTime,
 				timeControl: sc.analysis.timeControl,
-				fen: sc.matches.fen
+				fen: sc.matches.fen,
+				newestMoveAt: sc.matches.newestMoveAt
 			})
 			.from(sc.matches)
 			.innerJoin(sc.users, eq(sc.matches.author, sc.users.username))
@@ -466,6 +472,7 @@ export class MatchesService {
 				black: { name: match.blackPlayer, time: formatTime(match.blackPlayerTime), timeMs: match.blackPlayerTime },
 				fen: match.fen,
 				viewerCount: viewers,
+				newestMoveAt: match.newestMoveAt.getTime()
 			};
 			return dto;
 		});

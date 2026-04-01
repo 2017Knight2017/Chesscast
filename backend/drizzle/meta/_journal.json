@@ -43,6 +43,13 @@
       "when": 1774505428575,
       "tag": "0005_past_forgotten_one",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1775014171133,
+      "tag": "0006_luxuriant_whiplash",
+      "breakpoints": true
     }
   ]
 }
