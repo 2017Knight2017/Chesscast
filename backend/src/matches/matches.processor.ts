@@ -37,7 +37,7 @@ export class MatchesProcessor extends WorkerHost {
 
 		const currentMoveNotation = analysis.notation[moveIndex];
 		
-		const {updatedMatch, delay} = await this.engineService.processMove(matchId, currentMoveNotation);
+		const { updatedMatch, nextDelay } = await this.engineService.processMove(matchId, currentMoveNotation);
 
 		this.gateway.server.to(matchId).emit('new_move', {
 			matchId,
@@ -46,7 +46,7 @@ export class MatchesProcessor extends WorkerHost {
 			fen: updatedMatch.fen,
 			whiteTimeMs: updatedMatch.whitePlayerTime,
 			blackTimeMs: updatedMatch.blackPlayerTime,
-			newestMoveAt: updatedMatch.newestMoveAt.getTime()
+			newestMoveAt: updatedMatch.newestMoveAt?.getTime()
 		});
 
 		const nextIndex = moveIndex + 1;
@@ -55,7 +55,7 @@ export class MatchesProcessor extends WorkerHost {
 				'nextStep',
 				{ matchId, moveIndex: nextIndex },
 				{
-					delay: delay,
+					delay: nextDelay,
 					jobId: `timer_${matchId}_${nextIndex}`,
 					removeOnComplete: true,
 				},

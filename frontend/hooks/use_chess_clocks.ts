@@ -5,8 +5,8 @@ import { SyncPayload } from '@/types/types';
 
 const getTurnFromFen = (fen: string): 'w' | 'b' => fen.split(' ')[1] === "w" ? "w" : "b";
 
-export const useChessClock = (serverState: SyncPayload | null, initialTimeMs: number) => {
-	console.log("[use_chess_clocks.ts:useChessClock]", { serverStateFen: serverState?.fen, initialTimeMs });
+export const useChessClock = (serverState: SyncPayload | null, initialTimeMs: number, isPaused?: boolean) => {
+	console.log("[use_chess_clocks.ts:useChessClock]", { serverStateFen: serverState?.fen, initialTimeMs, isPaused });
 	const [displayWhite, setDisplayWhite] = useState(initialTimeMs || 0);
 	const [displayBlack, setDisplayBlack] = useState(initialTimeMs || 0);
 	const [isHydrated, setIsHydrated] = useState(false);
@@ -33,7 +33,7 @@ export const useChessClock = (serverState: SyncPayload | null, initialTimeMs: nu
 		stateRef.current = serverState;
 
 		const now = Date.now();
-		const elapsedSinceMove = Math.max(0, now - (serverState.newestMoveAt || now));
+		const elapsedSinceMove = (isPaused || !serverState.newestMoveAt) ? 0 : Math.max(0, now - serverState.newestMoveAt);
 		const turn = getTurnFromFen(serverState.fen);
 		
 		const currentWhite = turn === 'w' 
@@ -47,10 +47,10 @@ export const useChessClock = (serverState: SyncPayload | null, initialTimeMs: nu
 		setDisplayBlack(currentBlack);
 		lastWhiteSecRef.current = Math.floor(currentWhite / 1000);
 		lastBlackSecRef.current = Math.floor(currentBlack / 1000);
-	}, [serverState, initialTimeMs]);
+	}, [serverState, initialTimeMs, isPaused]);
 
 	useEffect(() => {
-		if (!isHydrated) return;
+		if (!isHydrated || isPaused) return;
 
 		let animationFrameId: number;
 
@@ -60,7 +60,7 @@ export const useChessClock = (serverState: SyncPayload | null, initialTimeMs: nu
 				animationFrameId = requestAnimationFrame(tick);
 				return;
 			}
-
+			
 			const now = Date.now();
 			const elapsedSinceMove = Math.max(0, now - (currentServerState.newestMoveAt || now));
 			
@@ -98,7 +98,7 @@ export const useChessClock = (serverState: SyncPayload | null, initialTimeMs: nu
 		tick();
 
 		return () => cancelAnimationFrame(animationFrameId);
-	}, [isHydrated]);
+	}, [isHydrated, isPaused]);
 
 	const formatTime = (ms: number): string => {
 		const totalSeconds = Math.floor(ms / 1000);

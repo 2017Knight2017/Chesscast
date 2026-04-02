@@ -10,14 +10,26 @@ export interface Match {
 	viewerCount: number;
 	history?: string[];
 	evaluations?: number[];
+	timesRemaining?: number[];
 	outcome?: string;
 	newestMoveAt?: number;
 }
 
 export interface Move {
 	evaluations: number[];
+	timesRemaining: number[];
 	turn: "w" | "b";
 	history: string[];
+	fen: string;
+	whiteTimeMs: number;
+	blackTimeMs: number;
+	newestMoveAt: number;
+}
+
+export interface NewMoveData {
+	matchId: string;
+	move: string;
+	evaluation: number;
 	fen: string;
 	whiteTimeMs: number;
 	blackTimeMs: number;

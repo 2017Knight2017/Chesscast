@@ -28,13 +28,30 @@ export class LifecycleService {
 
 	async startBroadcast(id: string) {
 		this.logger.log(`startBroadcast called for ${id}`);
-		
+
+		const game = await this.db.query.matches.findFirst({ where: eq(sc.matches.id, id) });
+		const analysis = await this.db.query.analysis.findFirst({ where: eq(sc.analysis.id, id) });
+
+		let firstDelay = 0;
+		if (analysis && analysis.timesRemaining.length > 0 && game) {
+			const timeBefore = game.whitePlayerTime;
+			const timeAfter = analysis.timesRemaining[0];
+			const increment = analysis.increment * 1000;
+
+			firstDelay = Math.max(0, (timeBefore + increment) - timeAfter);
+		}
+
 		await this.db.update(sc.matches)
 			.set({ status: "in_progress", moveIndex: 0, newestMoveAt: new Date() })
 			.where(eq(sc.matches.id, id));
 
 		await this.timerQueue.remove(`timer_${id}`);
-		await this.timerQueue.add('nextStep', { matchId: id, moveIndex: 0 }, { removeOnComplete: true, removeOnFail: true });
+
+		await this.timerQueue.add(
+			'nextStep', 
+			{ matchId: id, moveIndex: 0 }, 
+			{ delay: firstDelay, removeOnComplete: true, removeOnFail: true }
+		);
 
 		return { status: 'in_progress', matchId: id };
 	}

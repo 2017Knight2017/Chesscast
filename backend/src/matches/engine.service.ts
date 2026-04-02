@@ -14,46 +14,32 @@ export class EngineService {
 	) {}
 
 	async processMove(id: string, move: string) {
-		this.logger.log('processMove called');
+		this.logger.log(`processMove called for match ${id}`);
 		
 		const game = await this.db.query.matches.findFirst({ where: eq(sc.matches.id, id) });
 		const analysis = await this.db.query.analysis.findFirst({ where: eq(sc.analysis.id, id) });
 
-		if (!game) throw new Error('Match not found');
-		if (!analysis) throw new Error('Analysis not found');
+		if (!game || !analysis) throw new Error('Match or Analysis not found');
 
 		const chess = new Chess(game.fen);
 		chess.move(move);
 
 		const isGameOver = chess.isGameOver();
-		const nextMoveExists = game.moveIndex + 1 < analysis.timesRemaining.length;
 		const isWhiteMove = game.moveIndex % 2 === 0;
 
-		const timeBeforeMove = isWhiteMove ? game.whitePlayerTime : game.blackPlayerTime;
-		const timeAfterMove = analysis.timesRemaining[game.moveIndex] ?? timeBeforeMove;
+		const timeAfterMove = analysis.timesRemaining[game.moveIndex] ?? (isWhiteMove ? game.whitePlayerTime : game.blackPlayerTime);
 
-		const currentIncrementMs = 1000 * (analysis.controlMove == 0 || game.moveIndex / 2 < analysis.controlMove 
-			? analysis.increment 
-			: analysis.newIncrement);
-		
-		let bonusTimeMs = 0;
 		let lastControlMoveVar = game.lastControlMove;
-
 		if (analysis.controlMove !== 0) {
 			const moveNumber = Math.floor(game.moveIndex / 2) + 1;
 			const nextControl = game.lastControlMove === 0 
 				? analysis.controlMove 
 				: game.lastControlMove + analysis.newControlMoveEvery;
 
-			if (moveNumber === nextControl) {
-				bonusTimeMs = analysis.bonusTimeMin * 60000;
-				if (!isWhiteMove) lastControlMoveVar = nextControl;
+			if (!isWhiteMove && moveNumber === nextControl) {
+				lastControlMoveVar = nextControl;
 			}
 		}
-
-		const delay = isGameOver || !nextMoveExists 
-			? 0 
-			: Math.max(0, (timeBeforeMove + currentIncrementMs + bonusTimeMs) - timeAfterMove);
 
 		const [updatedMatch] = await this.db
 			.update(sc.matches)
@@ -68,6 +54,37 @@ export class EngineService {
 			.where(eq(sc.matches.id, id))
 			.returning();
 
-		return { updatedMatch, delay };
+		let nextDelay = 0;
+		const nextIndex = game.moveIndex + 1; 
+
+		if (!isGameOver && nextIndex < analysis.timesRemaining.length) {
+			const isNextWhite = nextIndex % 2 === 0;
+			
+			const nextTimeBefore = isNextWhite ? updatedMatch.whitePlayerTime : updatedMatch.blackPlayerTime;
+			const nextTimeAfter = analysis.timesRemaining[nextIndex] ?? nextTimeBefore;
+
+			const nextIncrementMs = 1000 * (analysis.controlMove == 0 || nextIndex / 2 < analysis.controlMove 
+				? analysis.increment 
+				: analysis.newIncrement);
+
+			let nextBonusTimeMs = 0;
+			if (analysis.controlMove !== 0) {
+				const nextMoveNumber = Math.floor(nextIndex / 2) + 1;
+				const nextControl = updatedMatch.lastControlMove === 0 
+					? analysis.controlMove 
+					: updatedMatch.lastControlMove + analysis.newControlMoveEvery;
+
+				if (nextMoveNumber === nextControl) {
+					nextBonusTimeMs = analysis.bonusTimeMin * 60000;
+				}
+			}
+
+			nextDelay = Math.max(0, (nextTimeBefore + nextIncrementMs + nextBonusTimeMs) - nextTimeAfter);
+		}
+
+		return { 
+			updatedMatch, 
+			nextDelay
+		};
 	}
 }

@@ -2,11 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useSocket } from '@/context/socket_context';
-import { Move, Match } from '@/types/types'
+import { Move, Match, NewMoveData } from '@/types/types'
 import { useGuestId } from './use_guest_id';
 
 export const useBroadcast = (matchId: string, initialMatch?: Match) => {
-	const [currentMoveData, setcurrentMoveData] = useState<Move | null>(() => {
+	const [currentMoveData, setCurrentMoveData] = useState<Move | null>(() => {
 		if (initialMatch) {
 			return {
 				fen: initialMatch.fen,
@@ -16,6 +16,7 @@ export const useBroadcast = (matchId: string, initialMatch?: Match) => {
 				turn: initialMatch.fen.split(' ')[1],
 				evaluations: initialMatch.evaluations || [],
 				history: initialMatch.history || [],
+				timesRemaining: initialMatch.timesRemaining || [],
 			} as Move;
 		}
 		return null;
@@ -47,7 +48,7 @@ export const useBroadcast = (matchId: string, initialMatch?: Match) => {
 				const data = JSON.parse(text);
 
 				if (data?.fen && !hasLiveMove.current) {
-					setcurrentMoveData({
+					setCurrentMoveData({
 						fen: data.fen,
 						whiteTimeMs: data.white?.timeMs ?? 0,
 						blackTimeMs: data.black?.timeMs ?? 0,
@@ -55,6 +56,7 @@ export const useBroadcast = (matchId: string, initialMatch?: Match) => {
 						turn: data.fen.split(' ')[1],
 						evaluations: data.evaluations || [],
 						history: data.history || [],
+						timesRemaining: data.timesRemaining || [],
 					} as Move);
 				}
 			} catch (err: any) {
@@ -74,12 +76,15 @@ export const useBroadcast = (matchId: string, initialMatch?: Match) => {
 			socket.emit('joinMatch', { matchId, username, guestId });
 		};
 
-		const handleNewMove = (data: any) => {
+		const handleNewMove = (data: NewMoveData) => {
 			if (data.matchId !== matchId) return;
 			hasLiveMove.current = true;
-			setcurrentMoveData((prev) => {
+			setCurrentMoveData((prev) => {
 				if (!prev) return prev;
 					
+				const isWhiteMove = prev.history.length % 2 === 0;
+				const newTimeRemaining = isWhiteMove ? (data.whiteTimeMs ?? 0) : (data.blackTimeMs ?? 0);
+
 				return {
 					...prev,
 					fen: data.fen,
@@ -89,7 +94,8 @@ export const useBroadcast = (matchId: string, initialMatch?: Match) => {
 					turn: data.fen.split(' ')[1],
 					evaluations: [...(prev.evaluations || []), data.evaluation],
 					history: [...(prev.history || []), data.move],
-				};
+					timesRemaining: [...(prev.timesRemaining || []), newTimeRemaining],
+				} as Move;
 			});
 		};
 

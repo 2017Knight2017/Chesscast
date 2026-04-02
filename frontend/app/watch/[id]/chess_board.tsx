@@ -26,11 +26,12 @@ interface ChessTimerProps {
 	data: SyncPayload|null, 
 	initial: number, 
 	label: "White"|"Black", 
-	isAnalysisMode: boolean 
+	isAnalysisMode: boolean,
+	isPaused?: boolean
 }
 
-const ChessTimer = memo(({ data, initial, label, isAnalysisMode }: ChessTimerProps) => {
-	const { whiteTimeFormatted, blackTimeFormatted } = useChessClock(data, initial); 
+const ChessTimer = memo(({ data, initial, label, isAnalysisMode, isPaused }: ChessTimerProps) => {
+	const { whiteTimeFormatted, blackTimeFormatted } = useChessClock(data, initial, isPaused); 
 
 	const isWhite = label === "White";
 	const time = isWhite ? whiteTimeFormatted : blackTimeFormatted;
@@ -54,7 +55,6 @@ const ChessTimer = memo(({ data, initial, label, isAnalysisMode }: ChessTimerPro
 	const baseContainer = "flex transition-all duration-300 shadow-xl border-[#3c3a33] items-center";
 	const colorStyles = isWhite ? "bg-[#f1f1f1]" : "bg-[#262421]";
 
-	// On mobile, always use horizontal layout if not in analysis mode, or simplified layout
 	const orientationClasses = isAnalysisMode
 		? `flex-col py-4 w-10 gap-4 lg:flex-col lg:py-4 lg:w-10 lg:gap-4 ${isWhite ? "rounded-r-md border-r border-y" : "rounded-l-md border-l border-y"}`
 		: `flex-row px-4 py-1 items-center gap-3 lg:px-4 lg:py-1.5 lg:gap-3 ${isWhite ? "rounded-b-md border-b border-x" : "rounded-t-md border-t border-x"}`;
@@ -141,8 +141,45 @@ export function ChessBoard({
 		await launchMatchAction(match.id);
 	};
 
-	const clockData = isBroadcastActive ? currentMoveData : null;
 	const initialTime = match.timeControl * 1000;
+	const isPaused = !isBroadcastActive;
+
+	const clockData = useMemo(() => {
+		if (isBroadcastActive) return currentMoveData;
+
+		if (selectedMoveIndex !== null && selectedMoveIndex !== undefined) {
+			const idx = selectedMoveIndex;
+			const timesRemaining = currentMoveData?.timesRemaining || [];
+			
+			if (idx === -1) {
+				return {
+					fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+					whiteTimeMs: initialTime,
+					blackTimeMs: initialTime,
+					newestMoveAt: 0
+				};
+			}
+
+			const currentTime = timesRemaining[idx] ?? initialTime;
+			const previousTime = timesRemaining[idx - 1] ?? initialTime;
+
+			const isWhiteTurn = idx % 2 === 0;
+
+			const whiteTime = isWhiteTurn ? currentTime : previousTime;
+			const blackTime = isWhiteTurn ? previousTime : currentTime;
+
+			console.log(timesRemaining)
+
+			return {
+				fen: fenHistory[idx] || activeFen,
+				whiteTimeMs: whiteTime,
+				blackTimeMs: blackTime,
+				newestMoveAt: 0
+			};
+		}
+
+		return currentMoveData;
+	}, [isBroadcastActive, currentMoveData, selectedMoveIndex, initialTime, fenHistory, activeFen]);
 
 	let outcomeMessage;
 	switch (outcome) {
@@ -161,7 +198,7 @@ export function ChessBoard({
 		<div ref={containerRef} className='relative w-full h-full flex justify-center items-center flex-col sepia-100 brightness-75 contrast-125'>
 			{!hideTimers && (
 				<div className={`absolute z-10 transition-all duration-300 ${isAnalysisMode ? "top-0 -left-6 lg:-left-11" : "-top-10 lg:-top-12 left-0"}`}>
-					<ChessTimer data={clockData} initial={initialTime} label="Black" isAnalysisMode={isAnalysisMode} />
+					<ChessTimer data={clockData} initial={initialTime} label="Black" isAnalysisMode={isAnalysisMode} isPaused={isPaused} />
 				</div>
 			)}
 			<div className="relative w-full h-full overflow-hidden rounded-md border border-[#8b5e34]/20 shadow-lg">
@@ -196,7 +233,7 @@ export function ChessBoard({
 			</div>
 			{!hideTimers && (
 				<div className={`absolute z-10 transition-all duration-300 ${isAnalysisMode ? "bottom-0 -right-6 lg:-right-11" : "-bottom-10 lg:-bottom-12 right-0"}`}>
-					<ChessTimer data={clockData} initial={initialTime} label="White" isAnalysisMode={isAnalysisMode} />
+					<ChessTimer data={clockData} initial={initialTime} label="White" isAnalysisMode={isAnalysisMode} isPaused={isPaused} />
 				</div>
 			)}
 		</div>

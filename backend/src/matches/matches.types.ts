@@ -15,6 +15,7 @@ export interface Match {
 	viewerCount: number;
 	history?: string[] | null;
 	evaluations?: number[] | null;
+	timesRemaining?: number[] | null;
 	outcome?: string;
 	newestMoveAt?: number;
 }

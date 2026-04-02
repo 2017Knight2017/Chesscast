@@ -68,20 +68,23 @@ export class MatchesService {
 		const viewerData = await this.redisService.getViewerData(id);
 		const viewers = viewerData.count + viewerData.guestCount || 0;
 
+		this.logger.log(analysis.timesRemaining);
+
 		return {
 			id: match.id,
 			title: match.title,
 			author: match.author,
 			timeControl: analysis.timeControl,
-			status: match.status as Match["status"],
-			evaluations: analysis.evaluations?.slice(0, match.moveIndex) || null,
+			status: match.status,
+			evaluations: analysis.evaluations.slice(0, match.moveIndex) || null,
 			white: { name: match.whitePlayer, time: formatTime(Math.floor(match.whitePlayerTime / 1000)), timeMs: match.whitePlayerTime },
 			black: { name: match.blackPlayer, time: formatTime(Math.floor(match.blackPlayerTime / 1000)), timeMs: match.blackPlayerTime },
 			fen: match.fen || '',
 			viewerCount: viewers,
-			history: analysis.notation?.slice(0, match.moveIndex) || [],
+			history: analysis.notation.slice(0, match.moveIndex) || [],
 			outcome: analysis.outcome || undefined,
-			newestMoveAt: match.newestMoveAt?.getTime()
+			newestMoveAt: match.newestMoveAt?.getTime(),
+			timesRemaining: analysis.timesRemaining.slice(0, match.moveIndex) || null
 		};
 	}
 
