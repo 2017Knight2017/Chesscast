@@ -6,7 +6,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ user
 	console.log("[member/[username]/page.tsx:DashboardPage]", { params });
 	const resolvedParams = await params;
 	const decodedUsername = decodeURIComponent(resolvedParams.username);
-	const styles = 'grid grid-cols-1 md:grid-cols-2 gap-6';
+	const styles = 'grid grid-cols-2 gap-6';
 
 	const cookieStore = await cookies();
     const token = cookieStore.get('token')?.value;

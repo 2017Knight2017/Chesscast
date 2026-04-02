@@ -4,6 +4,7 @@ import Chessground from '@bezalel6/react-chessground';
 import { Match } from '@/types/types'
 import { useBroadcast } from '@/hooks/use_broadcast';
 import { useChessClock } from '@/hooks/use_chess_clocks';
+import { EvalBar } from './eval_bar';
 
 export const ChessPreview = ({ match }: { match: Match }) => {
 	console.log("[chess_preview.tsx:ChessPreview]", { matchId: match.id });
@@ -13,6 +14,8 @@ export const ChessPreview = ({ match }: { match: Match }) => {
 		isLive ? currentMoveData : null,
 		match.timeControl*1000
 	)
+	const evaluations = currentMoveData?.evaluations || match.evaluations || [];
+	const currentEval = evaluations.length > 0 ? evaluations[evaluations.length - 1] : 0;
 	return (
 		<div className="relative aspect-square w-full bg-[#262421] p-2 flex flex-col justify-between">
 			
@@ -26,8 +29,13 @@ export const ChessPreview = ({ match }: { match: Match }) => {
 				</div>
 			</div>
 
-			<div className="flex-1 flex items-center justify-center">
-				<div className="w-full aspect-square max-h-full bg-[#b58863] relative rounded-sm overflow-hidden border border-[#3c3a37]">
+			<div className="relative flex-1 pl-4">
+				
+				<div className="absolute top-0 left-0 h-full w-3 rounded-[1px] overflow-hidden border border-[#3c3a37] opacity-90">
+					<EvalBar evaluation={currentEval} isWhite={true} hideText={true} />
+				</div>
+
+				<div className="w-full h-full aspect-square bg-[#b58863] relative rounded-sm overflow-hidden border border-[#3c3a37]">
 					<div className="absolute inset-0">
 						<Chessground
 							fen={currentMoveData?.fen ?? match.fen}
@@ -38,6 +46,7 @@ export const ChessPreview = ({ match }: { match: Match }) => {
 						/>
 					</div>
 				</div>
+				
 			</div>
 
 			<div className="flex justify-between items-center mt-1 px-1">

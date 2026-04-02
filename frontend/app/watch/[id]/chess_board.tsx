@@ -8,6 +8,7 @@ import { Match, Move, SyncPayload } from '@/types/types';
 import { useAnalysisState } from '@/context/analysis_context';
 import { Chess } from 'chess.js'
 import { launchMatchAction } from '@/actions/match_actions';
+import { EvalBar } from '@/components/eval_bar';
 
 interface ChessBoardProps {
 	onMove?: (orig: string, dest: string) => void,
@@ -181,6 +182,17 @@ export function ChessBoard({
 		return currentMoveData;
 	}, [isBroadcastActive, currentMoveData, selectedMoveIndex, initialTime, fenHistory, activeFen]);
 
+	const currentEval = useMemo(() => {
+		const evals = currentMoveData?.evaluations || [];
+
+		if (selectedMoveIndex !== null && selectedMoveIndex !== undefined) {
+			if (selectedMoveIndex === -1) return 0;
+			return evals[selectedMoveIndex] ?? 0;
+		}
+
+		return evals.length > 0 ? evals[evals.length - 1] : 0;
+	}, [currentMoveData?.evaluations, selectedMoveIndex]);
+
 	let outcomeMessage;
 	switch (outcome) {
 		case "1/2-1/2": 
@@ -201,35 +213,49 @@ export function ChessBoard({
 					<ChessTimer data={clockData} initial={initialTime} label="Black" isAnalysisMode={isAnalysisMode} isPaused={isPaused} />
 				</div>
 			)}
-			<div className="relative w-full h-full overflow-hidden rounded-md border border-[#8b5e34]/20 shadow-lg">
+			<div className="relative w-full h-full flex gap-2 md:gap-3">
+				<div className="relative w-full h-full overflow-hidden rounded-md border border-[#8b5e34]/20 shadow-lg">
+					{!(isBroadcastActive || finalIsEnded || isManualStarted) && (
+						<button 
+							className='absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 p-3 z-10 border-4 rounded-lg bg-amber-900 border-amber-700 hover:bg-amber-800 hover:border-amber-600' 
+							onClick={() => handleStart()}
+						>
+							<span className='text-gray-300 font-sans'>Start broadcast</span>
+						</button>
+					)}
 
-				{!(isBroadcastActive || finalIsEnded || isManualStarted) && (
-					<button 
-						className='absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 p-3 z-10 border-4 rounded-lg bg-amber-900 border-amber-700 hover:bg-amber-800 hover:border-amber-600' 
-						onClick={() => handleStart()}
-					>
-						<span className='text-gray-300 font-sans'>Start broadcast</span>
-					</button>
-				)}
+					{finalIsEnded && (
+						<div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 p-3 z-20 rounded-lg bg-amber-900 border-amber-700 text-center min-w-[200px]">
+							<span className='text-gray-300 font-bold text-xl lg:text-2xl font-sans whitespace-pre-line'>{`Broadcast is over!\n${outcomeMessage}`}</span>
+						</div>
+					)}
 
-				{finalIsEnded && (
-					<div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 p-3 z-20 rounded-lg bg-amber-900 border-amber-700 text-center min-w-[200px]">
-						<span className='text-gray-300 font-bold text-xl lg:text-2xl font-sans whitespace-pre-line'>{`Broadcast is over!\n${outcomeMessage}`}</span>
+					<Chessground
+						onSelect={onSelect}
+						onMove={onMove}
+						key={match.id}
+						fen={previewFen || activeFen}
+						viewOnly={false}
+						width="100%"
+						height="100%"
+						coordinates={false}
+						movable={{ free: true, color: "both" }}
+						animation={{ enabled: true, duration: 500 }}
+					/>
+				</div>
+				{!hideTimers && (
+					<div className={`absolute rounded-md overflow-hidden border border-[#8b5e34]/20 shadow-xl z-10 transition-all duration-300
+						${isAnalysisMode 
+							? "-bottom-6 left-0 w-full h-6" 
+							: "top-0 -right-8 h-full w-8" 
+						}`}>
+						<EvalBar 
+							evaluation={currentEval} 
+							isWhite={true} 
+							isHorizontal={isAnalysisMode} 
+						/>
 					</div>
 				)}
-
-				<Chessground
-					onSelect={onSelect}
-					onMove={onMove}
-					key={match.id}
-					fen={previewFen || activeFen}
-					viewOnly={false}
-					width="100%"
-					height="100%"
-					coordinates={false}
-					movable={{ free: true, color: "both" }}
-					animation={{ enabled: true, duration: 500 }}
-				/>
 			</div>
 			{!hideTimers && (
 				<div className={`absolute z-10 transition-all duration-300 ${isAnalysisMode ? "bottom-0 -right-6 lg:-right-11" : "-bottom-10 lg:-bottom-12 right-0"}`}>
@@ -237,5 +263,6 @@ export function ChessBoard({
 				</div>
 			)}
 		</div>
+		
 	);
 }

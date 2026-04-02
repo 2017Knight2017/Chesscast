@@ -7,7 +7,7 @@ export default async function HomePage() {
         fetch(`${process.env.NEST_API_URL}/matches/planned`, { headers: { 'Content-Type': 'application/json' } })
     ]);
 	const [liveMatches, plannedMatches]  = await Promise.all([ liveRes.json(), plannedRes.json() ]);
-	const styles = 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6';
+	const styles = 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6';
 
 	return (
 		<main className="max-w-7xl mx-auto px-6 py-12">
