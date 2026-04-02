@@ -3,11 +3,11 @@ import React from 'react';
 interface EvalBarProps {
 	evaluation: number;
 	isWhite: boolean;
-	isHorizontal?: boolean; // Новый пропс
+	isHorizontal?: boolean;
 	hideText?: boolean;
 }
 
-export const EvalBar: React.FC<EvalBarProps> = ({ evaluation, isWhite, isHorizontal, hideText }) => {
+export function EvalBar({ evaluation, isWhite, isHorizontal, hideText }: EvalBarProps) {
 	const getPercentage = (cp: number) => {
 		if (cp > 1500) return 100;
 		if (cp < -1500) return 0;
@@ -16,6 +16,13 @@ export const EvalBar: React.FC<EvalBarProps> = ({ evaluation, isWhite, isHorizon
 
 	const whitePercentage = getPercentage(evaluation);
 	const fillSize = isWhite ? whitePercentage : 100 - whitePercentage;
+
+	let isMate = false;
+	if (Math.abs(evaluation) > 20000) {
+		const isNegative = evaluation < 0
+		evaluation = (isNegative ? -30000 : 30000) - evaluation
+		isMate = true
+	}
 
 	return (
 		<div className={`relative w-full h-full bg-[#312e2b] flex ${isHorizontal ? 'flex-row' : 'flex-col-reverse'}`}>
@@ -27,11 +34,10 @@ export const EvalBar: React.FC<EvalBarProps> = ({ evaluation, isWhite, isHorizon
 				}}
 			/>
 			
-			{/* Центрированный текст */}
 			{!hideText && (
 				<div className={`absolute flex items-center justify-center font-bold z-10 text-[12px] inset-0
 					${whitePercentage > 50 ? 'text-black' : 'text-white'}`}>
-					{Math.abs(evaluation / 100).toFixed(1)}
+					{isMate && "M"}{(evaluation / 100).toFixed(isMate ? 0 : 1)}
 				</div>
 			)}
 		</div>

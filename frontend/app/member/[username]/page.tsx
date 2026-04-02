@@ -28,7 +28,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ user
 	const [ownedMatches, followedMatches] = await Promise.all([ ownedRes.json(), followedRes.json() ]); 
 
 	return (
-		<div className="max-w-6xl mx-auto p-6 space-y-12">
+		<div className="max-w-6xl mx-auto p-6 pt-20 space-y-12">
 			<h1 className="text-3xl font-serif font-bold text-[#5d4037] border-b-2 border-[#8d6e63] pb-4">
 				{decodedUsername}
 			</h1>

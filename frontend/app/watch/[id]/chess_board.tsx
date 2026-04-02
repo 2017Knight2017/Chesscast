@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useMemo, memo, Dispatch, SetStateAction } from 'react';
+import { useRef, useMemo, memo, Dispatch, SetStateAction, useState } from 'react';
 import { useChessClock } from '@/hooks/use_chess_clocks';
 import { useKeyboardNavigation } from '@/hooks/use_keyboard_navigation';
 import Chessground from '@bezalel6/react-chessground';
@@ -86,6 +86,9 @@ export function ChessBoard({
 	hideTimers = false,
 }: ChessBoardProps) {
 	console.log("[watch/[id]/chess_board.tsx:ChessBoard]", { onMove, onSelect, isManualStarted, isBroadcastActive, finalIsEnded, match, currentMoveData, outcome, hideTimers });
+	
+	const [isOverlayVisible, setIsOverlayVisible] = useState(true); 
+	
 	const { selectedMoveIndex, isAnalysisMode } = useAnalysisState();
 	const previewMove = isAnalysisMode ? undefined : (selectedMoveIndex ?? undefined);
 
@@ -224,9 +227,34 @@ export function ChessBoard({
 						</button>
 					)}
 
-					{finalIsEnded && (
-						<div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 p-3 z-20 rounded-lg bg-amber-900 border-amber-700 text-center min-w-[200px]">
-							<span className='text-gray-300 font-bold text-xl lg:text-2xl font-sans whitespace-pre-line'>{`Broadcast is over!\n${outcomeMessage}`}</span>
+					{finalIsEnded && isOverlayVisible && (
+						<div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 p-4 z-30 rounded-lg bg-amber-900/95 border border-amber-600 text-center min-w-[220px] shadow-2xl backdrop-blur-sm">
+							{/* Кнопка закрытия */}
+							<button 
+								onClick={() => setIsOverlayVisible(false)}
+								className="absolute -top-2 -right-2 bg-amber-700 hover:bg-amber-600 text-white w-6 h-6 rounded-full flex items-center justify-center border border-amber-500 shadow-md transition-colors"
+							>
+								<span className="text-xs">✕</span>
+							</button>
+
+							<div className="flex flex-col gap-2">
+								<span className='text-amber-200 text-xs uppercase tracking-widest font-bold'>
+									Game Over
+								</span>
+								<span className='pb-2 text-gray-100 font-bold text-xl lg:text-2xl font-sans whitespace-pre-line leading-tight'>
+									{outcomeMessage}
+								</span>
+								<button 
+									onClick={() => setIsOverlayVisible(false)}
+									className="group relative px-4 py-2.5 bg-transparent border border-amber-600/40 hover:border-amber-500 text-amber-100 rounded-lg transition-all duration-200 active:scale-95 overflow-hidden"
+								>
+									<div className="absolute inset-0 bg-amber-600/0 group-hover:bg-amber-600/10 transition-colors" />
+
+									<span className="relative text-sm font-semibold tracking-wide">
+										Review position
+									</span>
+								</button>
+							</div>
 						</div>
 					)}
 
