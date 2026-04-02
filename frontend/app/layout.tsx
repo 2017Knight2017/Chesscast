@@ -51,7 +51,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 		<html lang="en">
 			<body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
 				<Providers>
-					<header className="relative w-full h-16 flex items-center px-8 z-30 bg-[#1a1512] border-b border-[#3e2b1d]/20 shadow-md">
+					<header className="absolute top-0 left-0 w-full h-16 flex items-center px-8 z-30 bg-[#1a1512] border-b border-[#3e2b1d]/20 shadow-md">
 						<Link href="/">
 							<h1 className="text-2xl font-serif text-[#d9c5b2] opacity-90 hover:opacity-100 transition-opacity">
 								Chesscast
