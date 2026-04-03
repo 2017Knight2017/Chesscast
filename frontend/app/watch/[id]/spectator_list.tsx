@@ -113,9 +113,9 @@ export function SpectatorList({ id, onInspectUser, usernames, guestCount, curren
 	};
 
 	return (
-		<div className="w-full h-full flex flex-col p-4 bg-[#f2e6d0] border border-[#8b5e34]/30 shadow-inner font-serif overflow-hidden">
+		<div className="w-full h-full flex flex-col p-4 bg-[#f4ead5] border-l-4 border-[#8b5e34] shadow-inner font-serif overflow-hidden">
 
-			<h3 className="shrink-0 text-center text-[#3e2b1d] uppercase tracking-widest border-b border-[#8b5e34]/20 mb-3 pb-2 text-sm font-bold">
+			<h3 className="shrink-0 text-[#3e2b1d] border-b mb-3 pb-1 font-mono">
 				Spectator List
 			</h3>
 
