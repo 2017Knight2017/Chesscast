@@ -64,7 +64,7 @@ export default function BroadcastPage() {
 	};
 
 	return (
-		<div className="flex flex-col items-center p-8 bg-slate-900 min-h-screen text-white">
+		<div className="flex flex-col items-center p-8 pt-22 bg-stone-950 min-h-screen text-white">
 			<div className="w-full max-w-2xl flex justify-between items-center mb-6">
 				<h1 className="text-2xl font-bold">Creating a broadcast</h1>
 				<button 

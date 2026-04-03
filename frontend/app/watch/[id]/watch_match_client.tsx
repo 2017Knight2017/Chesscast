@@ -63,142 +63,142 @@ export default function WatchMatchClient({ match }: {match: Match}) {
 	}
 
 	return (
-		<main className="h-screen w-screen bg-size-[100%_100%] overflow-x-hidden overflow-y-auto lg:overflow-hidden bg-[#1a0f07]">
-			{/* Desktop Layout */}
-			<div className='hidden lg:grid size-full items-center px-10 gap-8 relative z-10 grid-cols-[300px_1fr_300px]'>
-				<aside className="h-[75vh] flex flex-col"> 
-					<div className="bg-[#f4ead5]/20 backdrop-blur-sm p-4 flex-1 min-h-0 border border-[#8b5e34]/20 shadow-lg overflow-hidden">
-						<SpectatorList 
-							id={match.id} 
-							onInspectUser={handleInspectUser} 
-							usernames={usernames} 
-							guestCount={guestCount} 
-							currentMoveData={currentMoveData}
-						/>
-					</div>
+		<main className="h-screen w-screen bg-size-[100%_100%] overflow-x-hidden overflow-y-auto lg:overflow-hidden bg-stone-950">
+            {/* Desktop Layout */}
+            <div className='hidden lg:grid size-full items-center px-10 gap-8 relative z-10 grid-cols-[300px_1fr_300px]'>
+                <aside className="h-[75vh] flex flex-col"> 
+                    <div className="bg-orange-50/10 backdrop-blur-sm p-4 flex-1 min-h-0 border border-amber-900/20 shadow-lg overflow-hidden">
+                        <SpectatorList 
+                            id={match.id} 
+                            onInspectUser={handleInspectUser} 
+                            usernames={usernames} 
+                            guestCount={guestCount} 
+                            currentMoveData={currentMoveData}
+                        />
+                    </div>
 
-					{isAnalysisMode && (
-						<div className='w-full p-6 shrink-0 flex items-center justify-center max-w-[40vh] aspect-square'>
-							<ChessBoard 
-								onSelect={async () => {
-									const exists = await handleMainBoardClick();
-									setHasExistingAnalysis(exists);
-								}}
-								setIsManualStarted={setIsManualStarted}
-								setIsOverlayVisible={setIsOverlayVisible}
-								isOverlayVisible={isOverlayVisible}
-								isManualStarted={isManualStarted}
-								match={match}
-								currentMoveData={currentMoveData}
-								isBroadcastActive={isBroadcastActive}
-								finalIsEnded={finalIsEnded}
-								outcome={outcome}
-							/>
-						</div>
-					)}
-				</aside>
+                    {isAnalysisMode && (
+                        <div className='w-full p-6 shrink-0 flex items-center justify-center max-w-[40vh] aspect-square'>
+                            <ChessBoard 
+                                onSelect={async () => {
+                                    const exists = await handleMainBoardClick();
+                                    setHasExistingAnalysis(exists);
+                                }}
+                                setIsManualStarted={setIsManualStarted}
+                                setIsOverlayVisible={setIsOverlayVisible}
+                                isOverlayVisible={isOverlayVisible}
+                                isManualStarted={isManualStarted}
+                                match={match}
+                                currentMoveData={currentMoveData}
+                                isBroadcastActive={isBroadcastActive}
+                                finalIsEnded={finalIsEnded}
+                                outcome={outcome}
+                            />
+                        </div>
+                    )}
+                </aside>
 
-				<section className='flex justify-center items-center flex-col gap-4'>
-					{!isAnalysisMode && (
-						<div className='w-full shadow-2xl flex items-center justify-center max-w-[70vh] aspect-square'>
-							<ChessBoard 
-								onMove={() => handleInteractionOnMainBoard("move")}
-								onSelect={() => handleInteractionOnMainBoard("select")}
-								setIsManualStarted={setIsManualStarted}
-								setIsOverlayVisible={setIsOverlayVisible}
-								isOverlayVisible={isOverlayVisible}
-								isManualStarted={isManualStarted}
-								match={match} 
-								currentMoveData={currentMoveData}
-								isBroadcastActive={isBroadcastActive}
-								finalIsEnded={finalIsEnded}
-								outcome={outcome}
-							/>
-						</div>
-					)}
+                <section className='flex justify-center items-center flex-col gap-4'>
+                    {!isAnalysisMode && (
+                        <div className='w-full shadow-2xl flex items-center justify-center max-w-[70vh] aspect-square'>
+                            <ChessBoard 
+                                onMove={() => handleInteractionOnMainBoard("move")}
+                                onSelect={() => handleInteractionOnMainBoard("select")}
+                                setIsManualStarted={setIsManualStarted}
+                                setIsOverlayVisible={setIsOverlayVisible}
+                                isOverlayVisible={isOverlayVisible}
+                                isManualStarted={isManualStarted}
+                                match={match} 
+                                currentMoveData={currentMoveData}
+                                isBroadcastActive={isBroadcastActive}
+                                finalIsEnded={finalIsEnded}
+                                outcome={outcome}
+                            />
+                        </div>
+                    )}
 
-					{isAnalysisMode && (
-						<div className="w-full max-w-[70vh] aspect-square shadow-2xl flex items-center justify-center">
-							<UserAnalysisBoard
-								ref={userAnalysisBoardRef}
-								matchId={match.id}
-								userId={userId}
-								matchHistory={currentMoveData.history}
-								currentFen={currentMoveData.fen}
-								evals={currentMoveData.evaluations}
-							/>
-						</div>
-					)}
-				</section>
+                    {isAnalysisMode && (
+                        <div className="w-full max-w-[70vh] aspect-square shadow-2xl flex items-center justify-center">
+                            <UserAnalysisBoard
+                                ref={userAnalysisBoardRef}
+                                matchId={match.id}
+                                userId={userId}
+                                matchHistory={currentMoveData.history}
+                                currentFen={currentMoveData.fen}
+                                evals={currentMoveData.evaluations}
+                            />
+                        </div>
+                    )}
+                </section>
 
-				<aside className="h-[75vh] flex flex-col justify-center">
-					<div className="bg-[#f4ead5]/20 backdrop-blur-sm p-4 h-full border border-[#8b5e34]/20 shadow-lg">
-						<MoveList id={match.id} currentMoveData={currentMoveData} />
-					</div>
-				</aside>
-			</div>
+                <aside className="h-[75vh] flex flex-col justify-center">
+                    <div className="bg-orange-50/10 backdrop-blur-sm p-4 h-full border border-amber-900/20 shadow-lg">
+                        <MoveList id={match.id} currentMoveData={currentMoveData} />
+                    </div>
+                </aside>
+            </div>
 
-			{/* Mobile Layout */}
-			<div className="lg:hidden flex flex-col min-h-screen pt-[10%] relative z-10">
-				<section className="flex flex-col items-center px-4 py-8 gap-12">
-					{!isAnalysisMode ? (
-						<div className="w-full max-w-[500px] my-6 aspect-square shadow-2xl relative">
-							<ChessBoard 
-								onMove={() => handleInteractionOnMainBoard("move")}
-								onSelect={() => handleInteractionOnMainBoard("select")}
-								setIsManualStarted={setIsManualStarted}
-								setIsOverlayVisible={setIsOverlayVisible}
-								isOverlayVisible={isOverlayVisible}
-								isManualStarted={isManualStarted}
-								match={match} 
-								currentMoveData={currentMoveData}
-								isBroadcastActive={isBroadcastActive}
-								finalIsEnded={finalIsEnded}
-								outcome={outcome}
-							/>
-						</div>
-					) : (
-						<div className="w-full max-w-[500px] aspect-square shadow-2xl relative">
-							<UserAnalysisBoard
-								ref={userAnalysisBoardRef}
-								matchId={match.id}
-								userId={userId}
-								matchHistory={currentMoveData.history}
-								currentFen={currentMoveData.fen}
-								evals={currentMoveData.evaluations}
-							/>
-							<div className="fixed bottom-4 right-4 w-32 h-32 z-50 shadow-2xl border-2 border-[#8b5e34] bg-[#1a0f07] rounded-md overflow-hidden">
-								<ChessBoard 
-									onSelect={async () => {
-										const exists = await handleMainBoardClick();
-										setHasExistingAnalysis(exists);
-									}}
-									setIsManualStarted={setIsManualStarted}
-									setIsOverlayVisible={setIsOverlayVisible}
-									isOverlayVisible={isOverlayVisible}
-									isManualStarted={isManualStarted}
-									match={match}
-									currentMoveData={currentMoveData}
-									isBroadcastActive={isBroadcastActive}
-									finalIsEnded={finalIsEnded}
-									outcome={outcome}
-									hideTimers={true}
-								/>
-							</div>
-						</div>
-					)}
-				</section>
+            {/* Mobile Layout */}
+            <div className="lg:hidden flex flex-col min-h-screen pt-[10%] relative z-10">
+                <section className="flex flex-col items-center px-4 py-8 gap-12">
+                    {!isAnalysisMode ? (
+                        <div className="w-full max-w-[500px] my-6 aspect-square shadow-2xl relative">
+                            <ChessBoard 
+                                onMove={() => handleInteractionOnMainBoard("move")}
+                                onSelect={() => handleInteractionOnMainBoard("select")}
+                                setIsManualStarted={setIsManualStarted}
+                                setIsOverlayVisible={setIsOverlayVisible}
+                                isOverlayVisible={isOverlayVisible}
+                                isManualStarted={isManualStarted}
+                                match={match} 
+                                currentMoveData={currentMoveData}
+                                isBroadcastActive={isBroadcastActive}
+                                finalIsEnded={finalIsEnded}
+                                outcome={outcome}
+                            />
+                        </div>
+                    ) : (
+                        <div className="w-full max-w-[500px] aspect-square shadow-2xl relative">
+                            <UserAnalysisBoard
+                                ref={userAnalysisBoardRef}
+                                matchId={match.id}
+                                userId={userId}
+                                matchHistory={currentMoveData.history}
+                                currentFen={currentMoveData.fen}
+                                evals={currentMoveData.evaluations}
+                            />
+                            <div className="fixed bottom-4 right-4 w-32 h-32 z-50 shadow-2xl border-2 border-amber-900 bg-stone-950 rounded-md overflow-hidden">
+                                <ChessBoard 
+                                    onSelect={async () => {
+                                        const exists = await handleMainBoardClick();
+                                        setHasExistingAnalysis(exists);
+                                    }}
+                                    setIsManualStarted={setIsManualStarted}
+                                    setIsOverlayVisible={setIsOverlayVisible}
+                                    isOverlayVisible={isOverlayVisible}
+                                    isManualStarted={isManualStarted}
+                                    match={match}
+                                    currentMoveData={currentMoveData}
+                                    isBroadcastActive={isBroadcastActive}
+                                    finalIsEnded={finalIsEnded}
+                                    outcome={outcome}
+                                    hideTimers={true}
+                                />
+                            </div>
+                        </div>
+                    )}
+                </section>
 
-				<div className="mt-auto">
-					<MobileBottomPanel 
-						matchId={match.id} 
-						onInspectUser={handleInspectUser} 
-						currentMoveData={currentMoveData}
-						usernames={usernames}
-						guestCount={guestCount}
-					/>
-				</div>
-			</div>
-		</main>
+                <div className="mt-auto">
+                    <MobileBottomPanel 
+                        matchId={match.id} 
+                        onInspectUser={handleInspectUser} 
+                        currentMoveData={currentMoveData}
+                        usernames={usernames}
+                        guestCount={guestCount}
+                    />
+                </div>
+            </div>
+        </main>
 	);
 }
