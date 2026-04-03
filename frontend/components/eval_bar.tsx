@@ -1,4 +1,6 @@
-import React from 'react';
+'use client';
+
+import { useMemo, memo } from 'react';
 
 interface EvalBarProps {
 	evaluation: number;
@@ -7,37 +9,53 @@ interface EvalBarProps {
 	hideText?: boolean;
 }
 
-export function EvalBar({ evaluation, isWhite, isHorizontal, hideText }: EvalBarProps) {
-	const getPercentage = (cp: number) => {
-		if (cp > 1500) return 100;
-		if (cp < -1500) return 0;
-		return 100 / (1 + Math.pow(10, -0.002 * cp));
-	};
+export function EvalBar({ evaluation, isWhite, isHorizontal, hideText }: EvalBarProps) {		
+	const { displayValue, isMate, fillSize } = useMemo(() => {
+		let val = evaluation;
+		let mate = false;
+		
+		if (Math.abs(val) > 20000) {
+			const isNegative = val < 0;
+			val = (isNegative ? -30000 : 30000) - val;
+			mate = true;
+		}
 
-	const whitePercentage = getPercentage(evaluation);
-	const fillSize = isWhite ? whitePercentage : 100 - whitePercentage;
+		const getPercentage = (cp: number) => {
+			if (cp > 1500) return 100;
+			if (cp < -1500) return 0;
+			return 100 / (1 + Math.pow(10, -0.002 * cp));
+		};
 
-	let isMate = false;
-	if (Math.abs(evaluation) > 20000) {
-		const isNegative = evaluation < 0
-		evaluation = (isNegative ? -30000 : 30000) - evaluation
-		isMate = true
-	}
+		const whiteP = getPercentage(evaluation);
+		const size = isWhite ? whiteP : 100 - whiteP;
+
+		return {
+			displayValue: (val / 100).toFixed(mate ? 0 : 1),
+			isMate: mate,
+			fillSize: size / 100,
+			whitePercentage: whiteP
+		};
+	}, [evaluation, isWhite]);
+
+	const whitePercentage = (isWhite ? fillSize : 1 - fillSize) * 100;
 
 	return (
-		<div className={`relative w-full h-full bg-[#312e2b] flex ${isHorizontal ? 'flex-row' : 'flex-col-reverse'}`}>
+		<div className={`relative w-full h-full bg-[#312e2b] flex overflow-hidden ${isHorizontal ? 'flex-row-reverse' : 'flex-col-reverse'}`}>
 			<div 
-				className="bg-[#ffffff] transition-all duration-500 ease-in-out"
+				className="absolute inset-0 bg-[#ffffff] transition-transform duration-300 ease-out origin-bottom left-0"
 				style={{ 
-					height: isHorizontal ? '100%' : `${fillSize}%`, 
-					width: isHorizontal ? `${fillSize}%` : '100%' 
+					willChange: 'transform',
+					transform: isHorizontal 
+						? `scaleX(${fillSize})` 
+						: `scaleY(${fillSize})`,
+					transformOrigin: isHorizontal ? 'right' : 'bottom'
 				}}
 			/>
 			
 			{!hideText && (
-				<div className={`absolute flex items-center justify-center font-bold z-10 text-[12px] inset-0
+				<div className={`absolute inset-0 flex items-center justify-center font-bold z-10 text-[12px] transition-colors duration-300
 					${whitePercentage > 50 ? 'text-black' : 'text-white'}`}>
-					{isMate && "M"}{(evaluation / 100).toFixed(isMate ? 0 : 1)}
+					{isMate && "#"}{displayValue}
 				</div>
 			)}
 		</div>

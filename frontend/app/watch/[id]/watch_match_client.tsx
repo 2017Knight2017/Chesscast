@@ -41,6 +41,8 @@ export default function WatchMatchClient({ match }: {match: Match}) {
 
 	const userAnalysisBoardRef = useRef<UserAnalysisBoardRef>(null); 
 
+	const [isOverlayVisible, setIsOverlayVisible] = useState(true); 
+
 	useEffect(() => {
 		const user = localStorage.getItem('user');
 		if (user) {
@@ -83,6 +85,8 @@ export default function WatchMatchClient({ match }: {match: Match}) {
 									setHasExistingAnalysis(exists);
 								}}
 								setIsManualStarted={setIsManualStarted}
+								setIsOverlayVisible={setIsOverlayVisible}
+								isOverlayVisible={isOverlayVisible}
 								isManualStarted={isManualStarted}
 								match={match}
 								currentMoveData={currentMoveData}
@@ -101,6 +105,8 @@ export default function WatchMatchClient({ match }: {match: Match}) {
 								onMove={() => handleInteractionOnMainBoard("move")}
 								onSelect={() => handleInteractionOnMainBoard("select")}
 								setIsManualStarted={setIsManualStarted}
+								setIsOverlayVisible={setIsOverlayVisible}
+								isOverlayVisible={isOverlayVisible}
 								isManualStarted={isManualStarted}
 								match={match} 
 								currentMoveData={currentMoveData}
@@ -119,6 +125,7 @@ export default function WatchMatchClient({ match }: {match: Match}) {
 								userId={userId}
 								matchHistory={currentMoveData.history}
 								currentFen={currentMoveData.fen}
+								evals={currentMoveData.evaluations}
 							/>
 						</div>
 					)}
@@ -135,11 +142,13 @@ export default function WatchMatchClient({ match }: {match: Match}) {
 			<div className="lg:hidden flex flex-col min-h-screen pt-[10%] relative z-10">
 				<section className="flex flex-col items-center px-4 py-8 gap-12">
 					{!isAnalysisMode ? (
-						<div className="w-full max-w-[500px] aspect-square shadow-2xl relative">
+						<div className="w-full max-w-[500px] my-6 aspect-square shadow-2xl relative">
 							<ChessBoard 
 								onMove={() => handleInteractionOnMainBoard("move")}
 								onSelect={() => handleInteractionOnMainBoard("select")}
 								setIsManualStarted={setIsManualStarted}
+								setIsOverlayVisible={setIsOverlayVisible}
+								isOverlayVisible={isOverlayVisible}
 								isManualStarted={isManualStarted}
 								match={match} 
 								currentMoveData={currentMoveData}
@@ -156,6 +165,7 @@ export default function WatchMatchClient({ match }: {match: Match}) {
 								userId={userId}
 								matchHistory={currentMoveData.history}
 								currentFen={currentMoveData.fen}
+								evals={currentMoveData.evaluations}
 							/>
 							<div className="fixed bottom-4 right-4 w-32 h-32 z-50 shadow-2xl border-2 border-[#8b5e34] bg-[#1a0f07] rounded-md overflow-hidden">
 								<ChessBoard 
@@ -164,6 +174,8 @@ export default function WatchMatchClient({ match }: {match: Match}) {
 										setHasExistingAnalysis(exists);
 									}}
 									setIsManualStarted={setIsManualStarted}
+									setIsOverlayVisible={setIsOverlayVisible}
+									isOverlayVisible={isOverlayVisible}
 									isManualStarted={isManualStarted}
 									match={match}
 									currentMoveData={currentMoveData}

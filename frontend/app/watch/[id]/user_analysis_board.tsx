@@ -1,16 +1,17 @@
 'use client';
 
-import { forwardRef, useImperativeHandle, useState, useMemo, useEffect, useRef } from 'react';
+import { forwardRef, useImperativeHandle, useMemo, useEffect, useRef } from 'react';
 import Chessground from '@bezalel6/react-chessground';
 import { Chess } from 'chess.js';
-import { MoveTreeNode } from '@/types/types';
 import { useAnalysisState } from '@/context/analysis_context';
+import { EvalBar } from '@/components/eval_bar';
 
 interface UserAnalysisBoardProps {
 	matchId: string;
 	userId: number|null;
 	matchHistory: string[];
 	currentFen: string;
+	evals: number[];
 	onMove?: (move: string) => void;
 }
 
@@ -18,8 +19,7 @@ export interface UserAnalysisBoardRef {
 	getCurrentFen: () => string;
 }
 
-export const UserAnalysisBoard = forwardRef<UserAnalysisBoardRef, UserAnalysisBoardProps>(
-	({ matchHistory, currentFen, onMove }, ref) => {
+export const UserAnalysisBoard = forwardRef<UserAnalysisBoardRef, UserAnalysisBoardProps>(({ matchHistory, currentFen, onMove, evals }, ref) => {
 		const { 
 			analysisTree, 
 			addMoveToTree, 
@@ -125,8 +125,17 @@ export const UserAnalysisBoard = forwardRef<UserAnalysisBoardRef, UserAnalysisBo
 			};
 		}, [computedChess]);
 
+		const currentEval = useMemo(() => {
+			if (selectedMoveIndex !== null && selectedMoveIndex !== undefined) {
+				if (selectedMoveIndex === -1) return 0;
+				return evals[selectedMoveIndex] ?? 0;
+			}
+
+			return evals.length > 0 ? evals[evals.length - 1] : 0;
+		}, [evals, selectedMoveIndex]);
+
 		return (
-			<div className="w-full h-full rounded-md overflow-hidden flex justify-center items-center">
+			<div className="relative w-full h-full rounded-md flex justify-center items-center">
 				<Chessground
 					onMove={handleMove}
 					fen={computedFen}
@@ -141,6 +150,13 @@ export const UserAnalysisBoard = forwardRef<UserAnalysisBoardRef, UserAnalysisBo
 						duration: 300,
 					}}
 				/>
+
+				<div className="absolute top-0 -right-10 h-full w-8 rounded-md overflow-hidden border border-[#8b5e34]/20 shadow-xl z-10 transition-all duration-300">
+					<EvalBar 
+						evaluation={currentEval} 
+						isWhite={true}  
+					/>
+				</div>
 			</div>
 		);
 	}

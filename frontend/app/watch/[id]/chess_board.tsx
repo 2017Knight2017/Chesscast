@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useMemo, memo, Dispatch, SetStateAction, useState } from 'react';
+import { useRef, useMemo, memo, Dispatch, SetStateAction } from 'react';
 import { useChessClock } from '@/hooks/use_chess_clocks';
 import { useKeyboardNavigation } from '@/hooks/use_keyboard_navigation';
 import Chessground from '@bezalel6/react-chessground';
@@ -13,7 +13,9 @@ import { EvalBar } from '@/components/eval_bar';
 interface ChessBoardProps {
 	onMove?: (orig: string, dest: string) => void,
 	onSelect?: (key: string) => void,
+	setIsOverlayVisible: Dispatch<SetStateAction<boolean>>,
 	setIsManualStarted: Dispatch<SetStateAction<boolean>>,
+	isOverlayVisible: boolean,
 	isManualStarted: boolean
 	isBroadcastActive: boolean
 	finalIsEnded: boolean,
@@ -26,15 +28,15 @@ interface ChessBoardProps {
 interface ChessTimerProps { 
 	data: SyncPayload|null, 
 	initial: number, 
-	label: "White"|"Black", 
+	isWhite: boolean,
+	playerName: string,
 	isAnalysisMode: boolean,
 	isPaused?: boolean
 }
 
-const ChessTimer = memo(({ data, initial, label, isAnalysisMode, isPaused }: ChessTimerProps) => {
+const ChessTimer = memo(({ data, initial, isWhite, playerName, isAnalysisMode, isPaused }: ChessTimerProps) => {
 	const { whiteTimeFormatted, blackTimeFormatted } = useChessClock(data, initial, isPaused); 
 
-	const isWhite = label === "White";
 	const time = isWhite ? whiteTimeFormatted : blackTimeFormatted;
 
 	const renderTime = () => {
@@ -62,13 +64,14 @@ const ChessTimer = memo(({ data, initial, label, isAnalysisMode, isPaused }: Che
 
 	return (
 		<div className={`${baseContainer} ${colorStyles} ${orientationClasses}`}>
-			<span className={`text-[10px] font-bold tracking-tighter uppercase ${isAnalysisMode ? "flex flex-col items-center leading-none" : ""} ${isWhite ? "text-slate-400" : "text-slate-500"}`}>
-				{isAnalysisMode ? label.split('').map((l, i) => <span key={i}>{l}</span>) : label}
+			<span className={`text-[13px] font-bold tracking-wider uppercase ${isAnalysisMode ? "flex flex-col items-center leading-none" : ""} ${isWhite ? "text-slate-400" : "text-slate-500"}`}>
+				{isAnalysisMode ? playerName.split(' ').at(-1)!.split('').map((l, i) => <span key={i}>{l}</span>) : playerName}
 			</span>
 
 			<span className={`font-mono font-bold text-center ${isAnalysisMode ? "flex flex-col text-sm items-center gap-0.5" : "text-lg lg:text-xl min-w-16 lg:min-w-20"} ${isWhite ? "text-black" : "text-white"}`}>
 				{renderTime()}
 			</span>
+			
 		</div>
 	);
 });
@@ -76,6 +79,8 @@ const ChessTimer = memo(({ data, initial, label, isAnalysisMode, isPaused }: Che
 export function ChessBoard({
 	onMove, 
 	onSelect,
+	setIsOverlayVisible,
+	isOverlayVisible,
 	setIsManualStarted,
 	isManualStarted,
 	isBroadcastActive,
@@ -86,8 +91,6 @@ export function ChessBoard({
 	hideTimers = false,
 }: ChessBoardProps) {
 	console.log("[watch/[id]/chess_board.tsx:ChessBoard]", { onMove, onSelect, isManualStarted, isBroadcastActive, finalIsEnded, match, currentMoveData, outcome, hideTimers });
-	
-	const [isOverlayVisible, setIsOverlayVisible] = useState(true); 
 	
 	const { selectedMoveIndex, isAnalysisMode } = useAnalysisState();
 	const previewMove = isAnalysisMode ? undefined : (selectedMoveIndex ?? undefined);
@@ -188,7 +191,7 @@ export function ChessBoard({
 	const currentEval = useMemo(() => {
 		const evals = currentMoveData?.evaluations || [];
 
-		if (selectedMoveIndex !== null && selectedMoveIndex !== undefined) {
+		if (selectedMoveIndex !== null && selectedMoveIndex !== undefined && !isAnalysisMode) {
 			if (selectedMoveIndex === -1) return 0;
 			return evals[selectedMoveIndex] ?? 0;
 		}
@@ -212,8 +215,8 @@ export function ChessBoard({
 	return (
 		<div ref={containerRef} className='relative w-full h-full flex justify-center items-center flex-col sepia-100 brightness-75 contrast-125'>
 			{!hideTimers && (
-				<div className={`absolute z-10 transition-all duration-300 ${isAnalysisMode ? "top-0 -left-6 lg:-left-11" : "-top-10 lg:-top-12 left-0"}`}>
-					<ChessTimer data={clockData} initial={initialTime} label="Black" isAnalysisMode={isAnalysisMode} isPaused={isPaused} />
+				<div className={`absolute z-10 flex items-center gap-3 transition-all duration-300 ${isAnalysisMode ? "top-0 -left-6 lg:-left-11" : "-top-10 lg:-top-12 left-0"}`}>
+					<ChessTimer data={clockData} initial={initialTime} isWhite={false} playerName={match.black.name} isAnalysisMode={isAnalysisMode} isPaused={isPaused} />
 				</div>
 			)}
 			<div className="relative w-full h-full flex gap-2 md:gap-3">
@@ -229,7 +232,6 @@ export function ChessBoard({
 
 					{finalIsEnded && isOverlayVisible && (
 						<div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 p-4 z-30 rounded-lg bg-amber-900/95 border border-amber-600 text-center min-w-[220px] shadow-2xl backdrop-blur-sm">
-							{/* Кнопка закрытия */}
 							<button 
 								onClick={() => setIsOverlayVisible(false)}
 								className="absolute -top-2 -right-2 bg-amber-700 hover:bg-amber-600 text-white w-6 h-6 rounded-full flex items-center justify-center border border-amber-500 shadow-md transition-colors"
@@ -286,8 +288,8 @@ export function ChessBoard({
 				)}
 			</div>
 			{!hideTimers && (
-				<div className={`absolute z-10 transition-all duration-300 ${isAnalysisMode ? "bottom-0 -right-6 lg:-right-11" : "-bottom-10 lg:-bottom-12 right-0"}`}>
-					<ChessTimer data={clockData} initial={initialTime} label="White" isAnalysisMode={isAnalysisMode} isPaused={isPaused} />
+				<div className={`absolute z-10 flex items-center gap-2 transition-all duration-300 ${isAnalysisMode ? "bottom-0 -right-6 lg:-right-11" : "-bottom-10 lg:-bottom-12 right-0"}`}>
+					<ChessTimer data={clockData} initial={initialTime} isWhite={true} playerName={match.white.name} isAnalysisMode={isAnalysisMode} isPaused={isPaused} />
 				</div>
 			)}
 		</div>
