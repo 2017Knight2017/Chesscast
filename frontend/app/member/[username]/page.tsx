@@ -29,18 +29,18 @@ export default async function DashboardPage({ params }: { params: Promise<{ user
 
 	return (
 		<div className="max-w-6xl mx-auto p-6 pt-20 space-y-12">
-			<h1 className="text-3xl font-serif font-bold text-[#5d4037] border-b-2 border-[#8d6e63] pb-4">
+			<h1 className="text-3xl font-serif font-bold border-b-2 border-[#8d6e63] pb-4">
 				{decodedUsername}
 			</h1>
 
 			<section className="space-y-6">
-				<h2 className="text-2xl font-semibold text-[#5d4037]">My Followed</h2>
+				<h2 className="text-2xl font-semibold border-[#8d6e63] border-l-4 pl-4">My Followed</h2>
 				
 				<MemberSection matches={followedMatches} styles={styles} />
 			</section>
 
 			<section className="space-y-6">
-				<h2 className="text-2xl font-semibold text-[#5d4037]">My Broadcasts</h2>
+				<h2 className="text-2xl font-semibold border-[#8d6e63] border-l-4 pl-4">My Broadcasts</h2>
 				
 				<MemberSection matches={ownedMatches} styles={styles}/>
 			</section>

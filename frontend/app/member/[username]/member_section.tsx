@@ -19,7 +19,7 @@ export function MemberSection({matches, styles}: {matches: Match[], styles: stri
 			</div>
 		
 			<div className="p-6 rounded-lg shadow-sm">
-				<h3 className="text-xl font-medium mb-4 text-gray-700">Planned</h3>
+				<h3 className="text-xl font-medium mb-4">Planned</h3>
 				<LiveMatchesList liveMatches={planned} styles={styles}/>
 			</div>
 		</div>
