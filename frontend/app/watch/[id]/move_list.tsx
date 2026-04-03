@@ -234,7 +234,7 @@ export function MoveList({ id, matchHistory: propMatchHistory, currentMoveData }
 	);
 
 	return (
-	<div className="h-full flex flex-col bg-[#f4ead5] text-[#3e2b1d] shadow-inner p-4 border-l-4 border-[#8b5e34] font-mono overflow-hidden">
+	<div className="h-full flex flex-col bg-orange-50 text-stone-900 shadow-inner p-4 border-l-4 border-amber-900 font-mono overflow-hidden">
 		
 		<div className="shrink-0 flex justify-between items-center border-b mb-2 pb-1">
 			<h3 className="sepia">Moves Record</h3>

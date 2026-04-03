@@ -41,13 +41,13 @@ export function PlayerInput({ label, onSelect }: { label: string, onSelect: (pla
 
     return (
         <div className="relative">
-            <label>{label}</label>
+            <label className="text-xs font-bold uppercase tracking-wider text-amber-200/60 mb-2 block">{label}</label>
             <input
                 type="text"
                 value={query}
                 onChange={handleInputChange}
                 onFocus={() => setShowSuggestions(true)}
-                className="w-full p-2 bg-slate-800 border..."
+                className="w-full p-3 rounded-sm bg-stone-900 border border-amber-900/30 focus:border-white-500 text-stone-100 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed placeholder:text-stone-600"
             />
             
             {showSuggestions && suggestions.length > 0 && (
