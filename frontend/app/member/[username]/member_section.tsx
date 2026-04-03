@@ -10,16 +10,16 @@ export function MemberSection({matches, styles}: {matches: Match[], styles: stri
 
 	return (
 		<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-			<div className="bg-white/80 p-6 rounded-lg shadow-sm border border-[#eefe] border-opacity-50">
+			<div className="p-6 rounded-lg shadow-sm">
 				<h3 className="text-xl font-medium mb-4 flex items-center gap-2">
 					<span className="w-3 h-3 rounded-full bg-red-500 animate-pulse"></span>
-					В эфире
+					Live
 				</h3>
 				<LiveMatchesList liveMatches={live} styles={styles}/>
 			</div>
 		
-			<div className="bg-white/80 p-6 rounded-lg shadow-sm border border-[#eefe] border-opacity-50">
-				<h3 className="text-xl font-medium mb-4 text-gray-700">Ожидаются</h3>
+			<div className="p-6 rounded-lg shadow-sm">
+				<h3 className="text-xl font-medium mb-4 text-gray-700">Planned</h3>
 				<LiveMatchesList liveMatches={planned} styles={styles}/>
 			</div>
 		</div>

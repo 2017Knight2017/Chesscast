@@ -33,16 +33,14 @@ export default async function DashboardPage({ params }: { params: Promise<{ user
 				{decodedUsername}
 			</h1>
 
-			{/* РАЗДЕЛ 1: МОИ ПОДПИСКИ (Я - зритель) */}
 			<section className="space-y-6">
-				<h2 className="text-2xl font-semibold text-[#5d4037]">Мои подписки</h2>
+				<h2 className="text-2xl font-semibold text-[#5d4037]">My Followed</h2>
 				
 				<MemberSection matches={followedMatches} styles={styles} />
 			</section>
 
-			{/* РАЗДЕЛ 2: МОИ ТРАНСЛЯЦИИ (Я - автор) */}
 			<section className="space-y-6">
-				<h2 className="text-2xl font-semibold text-[#5d4037]">Мои трансляции</h2>
+				<h2 className="text-2xl font-semibold text-[#5d4037]">My Broadcasts</h2>
 				
 				<MemberSection matches={ownedMatches} styles={styles}/>
 			</section>

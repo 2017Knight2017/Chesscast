@@ -10,7 +10,7 @@ export default async function HomePage() {
 	const styles = 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6';
 
 	return (
-		<main className="max-w-7xl mx-auto px-6 pt-20 py-12">
+		<main className="max-w-7xl mx-auto px-6 pt-24 py-12 flex flex-col gap-8">
 			<section>
 				<div className="flex justify-between items-end mb-6">
 						<h2 className="text-xl font-semibold text-slate-200 uppercase tracking-widest">Live</h2>
