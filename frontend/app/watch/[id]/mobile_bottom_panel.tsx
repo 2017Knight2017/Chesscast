@@ -5,6 +5,7 @@ import { MoveList } from './move_list';
 import { SpectatorList } from './spectator_list';
 import { ViewerStatus } from '@/hooks/use_viewer_counts';
 import { Move } from '@/types/types';
+import { ParaboardList } from './paraboard_list';
 
 interface MobileBottomPanelProps {
 	matchId: string;
@@ -15,7 +16,7 @@ interface MobileBottomPanelProps {
 }
 
 export function MobileBottomPanel({ matchId, onInspectUser, currentMoveData, usernames, guestCount }: MobileBottomPanelProps) {
-	const [activeTab, setActiveTab] = useState<'moves' | 'spectators'>('moves');
+	const [activeTab, setActiveTab] = useState<'moves' | 'spectators' | 'boards'>('moves');
 
 	return (
 		<div className="flex flex-col h-[40vh] bg-[#2a1b0e] border-t border-[#8b5e34]/30">
@@ -31,6 +32,16 @@ export function MobileBottomPanel({ matchId, onInspectUser, currentMoveData, use
 					Moves
 				</button>
 				<button
+					onClick={() => setActiveTab('boards')}
+					className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-colors ${
+						activeTab === 'boards'
+							? 'bg-[#8b5e34] text-[#f4ead5]'
+							: 'text-[#f4ead5]/60 hover:text-[#f4ead5]'
+					}`}
+				>
+					Boards
+				</button>
+				<button
 					onClick={() => setActiveTab('spectators')}
 					className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-colors ${
 						activeTab === 'spectators'
@@ -42,12 +53,16 @@ export function MobileBottomPanel({ matchId, onInspectUser, currentMoveData, use
 				</button>
 			</div>
 			<div className="flex-1 overflow-hidden relative">
-				{activeTab === 'moves' ? (
-					<div className="h-full overflow-auto">
+				<div className="h-full overflow-auto">
+					{activeTab === 'moves' && (
 						<MoveList id={matchId} currentMoveData={currentMoveData} />
-					</div>
-				) : (
-					<div className="h-full overflow-auto">
+					)}
+					{activeTab === "boards" && (
+						<ParaboardList 
+							id={matchId} 
+						/>
+					)}
+					{activeTab === "spectators" && (
 						<SpectatorList 
 							id={matchId} 
 							onInspectUser={onInspectUser} 
@@ -55,8 +70,8 @@ export function MobileBottomPanel({ matchId, onInspectUser, currentMoveData, use
 							guestCount={guestCount} 
 							currentMoveData={currentMoveData}
 						/>
-					</div>
-				)}
+					)}
+				</div>
 			</div>
 		</div>
 	);

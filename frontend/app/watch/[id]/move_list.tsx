@@ -234,10 +234,10 @@ export function MoveList({ id, matchHistory: propMatchHistory, currentMoveData }
 	);
 
 	return (
-	<div className="h-full flex flex-col bg-orange-50 text-stone-900 shadow-inner p-4 border-l-4 border-amber-900 font-mono overflow-hidden">
+	<div className="h-full flex flex-col p-4 border-l-4 border-amber-900 bg-orange-50 shadow-inner overflow-hidden font-mono text-stone-900">
 		
 		<div className="shrink-0 flex justify-between items-center border-b mb-2 pb-1">
-			<h3 className="sepia">Moves Record</h3>
+			<h3>Moves Record</h3>
 			{isAnalysisMode && currentPath.length > 0 && selectedMoveIndex !== null && inspectedUserId === null && (
 				<button 
 					onClick={() => deleteBranch(selectedMoveIndex, currentPath)}
@@ -251,15 +251,7 @@ export function MoveList({ id, matchHistory: propMatchHistory, currentMoveData }
 		</div>
 
 		<div className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden mb-4 pr-2">
-			<div className="flex flex-col gap-2" 
-			style={{
-					display: 'flex',
-					flexFlow: 'column wrap',
-					height: '100%',
-					alignContent: 'flex-start',
-					overscrollBehaviorX: 'contain',
-				}}
-			>
+			<div className="h-full flex flex-col content-start gap-2 flex-wrap" style={{ overscrollBehaviorX: 'contain' }}>
 				{/* Starting position for variations before the first move */}
 				{isAnalysisMode && analysisTree[-1] && (
 					analysisTree[-1].map((node, idx) => (

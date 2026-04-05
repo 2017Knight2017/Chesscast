@@ -1,7 +1,7 @@
 'use client'
 
 import { ViewerStatus } from "@/hooks/use_viewer_counts";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Dispatch, SetStateAction } from "react";
 import Chessground from "@bezalel6/react-chessground";
 import { getPlayerByUsernameAction, loadAnalysisAction } from "@/actions/analysis_actions";
 import { Move, MoveTreeNode } from "@/types/types";
@@ -9,12 +9,13 @@ import { Move, MoveTreeNode } from "@/types/types";
 interface SpectatorListProps {
 	id: string;
 	onInspectUser?: (status: ViewerStatus) => void;
+	setIsSpectatorTab?: Dispatch<SetStateAction<boolean>>;
 	usernames: Record<string, ViewerStatus[]>;
 	guestCount: Record<string, number>;
 	currentMoveData?: Move | null;
 }
 
-export function SpectatorList({ id, onInspectUser, usernames, guestCount, currentMoveData }: SpectatorListProps) {
+export function SpectatorList({ id, onInspectUser, usernames, guestCount, currentMoveData, setIsSpectatorTab }: SpectatorListProps) {
 	console.log("[watch/[id]/spectator_list.tsx:SpectatorList]", { id });
 	const [selectedSpectator, setSelectedSpectator] = useState<string | null>(null);
 	const [previewFen, setPreviewFen] = useState<string | null>(null);
@@ -113,19 +114,40 @@ export function SpectatorList({ id, onInspectUser, usernames, guestCount, curren
 	};
 
 	return (
-		<div className="w-full h-full flex flex-col p-4 bg-orange-50 border-l-4 border-amber-900 shadow-inner font-serif overflow-hidden">
+		<div className="h-full flex flex-col p-4 border-l-4 border-amber-900 bg-orange-50 shadow-inner overflow-hidden">
 
-			<h3 className="shrink-0 text-stone-900 border-b border-amber-900/10 mb-3 pb-1 font-mono">
-				Spectator List
-			</h3>
-			
-			<div className="shrink-0 flex flex-row overflow-x-auto overflow-y-hidden gap-3 pb-2 mb-2 scrollbar-thin scrollbar-thumb-amber-900/30">
+			<div className="shrink-0 flex justify-between gap-2 border-b mb-2 pb-1 text-stone-900">
+				<h3 className="font-mono">
+					Spectators List
+				</h3>
+				{setIsSpectatorTab && 
+					<div className="ml-auto flex items-center gap-2">
+						<button className="flex items-center justify-center">
+							<svg width="24" height="24" viewBox="0 0 24 24" fill="#9f8e6e" className="block">
+								<circle cx="12" cy="7" r="4" />
+								<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+							</svg>
+						</button>
+
+						<div className="border-l border-amber-900/30 h-6 pr-1"></div>
+
+						<button className="flex items-center justify-center" onClick={()=>{setIsSpectatorTab(false)}}>
+							<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" className="block">
+								<rect width="24" height="24" fill="#ffffd5"/>
+								<rect x="0" y="0" width="12" height="12" fill="#9f8e6e"/>
+								<rect x="12" y="12" width="12" height="12" fill="#9f8e6e"/>
+							</svg>
+						</button>
+					</div>
+				}
+			</div>
+			<div className="shrink-0 flex flex-row overflow-x-auto overflow-y-hidden gap-3 pb-2 mb-2 font-serif">
 				{resolvedUsernames.length > 0 ? (
 					resolvedUsernames.map((status) => (
 						<button
 							key={status.username}
 							onClick={() => handleSpectatorClick(status.username)}
-							className={`shrink-0 whitespace-nowrap flex items-center gap-1 transition-colors group px-3 py-2 lg:px-2 lg:py-1 rounded border ${
+							className={`shrink-0 whitespaces-nowrap flex items-center gap-1 transition-colors px-3 py-2 lg:px-2 lg:py-1 rounded border ${
 								selectedSpectator === status.username 
 									? "bg-amber-900/20 border-amber-900/40 text-stone-900" 
 									: "bg-orange-200/40 border-amber-900/10 text-stone-700 hover:text-amber-900 hover:border-amber-900/40"
@@ -178,10 +200,13 @@ export function SpectatorList({ id, onInspectUser, usernames, guestCount, curren
 				)}
 			</div>
 			
-			<div className="shrink-0 mt-3 pt-2 border-t border-amber-900/10 flex justify-between items-center text-xs text-stone-700 opacity-60">
+			<div className="shrink-0 mt-3 pt-2 border-t border-amber-900/10 flex justify-between items-center text-xs text-stone-700">
 				<div className="flex items-center gap-1">
-					<span className="text-base">👥</span>
-					<span>Total: {resolvedUsernames.length}</span>
+					<svg width="24" height="24" viewBox="0 0 24 24" fill="#86775c" className="user-icon">
+						<circle cx="12" cy="7" r="4" />
+						<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+					</svg>
+					<span className="opacity-60">Total: {resolvedUsernames.length}</span>
 				</div>
 				{resolvedGuestCount > 0 && (
 					<div className="italic">
