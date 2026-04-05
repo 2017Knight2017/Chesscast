@@ -20,6 +20,12 @@ interface MoveBtnProps {
 	onClick: () => void, 
 }
 
+interface MoveListProps { 
+	matchHistory?: string[], 
+	currentMoveData: Move | null, 
+	finalIsEnded: boolean,
+}
+
 const isVerticalBranching = (node: MoveTreeNode) => {
 	return node.s && node.s.length > 1 && node.s.some(c => c.s && c.s.length > 1);
 };
@@ -127,7 +133,7 @@ const MoveNode = ({
 	);
 };
 
-export function MoveList({ id, matchHistory: propMatchHistory, currentMoveData }: { id: string, matchHistory?: string[], currentMoveData: Move | null }) {
+export function MoveList({ matchHistory: propMatchHistory, currentMoveData, finalIsEnded }: MoveListProps) {
 	const { 
 		isAnalysisMode, 
 		analysisTree, 
@@ -338,10 +344,12 @@ export function MoveList({ id, matchHistory: propMatchHistory, currentMoveData }
 				})}
 			</div>
 		</div>
-			
-		<div className="shrink-0 mt-auto pt-4 border-t border-black/5">
-			<BackToLiveButton />
-		</div>
+		
+		{!finalIsEnded &&
+			<div className="shrink-0 mt-auto pt-4 border-t border-black/5">
+				<BackToLiveButton />
+			</div>
+		}
 	</div>
 );
 }

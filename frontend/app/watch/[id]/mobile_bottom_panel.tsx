@@ -13,9 +13,10 @@ interface MobileBottomPanelProps {
 	currentMoveData: Move | null;
 	usernames: Record<string, ViewerStatus[]>;
 	guestCount: Record<string, number>;
+	finalIsEnded: boolean;
 }
 
-export function MobileBottomPanel({ matchId, onInspectUser, currentMoveData, usernames, guestCount }: MobileBottomPanelProps) {
+export function MobileBottomPanel({ matchId, onInspectUser, currentMoveData, usernames, guestCount, finalIsEnded }: MobileBottomPanelProps) {
 	const [activeTab, setActiveTab] = useState<'moves' | 'spectators' | 'boards'>('moves');
 
 	return (
@@ -55,7 +56,10 @@ export function MobileBottomPanel({ matchId, onInspectUser, currentMoveData, use
 			<div className="flex-1 overflow-hidden relative">
 				<div className="h-full overflow-auto">
 					{activeTab === 'moves' && (
-						<MoveList id={matchId} currentMoveData={currentMoveData} />
+						<MoveList
+							currentMoveData={currentMoveData} 
+							finalIsEnded={finalIsEnded}
+						/>
 					)}
 					{activeTab === "boards" && (
 						<ParaboardList 

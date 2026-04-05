@@ -144,7 +144,9 @@ export default function WatchMatchClient({ match }: {match: Match}) {
 
 				<aside className="h-[75vh] flex flex-col">
 					<div className="bg-orange-50/10 backdrop-blur-sm p-4 h-full border border-amber-900/20 shadow-lg">
-						<MoveList id={match.id} currentMoveData={currentMoveData} />
+						<MoveList 
+							currentMoveData={currentMoveData}
+							finalIsEnded={finalIsEnded} />
 					</div>
 				</aside>
 			</div>
@@ -207,6 +209,7 @@ export default function WatchMatchClient({ match }: {match: Match}) {
 						currentMoveData={currentMoveData}
 						usernames={usernames}
 						guestCount={guestCount}
+						finalIsEnded={finalIsEnded}
 					/>
 				</div>
 			</div>

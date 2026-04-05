@@ -8,7 +8,7 @@ interface ParaboardListProps {
 }
 
 export function ParaboardList({ id, setIsSpectatorTab }: ParaboardListProps) {
-	console.log("[watch/[id]/parallel_boards_list.tsx:ParallelBoardsList]", { id });
+	console.log("[watch/[id]/paraboard_list.tsx:ParaboardList]", { id });
 	
 	return (
 		<div className="h-full flex flex-col p-4 border-l-4 border-amber-900 bg-orange-50 shadow-inner overflow-hidden">
