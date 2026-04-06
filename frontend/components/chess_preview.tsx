@@ -29,7 +29,7 @@ export const ChessPreview = ({ match, isEmbedded }: { match: Match, isEmbedded?:
 				<div className="flex items-center gap-2">
 					<span className="text-[11px] font-medium text-slate-300">{match.black.name}</span>
 				</div>
-				<div className="bg-stone-900 px-2 py-0.5 rounded text-[12px] font-mono text-slate-400">
+				<div className={`${currentMoveData?.turn == "w" ? 'bg-stone-900 text-slate-400' : 'bg-white text-black font-bold'} px-2 py-0.5 rounded text-[12px] font-mono`}>
 					{blackTimeFormatted}
 				</div>
 			</div>
@@ -58,7 +58,7 @@ export const ChessPreview = ({ match, isEmbedded }: { match: Match, isEmbedded?:
 				<div className="flex items-center gap-2">
 					<span className="text-[11px] font-medium text-white">{match.white.name}</span>
 				</div>
-				<div className="bg-white px-2 py-0.5 rounded text-[12px] font-mono text-black font-bold">
+				<div className={`${currentMoveData?.turn == "w" ? 'bg-white text-black font-bold' : 'bg-stone-900 text-slate-400'} px-2 py-0.5 rounded text-[12px] font-mono`}>
 					{whiteTimeFormatted}
 				</div>
 			</div>
