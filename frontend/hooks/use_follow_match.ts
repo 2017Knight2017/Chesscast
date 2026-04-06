@@ -10,23 +10,24 @@ export const useFollowMatch = (matchId: string) => {
 	const [error, setError] = useState<string | null>(null);
 
 	const checkFollowStatus = useCallback(async () => {
-		const stored = localStorage.getItem('user');
-		const user = stored ? JSON.parse(stored) : null;
-		if (!user) {
+		const token = localStorage.getItem('token');
+		if (!token) {
 			setIsLoading(false);
 			return;
 		}
 
 		try {
-			const token = user.token;
-			const res = await fetch(`${API_URL}/matches/${matchId}/follow/status`, {
+			const url = `${API_URL}/matches/${matchId}/follow/status`;
+			console.log('[use_follow_match] Checking status:', { url, hasToken: !!token });
+			const res = await fetch(url, {
 				headers: {
 					'Authorization': `Bearer ${token}`,
 				},
 			});
 
 			if (!res.ok) {
-				throw new Error('Failed to fetch follow status');
+				const errorBody = await res.text();
+				throw new Error(`Failed to fetch follow status: ${res.status} ${errorBody}`);
 			}
 
 			const data = await res.json();
@@ -44,9 +45,8 @@ export const useFollowMatch = (matchId: string) => {
 	}, [checkFollowStatus]);
 
 	const toggleFollow = useCallback(async () => {
-		const stored = localStorage.getItem('user');
-		const user = stored ? JSON.parse(stored) : null;
-		if (!user) {
+		const token = localStorage.getItem('token');
+		if (!token) {
 			setError('User not authenticated');
 			return;
 		}
@@ -55,11 +55,12 @@ export const useFollowMatch = (matchId: string) => {
 		setError(null);
 
 		try {
-			const token = user.token;
 			const method = isFollowing ? 'DELETE' : 'POST';
 			const expectedStatus = isFollowing ? 204 : 201;
+			const url = `${API_URL}/matches/${matchId}/follow`;
+			console.log('[use_follow_match] Toggling follow:', { url, method, hasToken: !!token });
 
-			const res = await fetch(`${API_URL}/matches/${matchId}/follow`, {
+			const res = await fetch(url, {
 				method,
 				headers: {
 					'Authorization': `Bearer ${token}`,

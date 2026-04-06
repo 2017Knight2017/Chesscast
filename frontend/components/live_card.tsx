@@ -4,10 +4,19 @@ import { Match } from '@/types/types';
 import { ChessPreview } from './chess_preview';
 import { useProcessing } from '@/hooks/use_processing';
 import Link from 'next/link';
+import { useFollowMatch } from '@/hooks/use_follow_match';
 
 export const LiveCard = ({ match, viewerCount }: { match: Match, viewerCount?: number }) => {
 	console.log("[live_card.tsx:LiveCard]", { matchId: match.id, viewerCount });
 	const { isProcessing } = useProcessing(match);
+
+	const { isFollowing, isLoading, toggleFollow } = useFollowMatch(match.id);
+
+	const handleFollowClick = (e: React.MouseEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
+		toggleFollow();
+	};
 	
 	const CardWrapper = isProcessing ? 'div' : Link;
 	const wrapperProps = isProcessing ? {} : { href: `/watch/${match.id}` };
@@ -15,11 +24,11 @@ export const LiveCard = ({ match, viewerCount }: { match: Match, viewerCount?: n
 	return (
 		<CardWrapper {...(wrapperProps as any)} className="block">
 			<div className={`
-				group bg-[#161512] rounded-md overflow-hidden transition-all 
+				bg-[#161512] rounded-md overflow-hidden transition-all 
 				${isProcessing ? 'opacity-80 cursor-not-allowed' : 'hover:bg-[#1e1c18] cursor-pointer'}
 			`}>
 				<div className="relative">
-					<ChessPreview match={match} />
+					<ChessPreview match={match} isEmbedded={true} />
 					
 					{isProcessing && (
 						<div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/60 backdrop-blur-[1px] animate-in fade-in duration-300">
@@ -34,11 +43,22 @@ export const LiveCard = ({ match, viewerCount }: { match: Match, viewerCount?: n
 					)}
 				</div>
 				
-				<div className="p-3">
+				<div className="relative p-3">
+					
 					<h3 className={`text-[13px] font-bold truncate transition-colors ${
 						isProcessing ? 'text-slate-500' : 'text-slate-200 group-hover:text-blue-400'
 					}`}>
 						{match.title}
+						<button
+							onClick={handleFollowClick}
+							disabled={isLoading}
+							className="absolute top-2 right-1 z-10 p-1 rounded hover:bg-white/10 transition-colors disabled:opacity-50"
+							title={isFollowing ? "Unfollow match" : "Follow match"}
+						>
+							<svg width="16" height="16" viewBox="0 0 24 24" fill={isFollowing ? "#fbbf24" : "none"} stroke="#fbbf24" strokeWidth="2" className="block">
+								<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+							</svg>
+						</button>
 					</h3>
 					<div className="flex items-center justify-between mt-1">
 						<span className="text-[11px] text-slate-500">@{match.author}</span>
@@ -47,6 +67,7 @@ export const LiveCard = ({ match, viewerCount }: { match: Match, viewerCount?: n
 							 {isProcessing ? 'WAIT' : (viewerCount || match.viewerCount)}
 						</div>
 					</div>
+					
 				</div>
 			</div>
 		</CardWrapper>

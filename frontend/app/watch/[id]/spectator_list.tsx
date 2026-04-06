@@ -118,11 +118,11 @@ export function SpectatorList({ id, onInspectUser, usernames, guestCount, curren
 
 			<div className="shrink-0 flex justify-between gap-2 border-b mb-2 pb-1 text-stone-900">
 				<h3 className="font-mono">
-					Spectators List
+					Spectator List
 				</h3>
 				{setIsSpectatorTab && 
-					<div className="ml-auto flex items-center gap-2">
-						<button className="flex items-center justify-center">
+					<div className="-mt-1 ml-auto flex items-center gap-2">
+						<button className="flex items-center justify-center p-1 rounded hover:bg-amber-900/10 transition-colors disabled:opacity-50">
 							<svg width="24" height="24" viewBox="0 0 24 24" fill="#9f8e6e" className="block">
 								<circle cx="12" cy="7" r="4" />
 								<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -131,7 +131,7 @@ export function SpectatorList({ id, onInspectUser, usernames, guestCount, curren
 
 						<div className="border-l border-amber-900/30 h-6 pr-1"></div>
 
-						<button className="flex items-center justify-center" onClick={()=>{setIsSpectatorTab(false)}}>
+						<button className="flex items-center justify-center p-1 rounded hover:bg-amber-900/10 transition-colors disabled:opacity-50" onClick={()=>{setIsSpectatorTab(false)}}>
 							<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" className="block">
 								<rect width="24" height="24" fill="#ffffd5"/>
 								<rect x="0" y="0" width="12" height="12" fill="#9f8e6e"/>

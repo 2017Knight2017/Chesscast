@@ -17,7 +17,7 @@ export function PlayerInput({ label, onSelect }: { label: string, onSelect: (pla
     useEffect(() => {
         console.log("[new/player_input.tsx:useEffect]", { debouncedQuery, showSuggestions });
         if (debouncedQuery.length > 1 && showSuggestions) {
-            fetch(process.env.NEXT_PUBLIC_SOCKET_URL + `/players/search?name=${debouncedQuery}`)
+            fetch(`${process.env.NEXT_PUBLIC_SOCKET_URL}/players/search?name=${debouncedQuery}`)
                 .then(res => res.json())
                 .then(data => setSuggestions(data));
         } else {
