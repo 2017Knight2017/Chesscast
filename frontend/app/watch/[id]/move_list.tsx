@@ -27,7 +27,7 @@ interface MoveListProps {
 }
 
 const isVerticalBranching = (node: MoveTreeNode) => {
-	return node.s && node.s.length > 1 && node.s.some(c => c.s && c.s.length > 1);
+	return node.s && node.s.length > 2;
 };
 
 const MoveNode = ({ 
