@@ -1,5 +1,5 @@
-import { GoogleGenAI } from "@google/genai";
-import { Logger } from "@nestjs/common";
+import { GoogleGenAI } from '@google/genai';
+import { Logger } from '@nestjs/common';
 
 const logger = new Logger();
 
@@ -98,35 +98,38 @@ If they're simply reliable—Pragmatic.
 Give your answer in the json format: {player1: archetype1, player2: archetype2}. Saying anything beyond the json is STRICTLY FORBIDDEN.
 
 
-`
+`;
 
 const archetypes = [
-	"Calculator",
-	"Intuitive Genius",
-	"Chaos Attacker",
-	"Solid Pragmatist",
-	"Time Trouble Addict",
-	"Iron Fortress",
-	"Blunder Prone Gambler",
-	"Perfectionist",
-	"Tactical Berserker",
-	"Speed Demon",
-	"Psychological Grinder"
-]
+	'Calculator',
+	'Intuitive Genius',
+	'Chaos Attacker',
+	'Solid Pragmatist',
+	'Time Trouble Addict',
+	'Iron Fortress',
+	'Blunder Prone Gambler',
+	'Perfectionist',
+	'Tactical Berserker',
+	'Speed Demon',
+	'Psychological Grinder',
+];
 
 const getBothArchetypesPrompt = (player1: string, player2: string) => {
 	logger.log('[archetype.ts] getBothArchetypesPrompt called');
-	return instructions + `Which archetype suits ${player1} and ${player2} the best?`;
-}
+	return (
+		instructions +
+		`Which archetype suits ${player1} and ${player2} the best?`
+	);
+};
 const getSingleArchetypePrompt = (player: string) => {
-    logger.log('[archetype.ts] getSingleArchetypePrompt called');
+	logger.log('[archetype.ts] getSingleArchetypePrompt called');
 	return instructions + `Which archetype suits ${player} the best?`;
-}
+};
 
 const getRandomArchetype = (): string => {
 	logger.log('[archetype.ts] getRandomArchetype called');
-    const randomIndex = Math.floor(Math.random() * archetypes.length);
-    return archetypes[randomIndex];
+	const randomIndex = Math.floor(Math.random() * archetypes.length);
+	return archetypes[randomIndex];
 };
 
 const ai = new GoogleGenAI({
@@ -143,48 +146,59 @@ interface ArchetypeResponse {
 	isAiGenerated: boolean[];
 }
 
-export const requestArchetypes = async (players: params): Promise<ArchetypeResponse> => {
+export const requestArchetypes = async (
+	players: params,
+): Promise<ArchetypeResponse> => {
 	logger.log('[archetype.ts] requestArchetypes called');
-    const expectedCount = (players.player1 && players.player2) ? 2 : 1;
-	let isAiGenerated = Array(expectedCount).fill(false);
+	const expectedCount = players.player1 && players.player2 ? 2 : 1;
+	const isAiGenerated = Array(expectedCount).fill(false);
 
-    try {
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash-lite",
-            contents: players.player1 !== undefined && players.player2 !== undefined 
-                ? getBothArchetypesPrompt(players.player1, players.player2) 
-                : getSingleArchetypePrompt(players.player1 || players.player2!),
-            config: {
-                responseMimeType: "application/json",
-            }
-        });
+	try {
+		const response = await ai.models.generateContent({
+			model: 'gemini-2.5-flash-lite',
+			contents:
+				players.player1 !== undefined && players.player2 !== undefined
+					? getBothArchetypesPrompt(players.player1, players.player2)
+					: getSingleArchetypePrompt(
+							players.player1 || players.player2!,
+						),
+			config: {
+				responseMimeType: 'application/json',
+			},
+		});
 
-        const text = response.text;
-		logger.log("Raw AI Response:", text);
-        if (!text) throw new Error("Empty AI response");
+		const text = response.text;
+		logger.log('Raw AI Response:', text);
+		if (!text) throw new Error('Empty AI response');
 
-        const parsed = JSON.parse(text);
-        const values = Object.values(parsed) as string[];
+		const parsed = JSON.parse(text);
+		const values = Object.values(parsed) as string[];
 
-        const validated = values.map((val, index) => {
-            if (archetypes.includes(val)) {
-                isAiGenerated[index] = true;
-                return val;
-            }
-            return getRandomArchetype();
-        });
+		const validated = values.map((val, index) => {
+			if (archetypes.includes(val)) {
+				isAiGenerated[index] = true;
+				return val;
+			}
+			return getRandomArchetype();
+		});
 
-        while (validated.length < expectedCount) {
-            validated.push(getRandomArchetype());
-        }
-		logger.log("AI Archetype Response:", validated, "AI Generated Flags:", isAiGenerated);
-        return { results: validated, isAiGenerated: isAiGenerated };
-
-    } catch (error) {
-        logger.error("AI Archetype Request Failed:", error);
-        return { 
-            results: Array.from({ length: expectedCount }, () => getRandomArchetype()), 
-            isAiGenerated: Array(expectedCount).fill(false) 
-        };
-    }
-}
+		while (validated.length < expectedCount) {
+			validated.push(getRandomArchetype());
+		}
+		logger.log(
+			'AI Archetype Response:',
+			validated,
+			'AI Generated Flags:',
+			isAiGenerated,
+		);
+		return { results: validated, isAiGenerated: isAiGenerated };
+	} catch (error) {
+		logger.error('AI Archetype Request Failed:', error);
+		return {
+			results: Array.from({ length: expectedCount }, () =>
+				getRandomArchetype(),
+			),
+			isAiGenerated: Array(expectedCount).fill(false),
+		};
+	}
+};

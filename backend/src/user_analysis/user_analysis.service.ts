@@ -26,7 +26,10 @@ export class UserAnalysisService {
 		userId: number,
 	): Promise<MoveTreeNode[] | null> {
 		this.logger.log('getUserAnalysis called');
-		const redisData = await this.redisService.getUserAnalysis(matchId, userId);
+		const redisData = await this.redisService.getUserAnalysis(
+			matchId,
+			userId,
+		);
 		this.logger.log(redisData);
 		if (redisData) {
 			return redisData as MoveTreeNode[];
@@ -38,7 +41,7 @@ export class UserAnalysisService {
 				eq(sc.userAnalysis.userId, userId),
 			),
 		});
-		
+
 		if (!dbRecord) {
 			return null;
 		}
@@ -61,7 +64,7 @@ export class UserAnalysisService {
 		});
 
 		if (existingRecord) {
-			this.logger.log("There is already a record! Updating...");
+			this.logger.log('There is already a record! Updating...');
 			await this.db
 				.update(sc.userAnalysis)
 				.set({
@@ -70,10 +73,8 @@ export class UserAnalysisService {
 				})
 				.where(eq(sc.userAnalysis.id, existingRecord.id));
 		} else {
-			this.logger.log("There is no existing record! Saving...");
-			await this.db
-			.insert(sc.userAnalysis)
-			.values({
+			this.logger.log('There is no existing record! Saving...');
+			await this.db.insert(sc.userAnalysis).values({
 				matchId: matchId,
 				userId: userId,
 				data: data,
@@ -83,11 +84,21 @@ export class UserAnalysisService {
 		await this.redisService.deleteUserAnalysis(matchId, userId);
 	}
 
-	async saveAnalysisFromRedis(matchId: string, userId: number): Promise<void> {
+	async saveAnalysisFromRedis(
+		matchId: string,
+		userId: number,
+	): Promise<void> {
 		this.logger.log('saveAnalysisFromRedis called');
-		const redisData = await this.redisService.getUserAnalysis(matchId, userId);
+		const redisData = await this.redisService.getUserAnalysis(
+			matchId,
+			userId,
+		);
 		if (redisData) {
-			await this.saveUserAnalysis(matchId, userId, redisData as MoveTreeNode[]);
+			await this.saveUserAnalysis(
+				matchId,
+				userId,
+				redisData as MoveTreeNode[],
+			);
 		}
 	}
 
@@ -100,18 +111,23 @@ export class UserAnalysisService {
 					and(
 						eq(sc.userAnalysis.matchId, matchId),
 						eq(sc.userAnalysis.userId, userId),
-					)
+					),
 				);
 			await this.redisService.deleteUserAnalysis(matchId, userId);
 		} catch (error) {
-			this.logger.error(`Failed to discard analysis for user ${userId}: ${error.message}`);
+			this.logger.error(
+				`Failed to discard analysis for user ${userId}: ${error.message}`,
+			);
 			throw error;
 		}
 	}
 
 	async isAnalyzing(matchId: string, userId: number): Promise<boolean> {
 		this.logger.log('isAnalyzing called');
-		const redisData = await this.redisService.getUserAnalysis(matchId, userId);
+		const redisData = await this.redisService.getUserAnalysis(
+			matchId,
+			userId,
+		);
 		if (redisData) return true;
 
 		const dbRecord = await this.db.query.userAnalysis.findFirst({

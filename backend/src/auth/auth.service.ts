@@ -1,4 +1,9 @@
-import { Injectable, Inject, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import {
+	Injectable,
+	Inject,
+	UnauthorizedException,
+	BadRequestException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
@@ -7,9 +12,9 @@ import { eq, or } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 interface User {
-	id: number,
-	email: string,
-	username: string
+	id: number;
+	email: string;
+	username: string;
 }
 
 @Injectable()
@@ -23,9 +28,12 @@ export class AuthService {
 		const existing = await this.db
 			.select()
 			.from(sc.users)
-			.where(or(eq(sc.users.email, email), eq(sc.users.username, username)))
+			.where(
+				or(eq(sc.users.email, email), eq(sc.users.username, username)),
+			)
 			.limit(1);
-		if (existing.length > 0) throw new BadRequestException('Email уже занят');
+		if (existing.length > 0)
+			throw new BadRequestException('Email уже занят');
 
 		const hashedPassword = await bcrypt.hash(pass, 10);
 
@@ -47,8 +55,8 @@ export class AuthService {
 			.from(sc.users)
 			.where(eq(sc.users.username, username))
 			.limit(1);
-		
-		if (user && await bcrypt.compare(pass, user.password)) {
+
+		if (user && (await bcrypt.compare(pass, user.password))) {
 			const { password, ...result } = user;
 			return result;
 		}
@@ -56,10 +64,14 @@ export class AuthService {
 	}
 
 	async login(user: User) {
-		const payload = { email: user.email, username: user.username, sub: user.id };
+		const payload = {
+			email: user.email,
+			username: user.username,
+			sub: user.id,
+		};
 		return {
 			access_token: this.jwtService.sign(payload),
-			user: { id: user.id, username: user.username, email: user.email }
+			user: { id: user.id, username: user.username, email: user.email },
 		};
 	}
 }

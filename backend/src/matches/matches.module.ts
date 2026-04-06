@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { MatchesController } from './matches.controller';
 import { MatchesService } from './matches.service';
+import { FollowService } from './follow.service';
 import { MatchesProcessor } from './matches.processor';
 import { MatchesGateway } from './matches.gateway';
 import { DrizzleModule } from 'src/drizzle/drizzle.module';
@@ -16,31 +17,33 @@ import { ArchetypeService } from './archetype.service';
 		DrizzleModule,
 		PlayersModule,
 		RedisModule,
-		BullModule.registerQueue({
-			name: 'analysis',
-			defaultJobOptions: {
-    			removeOnComplete: true, 
-    			removeOnFail: false,
-			}},
+		BullModule.registerQueue(
 			{
-			name: 'timer',
-			defaultJobOptions: {
-    			removeOnComplete: true, 
-    			removeOnFail: false,
-			}}
+				name: 'analysis',
+				defaultJobOptions: {
+					removeOnComplete: true,
+					removeOnFail: false,
+				},
+			},
+			{
+				name: 'timer',
+				defaultJobOptions: {
+					removeOnComplete: true,
+					removeOnFail: false,
+				},
+			},
 		),
 	],
-	controllers: [
-		MatchesController
-	],
+	controllers: [MatchesController],
 	providers: [
-		MatchesService, 
+		MatchesService,
+		FollowService,
 		MatchesProcessor,
 		MatchesGateway,
 		LifecycleService,
 		EngineService,
-		ArchetypeService
+		ArchetypeService,
 	],
-	exports: [MatchesService],
+	exports: [MatchesService, FollowService],
 })
 export class MatchesModule {}

@@ -43,11 +43,13 @@ export class MatchesGateway
 			if (username) {
 				await this.redisService.removeViewer(matchId, username);
 				await this.redisService.removeUserStatus(matchId, username);
-				
-				this.server.to(`analysis_stream_status:${matchId}:${username}`).emit('analysisStreamEnded', {
-					matchId,
-					username,
-				});
+
+				this.server
+					.to(`analysis_stream_status:${matchId}:${username}`)
+					.emit('analysisStreamEnded', {
+						matchId,
+						username,
+					});
 
 				const counts = await this.redisService.getViewerData(matchId);
 				this.server
@@ -107,31 +109,49 @@ export class MatchesGateway
 	) {
 		this.logger.log('handleLeaveMatch called');
 		client.leave(data.matchId);
-		this.logger.log(`[Socket] Client ${client.id} left match ${data.matchId}`);
+		this.logger.log(
+			`[Socket] Client ${client.id} left match ${data.matchId}`,
+		);
 
 		if (data.username) {
 			await this.redisService.removeViewer(data.matchId, data.username);
-			await this.redisService.removeUserStatus(data.matchId, data.username);
+			await this.redisService.removeUserStatus(
+				data.matchId,
+				data.username,
+			);
 
-			this.server.to(`analysis_stream_status:${data.matchId}:${data.username}`).emit('analysisStreamEnded', {
-				matchId: data.matchId,
-				username: data.username,
-			});
+			this.server
+				.to(`analysis_stream_status:${data.matchId}:${data.username}`)
+				.emit('analysisStreamEnded', {
+					matchId: data.matchId,
+					username: data.username,
+				});
 		} else if (data.guestId) {
-			await this.redisService.removeGuestViewer(data.matchId, data.guestId);
+			await this.redisService.removeGuestViewer(
+				data.matchId,
+				data.guestId,
+			);
 		}
 
 		const counts = await this.redisService.getViewerData(data.matchId);
 		this.server
 			.to(`counter:${data.matchId}`)
 			.emit('viewer_count_update', { matchId: data.matchId, ...counts });
-		
-		client.emit('viewer_count_update', { matchId: data.matchId, ...counts });
+
+		client.emit('viewer_count_update', {
+			matchId: data.matchId,
+			...counts,
+		});
 	}
 
 	@SubscribeMessage('userStartedAnalysis')
 	async handleUserStartedAnalysis(
-		@MessageBody() data: { matchId: string; username: string; currentFen?: string },
+		@MessageBody()
+		data: {
+			matchId: string;
+			username: string;
+			currentFen?: string;
+		},
 	) {
 		this.logger.log('handleUserStartedAnalysis called');
 		await this.redisService.setUserStatus(data.matchId, data.username, {
@@ -151,10 +171,12 @@ export class MatchesGateway
 		this.logger.log('handleUserStoppedAnalysis called');
 		await this.redisService.removeUserStatus(data.matchId, data.username);
 
-		this.server.to(`analysis_stream_status:${data.matchId}:${data.username}`).emit('analysisStreamEnded', {
-			matchId: data.matchId,
-			username: data.username,
-		});
+		this.server
+			.to(`analysis_stream_status:${data.matchId}:${data.username}`)
+			.emit('analysisStreamEnded', {
+				matchId: data.matchId,
+				username: data.username,
+			});
 
 		const counts = await this.redisService.getViewerData(data.matchId);
 		this.server
@@ -197,25 +219,31 @@ export class MatchesGateway
 
 	@SubscribeMessage('joinAnalysisStream')
 	handleJoinAnalysisStream(
-		@MessageBody() data: { matchId: string; userId: number; username: string },
+		@MessageBody()
+		data: { matchId: string; userId: number; username: string },
 		@ConnectedSocket() client: Socket,
 	) {
 		this.logger.log('handleJoinAnalysisStream called');
 		client.join(`analysis_stream:${data.matchId}:user:${data.userId}`);
 		if (data.username) {
-			client.join(`analysis_stream_status:${data.matchId}:${data.username}`);
+			client.join(
+				`analysis_stream_status:${data.matchId}:${data.username}`,
+			);
 		}
 	}
 
 	@SubscribeMessage('leaveAnalysisStream')
 	handleLeaveAnalysisStream(
-		@MessageBody() data: { matchId: string; userId: number; username: string },
+		@MessageBody()
+		data: { matchId: string; userId: number; username: string },
 		@ConnectedSocket() client: Socket,
 	) {
 		this.logger.log('handleLeaveAnalysisStream called');
 		client.leave(`analysis_stream:${data.matchId}:user:${data.userId}`);
 		if (data.username) {
-			client.leave(`analysis_stream_status:${data.matchId}:${data.username}`);
+			client.leave(
+				`analysis_stream_status:${data.matchId}:${data.username}`,
+			);
 		}
 	}
 

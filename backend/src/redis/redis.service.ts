@@ -53,7 +53,9 @@ export class RedisService {
 
 		const formattedUsernames = usernames.map((username) => {
 			const statusStr = statuses[username];
-			const status = statusStr ? JSON.parse(statusStr) : { isAnalyzing: false };
+			const status = statusStr
+				? JSON.parse(statusStr)
+				: { isAnalyzing: false };
 			return { username, ...status };
 		});
 

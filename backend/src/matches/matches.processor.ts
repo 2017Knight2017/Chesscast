@@ -9,13 +9,13 @@ import { eq } from 'drizzle-orm';
 import { LifecycleService } from './lifecycle.service';
 import { EngineService } from './engine.service';
 
-
 @Processor('timer')
 export class MatchesProcessor extends WorkerHost {
 	constructor(
 		private readonly lifecycleService: LifecycleService,
 		private readonly engineService: EngineService,
-		@Inject(forwardRef(() => MatchesGateway)) private readonly gateway: MatchesGateway,
+		@Inject(forwardRef(() => MatchesGateway))
+		private readonly gateway: MatchesGateway,
 		@Inject(DrizzleAsyncProvider) private db: NodePgDatabase<typeof sc>,
 		@InjectQueue('timer') private timerQueue: Queue,
 	) {
@@ -25,7 +25,9 @@ export class MatchesProcessor extends WorkerHost {
 
 	private readonly logger = new Logger(MatchesProcessor.name);
 
-	async process(job: Job<{ matchId: string; moveIndex: number }>): Promise<void> {
+	async process(
+		job: Job<{ matchId: string; moveIndex: number }>,
+	): Promise<void> {
 		this.logger.log('process called');
 		const { matchId, moveIndex } = job.data;
 
@@ -36,8 +38,9 @@ export class MatchesProcessor extends WorkerHost {
 			.limit(1);
 
 		const currentMoveNotation = analysis.notation[moveIndex];
-		
-		const { updatedMatch, nextDelay } = await this.engineService.processMove(matchId, currentMoveNotation);
+
+		const { updatedMatch, nextDelay } =
+			await this.engineService.processMove(matchId, currentMoveNotation);
 
 		this.gateway.server.to(matchId).emit('new_move', {
 			matchId,
@@ -46,7 +49,7 @@ export class MatchesProcessor extends WorkerHost {
 			fen: updatedMatch.fen,
 			whiteTimeMs: updatedMatch.whitePlayerTime,
 			blackTimeMs: updatedMatch.blackPlayerTime,
-			newestMoveAt: updatedMatch.newestMoveAt?.getTime()
+			newestMoveAt: updatedMatch.newestMoveAt?.getTime(),
 		});
 
 		const nextIndex = moveIndex + 1;
@@ -61,9 +64,10 @@ export class MatchesProcessor extends WorkerHost {
 				},
 			);
 		} else {
-			this.gateway.server.to(matchId).emit('match_finished', { matchId, outcome: analysis.outcome });
+			this.gateway.server
+				.to(matchId)
+				.emit('match_finished', { matchId, outcome: analysis.outcome });
 			await this.lifecycleService.finishGame(matchId);
 		}
 	}
 }
-

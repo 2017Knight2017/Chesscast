@@ -12,7 +12,7 @@ export class PlayersController {
 	@Get('search')
 	async searchPlayers(@Query('name') name: string) {
 		this.logger.log('searchPlayers called');
-    	if (!name || name.length < 2) return [];
+		if (!name || name.length < 2) return [];
 		return this.playersService.findByName(name);
 	}
 }

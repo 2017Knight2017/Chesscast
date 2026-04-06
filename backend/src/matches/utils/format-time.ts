@@ -4,7 +4,7 @@ export const formatTime = (seconds: number): string => {
 	const s = seconds % 60;
 	const mm = m.toString().padStart(2, '0');
 	const ss = s.toString().padStart(2, '0');
-	
+
 	if (h < 1) return `${mm}:${ss}`;
 	else return `${h}:${mm}:${ss}`;
 };

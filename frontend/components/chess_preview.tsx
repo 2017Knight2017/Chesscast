@@ -4,6 +4,7 @@ import Chessground from '@bezalel6/react-chessground';
 import { Match } from '@/types/types'
 import { useBroadcast } from '@/hooks/use_broadcast';
 import { useChessClock } from '@/hooks/use_chess_clocks';
+import { useFollowMatch } from '@/hooks/use_follow_match';
 import { EvalBar } from './eval_bar';
 
 export const ChessPreview = ({ match }: { match: Match }) => {
@@ -13,12 +14,30 @@ export const ChessPreview = ({ match }: { match: Match }) => {
 	const {whiteTimeFormatted, blackTimeFormatted} = useChessClock(
 		isLive ? currentMoveData : null,
 		match.timeControl*1000
-	)
+	);
+	const { isFollowing, isLoading, toggleFollow } = useFollowMatch(match.id);
+
+	const handleFollowClick = (e: React.MouseEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
+		toggleFollow();
+	};
 	const evaluations = currentMoveData?.evaluations || match.evaluations || [];
 	const currentEval = evaluations.length > 0 ? evaluations[evaluations.length - 1] : 0;
 	return (
 		<div className="relative aspect-square w-full bg-[#262421] p-2 flex flex-col justify-between">
-			
+
+			<button
+				onClick={handleFollowClick}
+				disabled={isLoading}
+				className="absolute top-1 right-1 z-10 p-1 rounded hover:bg-white/10 transition-colors disabled:opacity-50"
+				title={isFollowing ? "Unfollow match" : "Follow match"}
+			>
+				<svg width="16" height="16" viewBox="0 0 24 24" fill={isFollowing ? "#fbbf24" : "none"} stroke="#fbbf24" strokeWidth="2" className="block">
+					<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+				</svg>
+			</button>
+
 			<div className="flex justify-between items-center mb-1 px-1">
 				<div className="flex items-center gap-2">
 					<div className="w-5 h-5 bg-black border border-slate-600 rounded-sm" />

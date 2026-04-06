@@ -21,47 +21,91 @@ export class MatchesService {
 		@InjectQueue('analysis') private analysisQueue: Queue,
 		@Inject(RedisService) private redisService: RedisService,
 		private archetypeService: ArchetypeService,
-		private engineService: EngineService
+		private engineService: EngineService,
 	) {}
 
 	async createBroadcast(
-		authorId: number, author: string, title: string, scheduledAt: Date, pgn: string, 
-		whitePlayer: string, blackPlayer: string, archetypes: [string, string], 
-		timeControl: number, timeIncrement: number, controlMove: number = 0,
-		bonusTimeMin: number = 0, nextControlMoveAfter: number = 0, newTimeIncrement: number = 0
+		authorId: number,
+		author: string,
+		title: string,
+		scheduledAt: Date,
+		pgn: string,
+		whitePlayer: string,
+		blackPlayer: string,
+		archetypes: [string, string],
+		timeControl: number,
+		timeIncrement: number,
+		controlMove: number = 0,
+		bonusTimeMin: number = 0,
+		nextControlMoveAfter: number = 0,
+		newTimeIncrement: number = 0,
 	) {
 		this.logger.log('createBroadcast called');
-		
-		const validatedArchetypes = await this.archetypeService.validate(whitePlayer, blackPlayer, archetypes);
 
-		const [analysis] = await this.db.insert(sc.analysis).values({
-			pgn, timeControl, controlMove, increment: timeIncrement, bonusTimeMin,
-			newControlMoveEvery: nextControlMoveAfter, newIncrement: newTimeIncrement,
-		}).returning();
+		const validatedArchetypes = await this.archetypeService.validate(
+			whitePlayer,
+			blackPlayer,
+			archetypes,
+		);
+
+		const [analysis] = await this.db
+			.insert(sc.analysis)
+			.values({
+				pgn,
+				timeControl,
+				controlMove,
+				increment: timeIncrement,
+				bonusTimeMin,
+				newControlMoveEvery: nextControlMoveAfter,
+				newIncrement: newTimeIncrement,
+			})
+			.returning();
 
 		await this.db.insert(sc.matches).values({
-			id: analysis.id, author, title, whitePlayer, blackPlayer,
-			whitePlayerTime: timeControl * 1000, blackPlayerTime: timeControl * 1000,
-			status: 'processing', moveIndex: 0, scheduledAt
+			id: analysis.id,
+			author,
+			title,
+			whitePlayer,
+			blackPlayer,
+			whitePlayerTime: timeControl * 1000,
+			blackPlayerTime: timeControl * 1000,
+			status: 'processing',
+			moveIndex: 0,
+			scheduledAt,
 		});
-		
-		await this.db.insert(sc.plannedBroadcasts).values({ userId: authorId, matchId: analysis.id });
 
-		await this.analysisQueue.add('analyze', {
-			id: analysis.id, pgn, time_control: timeControl, control_move: controlMove,
-			time_increment: timeIncrement, bonus_time_min: bonusTimeMin,
-			next_control_move_after: nextControlMoveAfter, new_time_increment: newTimeIncrement,
-			archetypes: validatedArchetypes
-		}, { attempts: 3, backoff: 5000 });
+		await this.db
+			.insert(sc.plannedBroadcasts)
+			.values({ userId: authorId, matchId: analysis.id });
+
+		await this.analysisQueue.add(
+			'analyze',
+			{
+				id: analysis.id,
+				pgn,
+				time_control: timeControl,
+				control_move: controlMove,
+				time_increment: timeIncrement,
+				bonus_time_min: bonusTimeMin,
+				next_control_move_after: nextControlMoveAfter,
+				new_time_increment: newTimeIncrement,
+				archetypes: validatedArchetypes,
+			},
+			{ attempts: 3, backoff: 5000 },
+		);
 
 		return analysis;
 	}
 
 	async checkGameState(id: string): Promise<Match | null> {
 		this.logger.log('checkGameState called');
-		
-		const match = await this.db.query.matches.findFirst({ where: eq(sc.matches.id, id) });
-		const analysis = await this.db.query.analysis.findFirst({ where: eq(sc.analysis.id, id) });
+
+		const match = await this.db.query.matches.findFirst({
+			where: eq(sc.matches.id, id),
+		});
+		const analysis = await this.db.query.analysis.findFirst({
+			where: eq(sc.analysis.id, id),
+		});
 
 		if (!match || !analysis) return null;
 
@@ -77,50 +121,90 @@ export class MatchesService {
 			timeControl: analysis.timeControl,
 			status: match.status,
 			evaluations: analysis.evaluations.slice(0, match.moveIndex) || null,
-			white: { name: match.whitePlayer, time: formatTime(Math.floor(match.whitePlayerTime / 1000)), timeMs: match.whitePlayerTime },
-			black: { name: match.blackPlayer, time: formatTime(Math.floor(match.blackPlayerTime / 1000)), timeMs: match.blackPlayerTime },
+			white: {
+				name: match.whitePlayer,
+				time: formatTime(Math.floor(match.whitePlayerTime / 1000)),
+				timeMs: match.whitePlayerTime,
+			},
+			black: {
+				name: match.blackPlayer,
+				time: formatTime(Math.floor(match.blackPlayerTime / 1000)),
+				timeMs: match.blackPlayerTime,
+			},
 			fen: match.fen || '',
 			viewerCount: viewers,
 			history: analysis.notation.slice(0, match.moveIndex) || [],
 			outcome: analysis.outcome || undefined,
 			newestMoveAt: match.newestMoveAt?.getTime(),
-			timesRemaining: analysis.timesRemaining.slice(0, match.moveIndex) || null
+			timesRemaining:
+				analysis.timesRemaining.slice(0, match.moveIndex) || null,
 		};
 	}
 
-	async getMatchesByTable({ table, isJoinTable, userId, status }: {
-		table: PgTableWithColumns<any>, isJoinTable: boolean, userId?: number, status?: Match["status"]
+	async getMatchesByTable({
+		table,
+		isJoinTable,
+		userId,
+		status,
+	}: {
+		table: PgTableWithColumns<any>;
+		isJoinTable: boolean;
+		userId?: number;
+		status?: Match['status'];
 	}): Promise<Match[]> {
 		this.logger.log('getMatchesByTable called');
-		
-		let query = this.db
+
+		const query = this.db
 			.select({
-				id: sc.matches.id, author: sc.users.username, title: sc.matches.title,
-				status: sc.matches.status, whitePlayer: sc.matches.whitePlayer, blackPlayer: sc.matches.blackPlayer,
-				whitePlayerTime: sc.matches.whitePlayerTime, blackPlayerTime: sc.matches.blackPlayerTime,
-				timeControl: sc.analysis.timeControl, fen: sc.matches.fen, newestMoveAt: sc.matches.newestMoveAt
+				id: sc.matches.id,
+				author: sc.users.username,
+				title: sc.matches.title,
+				status: sc.matches.status,
+				whitePlayer: sc.matches.whitePlayer,
+				blackPlayer: sc.matches.blackPlayer,
+				whitePlayerTime: sc.matches.whitePlayerTime,
+				blackPlayerTime: sc.matches.blackPlayerTime,
+				timeControl: sc.analysis.timeControl,
+				fen: sc.matches.fen,
+				newestMoveAt: sc.matches.newestMoveAt,
 			})
 			.from(sc.matches)
 			.innerJoin(sc.users, eq(sc.matches.author, sc.users.username))
 			.innerJoin(sc.analysis, eq(sc.analysis.id, sc.matches.id));
-			
+
 		if (isJoinTable && userId) {
-			query.innerJoin(table, eq(sc.matches.id, table.matchId)).where(eq(table.userId, userId));
+			query
+				.innerJoin(table, eq(sc.matches.id, table.matchId))
+				.where(eq(table.userId, userId));
 		} else if (status) {
 			query.where(eq(sc.matches.status, status));
 		}
-		
+
 		const raw = await query.orderBy(desc(sc.matches.createdAt)).limit(10);
-		const viewerCounts = await Promise.all(raw.map(match => this.redisService.getViewerData(match.id)));
+		const viewerCounts = await Promise.all(
+			raw.map((match) => this.redisService.getViewerData(match.id)),
+		);
 
 		return raw.map((match, index) => ({
-			id: match.id, title: match.title, author: match.author, timeControl: match.timeControl,
-			status: match.status as Match["status"],
-			white: { name: match.whitePlayer, time: formatTime(match.whitePlayerTime), timeMs: match.whitePlayerTime },
-			black: { name: match.blackPlayer, time: formatTime(match.blackPlayerTime), timeMs: match.blackPlayerTime },
+			id: match.id,
+			title: match.title,
+			author: match.author,
+			timeControl: match.timeControl,
+			status: match.status,
+			white: {
+				name: match.whitePlayer,
+				time: formatTime(match.whitePlayerTime),
+				timeMs: match.whitePlayerTime,
+			},
+			black: {
+				name: match.blackPlayer,
+				time: formatTime(match.blackPlayerTime),
+				timeMs: match.blackPlayerTime,
+			},
 			fen: match.fen || '',
-			viewerCount: viewerCounts[index].count + viewerCounts[index].guestCount || 0,
-			newestMoveAt: match.newestMoveAt?.getTime()
+			viewerCount:
+				viewerCounts[index].count + viewerCounts[index].guestCount || 0,
+			newestMoveAt: match.newestMoveAt?.getTime(),
 		}));
 	}
 }

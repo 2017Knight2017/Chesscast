@@ -12,7 +12,7 @@ export class MatchCronService {
 
 	constructor(
 		@Inject(DrizzleAsyncProvider) private db: NodePgDatabase<typeof sc>,
-		private matchLifecycleService: LifecycleService
+		private matchLifecycleService: LifecycleService,
 	) {}
 
 	@Cron(CronExpression.EVERY_MINUTE)
@@ -22,15 +22,27 @@ export class MatchCronService {
 
 		const started = await this.db
 			.update(sc.matches)
-			.set({ status: 'in_progress', moveIndex: 0, newestMoveAt: new Date() })
-			.where(and(eq(sc.matches.status, 'waiting'), lte(sc.matches.scheduledAt, now)))
+			.set({
+				status: 'in_progress',
+				moveIndex: 0,
+				newestMoveAt: new Date(),
+			})
+			.where(
+				and(
+					eq(sc.matches.status, 'waiting'),
+					lte(sc.matches.scheduledAt, now),
+				),
+			)
 			.returning({ id: sc.matches.id });
 
 		for (const match of started) {
 			try {
 				await this.matchLifecycleService.startBroadcast(match.id);
 			} catch (err) {
-				this.logger.error(`Ошибка запуска таймера для ${match.id}:`, err);
+				this.logger.error(
+					`Ошибка запуска таймера для ${match.id}:`,
+					err,
+				);
 			}
 		}
 	}

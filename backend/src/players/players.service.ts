@@ -32,7 +32,9 @@ export class PlayersService {
 			.where(eq(sc.players.name, name))
 			.execute();
 
-		this.logger.log(`Successfully cached archetype for ${name}: ${archetype}`);
+		this.logger.log(
+			`Successfully cached archetype for ${name}: ${archetype}`,
+		);
 	}
 
 	async getArchetypeFromDB(name: string) {
@@ -41,10 +43,7 @@ export class PlayersService {
 			.select()
 			.from(sc.players)
 			.where(
-				and(
-					eq(sc.players.name, name),
-					isNotNull(sc.players.archetype)
-				)
+				and(eq(sc.players.name, name), isNotNull(sc.players.archetype)),
 			);
 		if (!result || !result[0]?.archetype) return undefined;
 		else return result[0]?.archetype;

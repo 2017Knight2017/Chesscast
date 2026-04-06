@@ -7,16 +7,16 @@ import { JwtStrategy } from './jwt.strategy';
 import { DrizzleModule } from '../drizzle/drizzle.module';
 
 @Module({
-  imports: [
-    PassportModule,
-	DrizzleModule,
-    JwtModule.register({
-      secret: process.env.KEY || 'default_secret_key',
-      signOptions: { expiresIn: '1d' },
-    }),
-  ],
-  providers: [AuthService, JwtStrategy],
-  controllers: [AuthController],
-  exports: [AuthService],
+	imports: [
+		PassportModule,
+		DrizzleModule,
+		JwtModule.register({
+			secret: process.env.KEY || 'default_secret_key',
+			signOptions: { expiresIn: '1d' },
+		}),
+	],
+	providers: [AuthService, JwtStrategy],
+	controllers: [AuthController],
+	exports: [AuthService],
 })
 export class AuthModule {}
