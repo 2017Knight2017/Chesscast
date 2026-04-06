@@ -13,6 +13,12 @@ import { Queue } from 'bullmq';
 import { RedisService } from 'src/redis/redis.service';
 import { Logger } from '@nestjs/common';
 
+interface SocketData {
+	matchId?: string;
+	guestId?: string;
+	username?: string;
+}
+
 @WebSocketGateway({ cors: { origin: '*' } })
 export class MatchesGateway
 	implements OnGatewayConnection, OnGatewayDisconnect
@@ -32,7 +38,7 @@ export class MatchesGateway
 		this.logger.log(`[Socket] Client connected: ${client.id}`);
 	}
 
-	async handleDisconnect(client: Socket) {
+	async handleDisconnect(client: Socket<any, any, any, SocketData>) {
 		this.logger.log(`[Socket] Client disconnected: ${client.id}`);
 
 		const matchId = client.data?.matchId;
@@ -69,10 +75,10 @@ export class MatchesGateway
 	async handleJoinMatch(
 		@MessageBody()
 		data: { matchId: string; username?: string; guestId?: string },
-		@ConnectedSocket() client: Socket,
+		@ConnectedSocket() client: Socket<any, any, any, SocketData>,
 	) {
 		this.logger.log('handleJoinMatch called');
-		client.join(data.matchId);
+		await client.join(data.matchId);
 		client.data.matchId = data.matchId;
 
 		this.logger.log(`Client ${client.id} joined room: ${data.matchId}`);
@@ -108,7 +114,7 @@ export class MatchesGateway
 		@ConnectedSocket() client: Socket,
 	) {
 		this.logger.log('handleLeaveMatch called');
-		client.leave(data.matchId);
+		await client.leave(data.matchId);
 		this.logger.log(
 			`[Socket] Client ${client.id} left match ${data.matchId}`,
 		);
@@ -203,45 +209,49 @@ export class MatchesGateway
 	async handleSubscribe(client: Socket, data: { matchIds: string[] }) {
 		this.logger.log('handleSubscribe called');
 		for (const id of data.matchIds) {
-			client.join(`counter:${id}`);
+			await client.join(`counter:${id}`);
 			const counts = await this.redisService.getViewerData(id);
 			client.emit('viewer_count_update', { matchId: id, ...counts });
 		}
 	}
 
 	@SubscribeMessage('unsubscribeFromCounts')
-	handleUnsubscribe(client: Socket, data: { matchIds: string[] }) {
+	async handleUnsubscribe(client: Socket, data: { matchIds: string[] }) {
 		this.logger.log('handleUnsubscribe called');
-		data.matchIds.forEach((id) => {
-			client.leave(`counter:${id}`);
-		});
+		for (const id of data.matchIds) {
+			await client.leave(`counter:${id}`);
+		}
 	}
 
 	@SubscribeMessage('joinAnalysisStream')
-	handleJoinAnalysisStream(
+	async handleJoinAnalysisStream(
 		@MessageBody()
 		data: { matchId: string; userId: number; username: string },
 		@ConnectedSocket() client: Socket,
 	) {
 		this.logger.log('handleJoinAnalysisStream called');
-		client.join(`analysis_stream:${data.matchId}:user:${data.userId}`);
+		await client.join(`
+			analysis_stream:${data.matchId}:user:${data.userId}
+		`);
 		if (data.username) {
-			client.join(
+			await client.join(
 				`analysis_stream_status:${data.matchId}:${data.username}`,
 			);
 		}
 	}
 
 	@SubscribeMessage('leaveAnalysisStream')
-	handleLeaveAnalysisStream(
+	async handleLeaveAnalysisStream(
 		@MessageBody()
 		data: { matchId: string; userId: number; username: string },
 		@ConnectedSocket() client: Socket,
 	) {
 		this.logger.log('handleLeaveAnalysisStream called');
-		client.leave(`analysis_stream:${data.matchId}:user:${data.userId}`);
+		await client.leave(`
+			analysis_stream:${data.matchId}:user:${data.userId}
+		`);
 		if (data.username) {
-			client.leave(
+			await client.leave(
 				`analysis_stream_status:${data.matchId}:${data.username}`,
 			);
 		}
@@ -256,7 +266,6 @@ export class MatchesGateway
 			movesTree: object;
 			currentPath: number[];
 		},
-		@ConnectedSocket() client: Socket,
 	) {
 		this.logger.log('handleSyncUserAnalysis called');
 		await this.redisService.setUserAnalysis(
@@ -276,20 +285,20 @@ export class MatchesGateway
 	}
 
 	@SubscribeMessage('joinMatchProcessing')
-	handlejoinMatchProcessing(
+	async handlejoinMatchProcessing(
 		@MessageBody() data: { matchId: string },
 		@ConnectedSocket() client: Socket,
 	) {
 		this.logger.log('handlejoinMatchProcessing called');
-		client.join(`is_processing:${data.matchId}`);
+		await client.join(`is_processing:${data.matchId}`);
 	}
 
 	@SubscribeMessage('leaveMatchProcessing')
-	handleleaveMatchProcessing(
+	async handleleaveMatchProcessing(
 		@MessageBody() data: { matchId: string },
 		@ConnectedSocket() client: Socket,
 	) {
 		this.logger.log('handleleaveMatchProcessing called');
-		client.leave(`is_processing:${data.matchId}`);
+		await client.leave(`is_processing:${data.matchId}`);
 	}
 }

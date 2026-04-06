@@ -1,26 +1,35 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useAnalysisState } from '@/context/analysis_context';
-
+import { useEffect } from "react";
+import { useAnalysisState } from "@/context/analysis_context";
 
 export function useKeyboardNavigation(totalMoves: number) {
-	console.log("[use_keyboard_navigation.ts:useKeyboardNavigation]", { totalMoves });
-	const { 
-		selectedMoveIndex, 
-		setSelectedMoveIndex, 
+	console.log("[use_keyboard_navigation.ts:useKeyboardNavigation]", {
+		totalMoves,
+	});
+	const {
+		selectedMoveIndex,
+		setSelectedMoveIndex,
 		isAnalysisMode,
 		currentPath,
 		setCurrentPath,
-		analysisTree
+		analysisTree,
 	} = useAnalysisState();
 
 	useEffect(() => {
 		const handleKeyDown = (event: KeyboardEvent) => {
-			console.log("[use_keyboard_navigation.ts:handleKeyDown]", { key: event.key, isAnalysisMode });
-			if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
+			console.log("[use_keyboard_navigation.ts:handleKeyDown]", {
+				key: event.key,
+				isAnalysisMode,
+			});
+			if (
+				event.target instanceof HTMLInputElement ||
+				event.target instanceof HTMLTextAreaElement
+			)
+				return;
 
-			const branchPoint = selectedMoveIndex !== null ? selectedMoveIndex : totalMoves - 1;
+			const branchPoint =
+				selectedMoveIndex !== null ? selectedMoveIndex : totalMoves - 1;
 
 			if (isAnalysisMode) {
 				switch (event.key) {
@@ -56,9 +65,10 @@ export function useKeyboardNavigation(totalMoves: number) {
 						if (currentPath.length > 0) {
 							let parentLevel = analysisTree[branchPoint] || [];
 							for (let i = 0; i < currentPath.length - 1; i++) {
-								parentLevel = parentLevel[currentPath[i]]?.s || [];
+								parentLevel =
+									parentLevel[currentPath[i]]?.s || [];
 							}
-							
+
 							const lastIdx = currentPath[currentPath.length - 1];
 							if (lastIdx > 0) {
 								const newPath = [...currentPath];
@@ -69,14 +79,15 @@ export function useKeyboardNavigation(totalMoves: number) {
 							setSelectedMoveIndex(-1);
 						}
 						break;
-					
+
 					case "ArrowDown":
 						if (currentPath.length > 0) {
 							let parentLevel = analysisTree[branchPoint] || [];
 							for (let i = 0; i < currentPath.length - 1; i++) {
-								parentLevel = parentLevel[currentPath[i]]?.s || [];
+								parentLevel =
+									parentLevel[currentPath[i]]?.s || [];
 							}
-							
+
 							const lastIdx = currentPath[currentPath.length - 1];
 							if (lastIdx < parentLevel.length - 1) {
 								const newPath = [...currentPath];
@@ -84,7 +95,10 @@ export function useKeyboardNavigation(totalMoves: number) {
 								setCurrentPath(newPath);
 							}
 						} else {
-							if (analysisTree[branchPoint] && analysisTree[branchPoint].length > 0) {
+							if (
+								analysisTree[branchPoint] &&
+								analysisTree[branchPoint].length > 0
+							) {
 								setCurrentPath([0]);
 							} else {
 								setSelectedMoveIndex(totalMoves - 1);
@@ -92,8 +106,7 @@ export function useKeyboardNavigation(totalMoves: number) {
 						}
 						break;
 				}
-			} 
-			else {
+			} else {
 				const currentIndex = selectedMoveIndex ?? totalMoves - 1;
 				switch (event.key) {
 					case "ArrowLeft":
@@ -108,17 +121,25 @@ export function useKeyboardNavigation(totalMoves: number) {
 							setSelectedMoveIndex(null);
 						}
 						break;
-					case "ArrowUp": 
+					case "ArrowUp":
 						setSelectedMoveIndex(-1);
 						break;
 					case "ArrowDown":
-						setSelectedMoveIndex(totalMoves - 1); 
+						setSelectedMoveIndex(totalMoves - 1);
 						break;
 				}
 			}
 		};
 
-		window.addEventListener('keydown', handleKeyDown);
-		return () => window.removeEventListener('keydown', handleKeyDown);
-	}, [totalMoves, selectedMoveIndex, setSelectedMoveIndex, isAnalysisMode, currentPath, setCurrentPath, analysisTree]);
+		window.addEventListener("keydown", handleKeyDown);
+		return () => window.removeEventListener("keydown", handleKeyDown);
+	}, [
+		totalMoves,
+		selectedMoveIndex,
+		setSelectedMoveIndex,
+		isAnalysisMode,
+		currentPath,
+		setCurrentPath,
+		analysisTree,
+	]);
 }

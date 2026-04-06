@@ -1,56 +1,75 @@
-'use client'
+"use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { SyncPayload } from '@/types/types';
+import { useState, useEffect, useRef } from "react";
+import { SyncPayload } from "@/types/types";
 
-const getTurnFromFen = (fen: string): 'w' | 'b' => fen.split(' ')[1] === "w" ? "w" : "b";
+const getTurnFromFen = (fen: string): "w" | "b" =>
+	fen.split(" ")[1] === "w" ? "w" : "b";
 
-export const useChessClock = (serverState: SyncPayload | null, initialTimeMs: number, isPaused?: boolean) => {
-	console.log("[use_chess_clocks.ts:useChessClock]", { serverStateFen: serverState?.fen, initialTimeMs, isPaused });
-	const [displayWhite, setDisplayWhite] = useState(initialTimeMs || 0);
-	const [displayBlack, setDisplayBlack] = useState(initialTimeMs || 0);
-	const [isHydrated, setIsHydrated] = useState(false);
+export const useChessClock = (
+	serverState: SyncPayload | null,
+	initialTimeMs: number,
+	isPaused?: boolean,
+) => {
+	const [displayWhite, setDisplayWhite] = useState(
+		serverState?.whiteTimeMs ?? initialTimeMs ?? 0,
+	);
+	const [displayBlack, setDisplayBlack] = useState(
+		serverState?.blackTimeMs ?? initialTimeMs ?? 0,
+	);
 
 	const stateRef = useRef(serverState);
-	const lastWhiteSecRef = useRef(Math.floor((initialTimeMs || 0) / 1000));
-	const lastBlackSecRef = useRef(Math.floor((initialTimeMs || 0) / 1000));
+	const lastWhiteSecRef = useRef(Math.floor((displayWhite || 0) / 1000));
+	const lastBlackSecRef = useRef(Math.floor((displayBlack || 0) / 1000));
 
 	useEffect(() => {
-		setIsHydrated(true);
-	}, []);
-
-	useEffect(() => {
-		if (!serverState) {
-			if (initialTimeMs !== undefined) {
-				setDisplayWhite(initialTimeMs);
-				setDisplayBlack(initialTimeMs);
-				lastWhiteSecRef.current = Math.floor(initialTimeMs / 1000);
-				lastBlackSecRef.current = Math.floor(initialTimeMs / 1000);
-			}
-			return;
-		}
-		
 		stateRef.current = serverState;
 
-		const now = Date.now();
-		const elapsedSinceMove = (isPaused || !serverState.newestMoveAt) ? 0 : Math.max(0, now - serverState.newestMoveAt);
-		const turn = getTurnFromFen(serverState.fen);
-		
-		const currentWhite = turn === 'w' 
-			? Math.max(0, serverState.whiteTimeMs - elapsedSinceMove)
-			: serverState.whiteTimeMs;
-		const currentBlack = turn === 'b'
-			? Math.max(0, serverState.blackTimeMs - elapsedSinceMove)
-			: serverState.blackTimeMs;
+		queueMicrotask(() => {
+			if (!serverState) {
+				if (initialTimeMs !== undefined) {
+					setDisplayWhite(initialTimeMs);
+					setDisplayBlack(initialTimeMs);
+					lastWhiteSecRef.current = Math.floor(initialTimeMs / 1000);
+					lastBlackSecRef.current = Math.floor(initialTimeMs / 1000);
+				}
+				return;
+			}
 
-		setDisplayWhite(currentWhite);
-		setDisplayBlack(currentBlack);
-		lastWhiteSecRef.current = Math.floor(currentWhite / 1000);
-		lastBlackSecRef.current = Math.floor(currentBlack / 1000);
+			const now = Date.now();
+			const elapsedSinceMove =
+				isPaused || !serverState.newestMoveAt
+					? 0
+					: Math.max(0, now - serverState.newestMoveAt);
+
+			const turn =
+				typeof getTurnFromFen === "function"
+					? getTurnFromFen(serverState.fen)
+					: "w";
+
+			const currentWhite =
+				turn === "w"
+					? Math.max(0, serverState.whiteTimeMs - elapsedSinceMove)
+					: serverState.whiteTimeMs;
+			const currentBlack =
+				turn === "b"
+					? Math.max(0, serverState.blackTimeMs - elapsedSinceMove)
+					: serverState.blackTimeMs;
+
+			setDisplayWhite((prev) =>
+				Math.abs(prev - currentWhite) > 10 ? currentWhite : prev,
+			);
+			setDisplayBlack((prev) =>
+				Math.abs(prev - currentBlack) > 10 ? currentBlack : prev,
+			);
+
+			lastWhiteSecRef.current = Math.floor(currentWhite / 1000);
+			lastBlackSecRef.current = Math.floor(currentBlack / 1000);
+		});
 	}, [serverState, initialTimeMs, isPaused]);
 
 	useEffect(() => {
-		if (!isHydrated || isPaused) return;
+		if (isPaused) return;
 
 		let animationFrameId: number;
 
@@ -60,13 +79,20 @@ export const useChessClock = (serverState: SyncPayload | null, initialTimeMs: nu
 				animationFrameId = requestAnimationFrame(tick);
 				return;
 			}
-			
-			const now = Date.now();
-			const elapsedSinceMove = Math.max(0, now - (currentServerState.newestMoveAt || now));
-			
-			const { fen, whiteTimeMs, blackTimeMs } = currentServerState;
 
-			if (getTurnFromFen(fen) === 'b') {
+			const now = Date.now();
+			const elapsedSinceMove = Math.max(
+				0,
+				now - (currentServerState.newestMoveAt || now),
+			);
+
+			const { fen, whiteTimeMs, blackTimeMs } = currentServerState;
+			const turn =
+				typeof getTurnFromFen === "function"
+					? getTurnFromFen(fen)
+					: "w";
+
+			if (turn === "b") {
 				const newBlack = Math.max(0, blackTimeMs - elapsedSinceMove);
 				const newBlackSec = Math.floor(newBlack / 1000);
 				if (newBlackSec !== lastBlackSecRef.current) {
@@ -95,28 +121,28 @@ export const useChessClock = (serverState: SyncPayload | null, initialTimeMs: nu
 			animationFrameId = requestAnimationFrame(tick);
 		};
 
-		tick();
+		animationFrameId = requestAnimationFrame(tick);
 
-		return () => cancelAnimationFrame(animationFrameId);
-	}, [isHydrated, isPaused]);
+		return () => {
+			if (animationFrameId) cancelAnimationFrame(animationFrameId);
+		};
+	}, [isPaused]);
 
 	const formatTime = (ms: number): string => {
-		const totalSeconds = Math.floor(ms / 1000);
+		const totalSeconds = Math.max(0, Math.floor(ms / 1000));
 		const h = Math.floor(totalSeconds / 3600);
 		const m = Math.floor((totalSeconds % 3600) / 60);
 		const s = totalSeconds % 60;
-		const mm = m.toString().padStart(2, '0');
-		const ss = s.toString().padStart(2, '0');
-		
+
+		const mm = m.toString().padStart(2, "0");
+		const ss = s.toString().padStart(2, "0");
+
 		if (h < 1) return `${mm}:${ss}`;
-		else return `${h}:${mm}:${ss}`;
+		return `${h}:${mm}:${ss}`;
 	};
 
-	const whiteMsToFormat = isHydrated ? displayWhite : (serverState?.whiteTimeMs ?? initialTimeMs ?? 0);
-	const blackMsToFormat = isHydrated ? displayBlack : (serverState?.blackTimeMs ?? initialTimeMs ?? 0);
-
 	return {
-		whiteTimeFormatted: formatTime(whiteMsToFormat),
-		blackTimeFormatted: formatTime(blackMsToFormat),
+		whiteTimeFormatted: formatTime(displayWhite),
+		blackTimeFormatted: formatTime(displayBlack),
 	};
 };

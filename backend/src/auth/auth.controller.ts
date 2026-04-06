@@ -1,14 +1,5 @@
-import {
-	Controller,
-	Post,
-	Body,
-	Get,
-	UseGuards,
-	Request,
-	UnauthorizedException,
-} from '@nestjs/common';
+import { Controller, Post, Body, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard } from './jwt-auth.guard';
 
 interface RegisterData {
 	email: string;
@@ -42,11 +33,5 @@ export class AuthController {
 		);
 		if (!user) throw new UnauthorizedException('Incorrect Data');
 		return this.authService.login(user);
-	}
-
-	@UseGuards(JwtAuthGuard)
-	@Get('profile')
-	getProfile(@Request() req) {
-		return req.user;
 	}
 }

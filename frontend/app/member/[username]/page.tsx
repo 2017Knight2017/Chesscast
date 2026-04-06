@@ -1,23 +1,27 @@
-import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
-import { MemberSection } from './member_section';
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { MemberSection } from "./member_section";
 
-export default async function DashboardPage({ params }: { params: Promise<{ username: string }> }) {
+export default async function DashboardPage({
+	params,
+}: {
+	params: Promise<{ username: string }>;
+}) {
 	console.log("[member/[username]/page.tsx:DashboardPage]", { params });
 	const resolvedParams = await params;
 	const decodedUsername = decodeURIComponent(resolvedParams.username);
-	const styles = 'grid grid-cols-2 gap-6';
+	const styles = "grid grid-cols-2 gap-6";
 
 	const cookieStore = await cookies();
-    const token = cookieStore.get('token')?.value;
+	const token = cookieStore.get("token")?.value;
 
-    if (!token) {
-        redirect('/login');
-    }
+	if (!token) {
+		redirect("/login");
+	}
 
-	const headers = { 
-		'Authorization': `Bearer ${token}`,
-		'Content-Type': 'application/json'
+	const headers = {
+		Authorization: `Bearer ${token}`,
+		"Content-Type": "application/json",
 	};
 
 	const [ownedRes, followedRes] = await Promise.all([
@@ -25,7 +29,10 @@ export default async function DashboardPage({ params }: { params: Promise<{ user
 		fetch(`${process.env.NEST_API_URL}/matches/my_followed`, { headers }),
 	]);
 
-	const [ownedMatches, followedMatches] = await Promise.all([ ownedRes.json(), followedRes.json() ]); 
+	const [ownedMatches, followedMatches] = await Promise.all([
+		ownedRes.json(),
+		followedRes.json(),
+	]);
 
 	return (
 		<div className="max-w-6xl mx-auto p-6 pt-20 space-y-12">
@@ -34,15 +41,19 @@ export default async function DashboardPage({ params }: { params: Promise<{ user
 			</h1>
 
 			<section className="space-y-6">
-				<h2 className="text-2xl font-semibold border-[#8d6e63] border-l-4 pl-4">My Followed</h2>
-				
+				<h2 className="text-2xl font-semibold border-[#8d6e63] border-l-4 pl-4">
+					My Followed
+				</h2>
+
 				<MemberSection matches={followedMatches} styles={styles} />
 			</section>
 
 			<section className="space-y-6">
-				<h2 className="text-2xl font-semibold border-[#8d6e63] border-l-4 pl-4">My Broadcasts</h2>
-				
-				<MemberSection matches={ownedMatches} styles={styles}/>
+				<h2 className="text-2xl font-semibold border-[#8d6e63] border-l-4 pl-4">
+					My Broadcasts
+				</h2>
+
+				<MemberSection matches={ownedMatches} styles={styles} />
 			</section>
 		</div>
 	);

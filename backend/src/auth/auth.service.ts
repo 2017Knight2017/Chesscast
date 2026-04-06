@@ -1,9 +1,4 @@
-import {
-	Injectable,
-	Inject,
-	UnauthorizedException,
-	BadRequestException,
-} from '@nestjs/common';
+import { Injectable, Inject, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
@@ -57,13 +52,13 @@ export class AuthService {
 			.limit(1);
 
 		if (user && (await bcrypt.compare(pass, user.password))) {
-			const { password, ...result } = user;
+			const { ...result } = user;
 			return result;
 		}
 		return null;
 	}
 
-	async login(user: User) {
+	login(user: User) {
 		const payload = {
 			email: user.email,
 			username: user.username,

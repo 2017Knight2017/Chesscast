@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { MoveList } from './move_list';
-import { SpectatorList } from './spectator_list';
-import { ViewerStatus } from '@/hooks/use_viewer_counts';
-import { Move } from '@/types/types';
-import { ParaboardList } from './paraboard_list';
+import { useState } from "react";
+import { MoveList } from "./move_list";
+import { SpectatorList } from "./spectator_list";
+import { ViewerStatus } from "@/hooks/use_viewer_counts";
+import { Move } from "@/types/types";
+import { ParaboardList } from "./paraboard_list";
 
 interface MobileBottomPanelProps {
 	matchId: string;
@@ -16,38 +16,47 @@ interface MobileBottomPanelProps {
 	finalIsEnded: boolean;
 }
 
-export function MobileBottomPanel({ matchId, onInspectUser, currentMoveData, usernames, guestCount, finalIsEnded }: MobileBottomPanelProps) {
-	const [activeTab, setActiveTab] = useState<'moves' | 'spectators' | 'boards'>('moves');
+export function MobileBottomPanel({
+	matchId,
+	onInspectUser,
+	currentMoveData,
+	usernames,
+	guestCount,
+	finalIsEnded,
+}: MobileBottomPanelProps) {
+	const [activeTab, setActiveTab] = useState<
+		"moves" | "spectators" | "boards"
+	>("moves");
 
 	return (
 		<div className="flex flex-col h-[40vh] bg-amber-950 border-t border-amber-800/30">
 			<div className="flex border-b border-amber-800/20">
 				<button
-					onClick={() => setActiveTab('moves')}
+					onClick={() => setActiveTab("moves")}
 					className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-colors ${
-						activeTab === 'moves'
-							? 'bg-amber-800 text-amber-50'
-							: 'text-amber-50/60 hover:text-amber-50'
+						activeTab === "moves"
+							? "bg-amber-800 text-amber-50"
+							: "text-amber-50/60 hover:text-amber-50"
 					}`}
 				>
 					Moves
 				</button>
 				<button
-					onClick={() => setActiveTab('boards')}
+					onClick={() => setActiveTab("boards")}
 					className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-colors ${
-						activeTab === 'boards'
-							? 'bg-amber-800 text-amber-50'
-							: 'text-amber-50/60 hover:text-amber-50'
+						activeTab === "boards"
+							? "bg-amber-800 text-amber-50"
+							: "text-amber-50/60 hover:text-amber-50"
 					}`}
 				>
 					Boards
 				</button>
 				<button
-					onClick={() => setActiveTab('spectators')}
+					onClick={() => setActiveTab("spectators")}
 					className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-colors ${
-						activeTab === 'spectators'
-							? 'bg-amber-800 text-amber-50'
-							: 'text-amber-50/60 hover:text-amber-50'
+						activeTab === "spectators"
+							? "bg-amber-800 text-amber-50"
+							: "text-amber-50/60 hover:text-amber-50"
 					}`}
 				>
 					Spectators
@@ -55,23 +64,19 @@ export function MobileBottomPanel({ matchId, onInspectUser, currentMoveData, use
 			</div>
 			<div className="flex-1 overflow-hidden relative">
 				<div className="h-full overflow-auto">
-					{activeTab === 'moves' && (
+					{activeTab === "moves" && (
 						<MoveList
-							currentMoveData={currentMoveData} 
+							currentMoveData={currentMoveData}
 							finalIsEnded={finalIsEnded}
 						/>
 					)}
-					{activeTab === "boards" && (
-						<ParaboardList 
-							id={matchId} 
-						/>
-					)}
+					{activeTab === "boards" && <ParaboardList id={matchId} />}
 					{activeTab === "spectators" && (
-						<SpectatorList 
-							id={matchId} 
-							onInspectUser={onInspectUser} 
-							usernames={usernames} 
-							guestCount={guestCount} 
+						<SpectatorList
+							id={matchId}
+							onInspectUser={onInspectUser}
+							usernames={usernames}
+							guestCount={guestCount}
 							currentMoveData={currentMoveData}
 						/>
 					)}

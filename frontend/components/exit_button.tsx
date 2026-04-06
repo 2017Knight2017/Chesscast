@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
 
 interface ExitButtonProps {
 	className?: string;
@@ -12,12 +12,13 @@ export function ExitButton({ className }: ExitButtonProps) {
 
 	const handleLogout = () => {
 		console.log("[exit_button.tsx:handleLogout]");
-		localStorage.removeItem('token');
-		localStorage.removeItem('user');
+		localStorage.removeItem("token");
+		localStorage.removeItem("user");
 
-		document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+		document.cookie =
+			"token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
 
-		router.push('/login');
+		router.push("/login");
 
 		router.refresh();
 	};

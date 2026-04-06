@@ -174,7 +174,7 @@ export class MatchesService {
 
 		if (isJoinTable && userId) {
 			query
-				.innerJoin(table, eq(sc.matches.id, table.matchId))
+				.innerJoin(table, eq(sc.matches.id, table.matchId as string))
 				.where(eq(table.userId, userId));
 		} else if (status) {
 			query.where(eq(sc.matches.status, status));

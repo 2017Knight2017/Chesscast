@@ -1,64 +1,71 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { ChessBoard } from '@/app/watch/[id]/chess_board';
-import { UserAnalysisBoard, UserAnalysisBoardRef } from '@/app/watch/[id]/user_analysis_board';
-import { MoveList } from '@/app/watch/[id]/move_list';
-import { SpectatorList } from '@/app/watch/[id]/spectator_list';
-import { Match } from '@/types/types';
-import { useBroadcast } from '@/hooks/use_broadcast';
-import { useViewerCounts } from '@/hooks/use_viewer_counts';
-import { useAnalysisState } from '@/context/analysis_context';
-import { useAnalysisSync } from '@/hooks/use_analysis_sync';
-import { MobileBottomPanel } from '@/app/watch/[id]/mobile_bottom_panel';
-import { ParaboardList } from './paraboard_list';
+import { useState, useEffect, useRef, useMemo } from "react";
+import { ChessBoard } from "@/app/watch/[id]/chess_board";
+import {
+	UserAnalysisBoard,
+	UserAnalysisBoardRef,
+} from "@/app/watch/[id]/user_analysis_board";
+import { MoveList } from "@/app/watch/[id]/move_list";
+import { SpectatorList } from "@/app/watch/[id]/spectator_list";
+import { Match } from "@/types/types";
+import { useBroadcast } from "@/hooks/use_broadcast";
+import { useViewerCounts } from "@/hooks/use_viewer_counts";
+import { useAnalysisState } from "@/context/analysis_context";
+import { useAnalysisSync } from "@/hooks/use_analysis_sync";
+import { MobileBottomPanel } from "@/app/watch/[id]/mobile_bottom_panel";
+import { ParaboardList } from "./paraboard_list";
 
-export default function WatchMatchClient({ match, isParaboardTabActive }: { match: Match, isParaboardTabActive: boolean}) {
-	console.log("[watch/[id]/watch_match_client.tsx:WatchMatchClient]", { matchId: match.id });
+export default function WatchMatchClient({
+	match,
+	isParaboardTabActive,
+}: {
+	match: Match;
+	isParaboardTabActive: boolean;
+}) {
+	console.log("[watch/[id]/watch_match_client.tsx:WatchMatchClient]", {
+		matchId: match.id,
+	});
 	const { currentMoveData, isEnded, outcome } = useBroadcast(match.id, match);
 	const { usernames, guestCount } = useViewerCounts([match.id]);
-	const {
-		isAnalysisMode,
-		setMatchId,
-		checkExistingAnalysis,
-	} = useAnalysisState();
+	const { isAnalysisMode, setMatchId, checkExistingAnalysis } =
+		useAnalysisState();
 
 	const [hasExistingAnalysis, setHasExistingAnalysis] = useState(false);
-	const [userId, setUserId] = useState<number | null>(null);
+	const userId = useMemo(() => {
+		if (typeof window === "undefined") return null;
+		const user = localStorage.getItem("user");
+		return user ? JSON.parse(user).id : null;
+	}, []);
 	const {
 		handleInteractionOnMainBoard,
 		handleMainBoardClick,
-		handleInspectUser
-	} = useAnalysisSync({ 
-		match, 
-		userId, 
+		handleInspectUser,
+	} = useAnalysisSync({
+		match,
+		userId,
 		hasExistingAnalysis,
-		currentMoveData
+		currentMoveData,
 	});
 
 	const [isManualStarted, setIsManualStarted] = useState<boolean>(false);
 	const isBroadcastActive = match.status === "in_progress" || isManualStarted;
 	const finalIsEnded = match.status === "finished" || isEnded;
 
-	const userAnalysisBoardRef = useRef<UserAnalysisBoardRef>(null); 
+	const userAnalysisBoardRef = useRef<UserAnalysisBoardRef>(null);
 
-	const [isSpectatorTab, setIsSpectatorTab] = useState<boolean>(!isParaboardTabActive);
-	const [isOverlayVisible, setIsOverlayVisible] = useState(true); 
-
-	useEffect(() => {
-		const user = localStorage.getItem('user');
-		if (user) {
-			const parsed = JSON.parse(user);
-			setUserId(parsed.id);
-		}
-	}, []);
+	const [isSpectatorTab, setIsSpectatorTab] =
+		useState<boolean>(!isParaboardTabActive);
+	const [isOverlayVisible, setIsOverlayVisible] = useState(true);
 
 	useEffect(() => {
 		if (match.id && userId) {
 			setMatchId(match.id);
-			checkExistingAnalysis(match.id, userId).then(setHasExistingAnalysis);
+			checkExistingAnalysis(match.id, userId).then(
+				setHasExistingAnalysis,
+			);
 		}
-	}, [match.id, userId]);
+	}, [match.id, userId, checkExistingAnalysis, setMatchId]);
 
 	if (!currentMoveData) {
 		return <div>Loading match data...</div>;
@@ -67,32 +74,33 @@ export default function WatchMatchClient({ match, isParaboardTabActive }: { matc
 	return (
 		<main className="h-screen w-screen bg-size-[100%_100%] overflow-x-hidden overflow-y-auto lg:overflow-hidden bg-stone-950">
 			{/* Desktop Layout */}
-			<div className={`hidden lg:grid size-full items-center px-6 gap-8 relative z-10 
-				${isSpectatorTab ? 'grid-cols-[300px_1fr_300px]' : 'grid-cols-[376px_1fr_300px]'}`}>
-
-				<aside className="h-[75vh] flex flex-col"> 
+			<div
+				className={`hidden lg:grid size-full items-center px-6 gap-8 relative z-10
+				${isSpectatorTab ? "grid-cols-[300px_1fr_300px]" : "grid-cols-[376px_1fr_300px]"}`}
+			>
+				<aside className="h-[75vh] flex flex-col">
 					<div className="bg-orange-50/10 backdrop-blur-sm p-4 h-full border border-amber-900/20 shadow-lg">
 						{isSpectatorTab && (
-							<SpectatorList 
-								id={match.id} 
-								onInspectUser={handleInspectUser} 
-								usernames={usernames} 
-								guestCount={guestCount} 
+							<SpectatorList
+								id={match.id}
+								onInspectUser={handleInspectUser}
+								usernames={usernames}
+								guestCount={guestCount}
 								currentMoveData={currentMoveData}
 								setIsSpectatorTab={setIsSpectatorTab}
 							/>
 						)}
 						{!isSpectatorTab && (
-							<ParaboardList 
-								id={match.id} 
+							<ParaboardList
+								id={match.id}
 								setIsSpectatorTab={setIsSpectatorTab}
 							/>
 						)}
 					</div>
 
 					{isAnalysisMode && (
-						<div className='w-full p-6 shrink-0 flex items-center justify-center max-w-[40vh] aspect-square'>
-							<ChessBoard 
+						<div className="w-full p-6 shrink-0 flex items-center justify-center max-w-[40vh] aspect-square">
+							<ChessBoard
 								onSelect={async () => {
 									const exists = await handleMainBoardClick();
 									setHasExistingAnalysis(exists);
@@ -111,17 +119,21 @@ export default function WatchMatchClient({ match, isParaboardTabActive }: { matc
 					)}
 				</aside>
 
-				<section className='flex justify-center items-center flex-col gap-4'>
+				<section className="flex justify-center items-center flex-col gap-4">
 					{!isAnalysisMode && (
-						<div className='w-full shadow-2xl flex items-center justify-center max-w-[70vh] aspect-square'>
-							<ChessBoard 
-								onMove={() => handleInteractionOnMainBoard("move")}
-								onSelect={() => handleInteractionOnMainBoard("select")}
+						<div className="w-full shadow-2xl flex items-center justify-center max-w-[70vh] aspect-square">
+							<ChessBoard
+								onMove={() =>
+									handleInteractionOnMainBoard("move")
+								}
+								onSelect={() =>
+									handleInteractionOnMainBoard("select")
+								}
 								setIsManualStarted={setIsManualStarted}
 								setIsOverlayVisible={setIsOverlayVisible}
 								isOverlayVisible={isOverlayVisible}
 								isManualStarted={isManualStarted}
-								match={match} 
+								match={match}
 								currentMoveData={currentMoveData}
 								isBroadcastActive={isBroadcastActive}
 								finalIsEnded={finalIsEnded}
@@ -146,9 +158,10 @@ export default function WatchMatchClient({ match, isParaboardTabActive }: { matc
 
 				<aside className="h-[75vh] flex flex-col">
 					<div className="bg-orange-50/10 backdrop-blur-sm p-4 h-full border border-amber-900/20 shadow-lg">
-						<MoveList 
+						<MoveList
 							currentMoveData={currentMoveData}
-							finalIsEnded={finalIsEnded} />
+							finalIsEnded={finalIsEnded}
+						/>
 					</div>
 				</aside>
 			</div>
@@ -157,15 +170,19 @@ export default function WatchMatchClient({ match, isParaboardTabActive }: { matc
 			<div className="lg:hidden flex flex-col min-h-screen pt-[10%] relative z-10">
 				<section className="flex flex-col items-center px-4 py-8 gap-12">
 					{!isAnalysisMode ? (
-						<div className="w-full max-w-[500px] my-6 aspect-square shadow-2xl relative">
-							<ChessBoard 
-								onMove={() => handleInteractionOnMainBoard("move")}
-								onSelect={() => handleInteractionOnMainBoard("select")}
+						<div className="w-full max-w-125 my-6 aspect-square shadow-2xl relative">
+							<ChessBoard
+								onMove={() =>
+									handleInteractionOnMainBoard("move")
+								}
+								onSelect={() =>
+									handleInteractionOnMainBoard("select")
+								}
 								setIsManualStarted={setIsManualStarted}
 								setIsOverlayVisible={setIsOverlayVisible}
 								isOverlayVisible={isOverlayVisible}
 								isManualStarted={isManualStarted}
-								match={match} 
+								match={match}
 								currentMoveData={currentMoveData}
 								isBroadcastActive={isBroadcastActive}
 								finalIsEnded={finalIsEnded}
@@ -173,7 +190,7 @@ export default function WatchMatchClient({ match, isParaboardTabActive }: { matc
 							/>
 						</div>
 					) : (
-						<div className="w-full max-w-[500px] aspect-square shadow-2xl relative">
+						<div className="w-full max-w-125 aspect-square shadow-2xl relative">
 							<UserAnalysisBoard
 								ref={userAnalysisBoardRef}
 								matchId={match.id}
@@ -183,9 +200,10 @@ export default function WatchMatchClient({ match, isParaboardTabActive }: { matc
 								evals={currentMoveData.evaluations}
 							/>
 							<div className="fixed bottom-4 right-4 w-32 h-32 z-50 shadow-2xl border-2 border-amber-900 bg-stone-950 rounded-md overflow-hidden">
-								<ChessBoard 
+								<ChessBoard
 									onSelect={async () => {
-										const exists = await handleMainBoardClick();
+										const exists =
+											await handleMainBoardClick();
 										setHasExistingAnalysis(exists);
 									}}
 									setIsManualStarted={setIsManualStarted}
@@ -205,9 +223,9 @@ export default function WatchMatchClient({ match, isParaboardTabActive }: { matc
 				</section>
 
 				<div className="mt-auto">
-					<MobileBottomPanel 
-						matchId={match.id} 
-						onInspectUser={handleInspectUser} 
+					<MobileBottomPanel
+						matchId={match.id}
+						onInspectUser={handleInspectUser}
 						currentMoveData={currentMoveData}
 						usernames={usernames}
 						guestCount={guestCount}

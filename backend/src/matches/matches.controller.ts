@@ -151,7 +151,7 @@ export class MatchesController {
 
 	@Get('my_followed')
 	@UseGuards(JwtAuthGuard)
-	async getMyFollowed(@Request() req) {
+	async getMyFollowed(@Request() req: userRequest) {
 		this.logger.log('getMyFollowed called');
 		return this.matchesService.getMatchesByTable({
 			table: sc.followedBroadcasts,
@@ -195,7 +195,7 @@ export class MatchesController {
 
 	@Get('my_planned')
 	@UseGuards(JwtAuthGuard)
-	async getMyPlanned(@Request() req) {
+	async getMyPlanned(@Request() req: userRequest) {
 		this.logger.log('getMyPlanned called');
 		return this.matchesService.getMatchesByTable({
 			table: sc.plannedBroadcasts,
@@ -205,7 +205,7 @@ export class MatchesController {
 	}
 
 	@Get('planned')
-	async getPlanned(@Request() req): Promise<Match[]> {
+	async getPlanned(): Promise<Match[]> {
 		this.logger.log('getPlanned called');
 		return this.matchesService.getMatchesByTable({
 			table: sc.followedBroadcasts,

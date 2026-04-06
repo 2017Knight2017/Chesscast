@@ -1,6 +1,9 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { PlayersService } from 'src/players/players.service';
-import { requestArchetypes } from 'src/matches/utils/archetype-generator';
+import {
+	ArchetypeResponse,
+	requestArchetypes,
+} from 'src/matches/utils/archetype-generator';
 import { ARCHETYPE_OPTIONS } from './matches.types';
 
 @Injectable()
@@ -35,35 +38,39 @@ export class ArchetypeService {
 		const archetypeMask =
 			(validatedArchetypes[0] === undefined ? 0 : 1) +
 			(validatedArchetypes[1] === undefined ? 0 : 2);
-
+		let archetypeResponse: ArchetypeResponse;
 		switch (archetypeMask) {
 			case 0:
-				const { results, isAiGenerated } = await requestArchetypes({
+				archetypeResponse = await requestArchetypes({
 					player1: whitePlayer,
 					player2: blackPlayer,
 				});
-				validatedArchetypes = results.map((archetype: string) =>
-					this.getValidArchetype(archetype),
+				validatedArchetypes = archetypeResponse.results.map(
+					(archetype: string) => this.getValidArchetype(archetype),
 				) as [string, string];
-				isArchetypeAiGenerated = isAiGenerated;
+				isArchetypeAiGenerated = archetypeResponse.isAiGenerated;
 				break;
 			case 1:
-				const res1 = await requestArchetypes({ player2: blackPlayer });
+				archetypeResponse = await requestArchetypes({
+					player2: blackPlayer,
+				});
 				validatedArchetypes[1] = this.getValidArchetype(
-					res1.results[0],
+					archetypeResponse.results[0],
 				);
-				isArchetypeAiGenerated[1] = res1.isAiGenerated[0];
+				isArchetypeAiGenerated[1] = archetypeResponse.isAiGenerated[0];
 				break;
 			case 2:
-				const res2 = await requestArchetypes({ player1: whitePlayer });
+				archetypeResponse = await requestArchetypes({
+					player1: whitePlayer,
+				});
 				validatedArchetypes[0] = this.getValidArchetype(
-					res2.results[0],
+					archetypeResponse.results[0],
 				);
-				isArchetypeAiGenerated[0] = res2.isAiGenerated[0];
+				isArchetypeAiGenerated[0] = archetypeResponse.isAiGenerated[0];
 				break;
 			case 3:
 				this.logger.log(
-					`Both archetypes from DB/Input: ${validatedArchetypes}`,
+					`Both archetypes from DB/Input: ${JSON.stringify(validatedArchetypes)}`,
 				);
 				break;
 		}

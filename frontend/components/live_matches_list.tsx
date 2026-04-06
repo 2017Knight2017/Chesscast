@@ -1,23 +1,37 @@
-'use client';
+"use client";
 
-import { useViewerCounts } from '@/hooks/use_viewer_counts';
+import { useViewerCounts } from "@/hooks/use_viewer_counts";
 import { LiveCard } from "@/components/live_card";
-import { Match } from '@/types/types';
+import { Match } from "@/types/types";
 
-export function LiveMatchesList({ liveMatches, styles }: { liveMatches: Match[], styles: string }) {
-	console.log("[live_matches_list.tsx:LiveMatchesList]", { matchCount: liveMatches.length });
-	const matchIds = liveMatches.map(m => m.id);
-	const {cumulativeCounts} = useViewerCounts(matchIds);
+export function LiveMatchesList({
+	liveMatches,
+	styles,
+}: {
+	liveMatches: Match[];
+	styles: string;
+}) {
+	console.log("[live_matches_list.tsx:LiveMatchesList]", {
+		matchCount: liveMatches.length,
+	});
+	const matchIds = liveMatches.map((m) => m.id);
+	const { cumulativeCounts } = useViewerCounts(matchIds);
 
 	return (
 		<div className={styles}>
 			{liveMatches.map((match: Match) => (
-				<LiveCard key={match.id} match={match} viewerCount={cumulativeCounts[match.id] ?? match.viewerCount} />
+				<LiveCard
+					key={match.id}
+					match={match}
+					viewerCount={
+						cumulativeCounts[match.id] ?? match.viewerCount
+					}
+				/>
 			))}
-			
+
 			{liveMatches.length === 0 && (
 				<div className="col-span-full py-20 text-center border-2 border-dashed border-slate-800 rounded-2xl text-slate-500">
-					 No broadcasts yet!
+					No broadcasts yet!
 				</div>
 			)}
 		</div>

@@ -1,77 +1,107 @@
 "use server";
 
-export async function saveAnalysisAction(matchId: string, analysisTree: any, token: string | null) {
+import { MoveTreeNode } from "@/types/types";
+
+export async function saveAnalysisAction(
+	matchId: string,
+	analysisTree: Record<number, MoveTreeNode[]>,
+	token: string | null,
+) {
 	const res = await fetch(`${process.env.NEST_API_URL}/user-analysis/save`, {
-		method: 'POST',
+		method: "POST",
 		headers: {
-			'Content-Type': 'application/json',
+			"Content-Type": "application/json",
 			...(token ? { Authorization: `Bearer ${token}` } : {}),
 		},
 		body: JSON.stringify({ matchId, data: analysisTree }),
 	});
 
-	if (!res.ok) throw new Error('Failed to save analysis');
+	if (!res.ok) throw new Error("Failed to save analysis");
 	return res.json();
 }
 
-export async function saveAnalysisDraftAction(matchId: string, token: string | null) {
-	const res = await fetch(`${process.env.NEST_API_URL}/user-analysis/save-draft`, {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-			...(token ? { Authorization: `Bearer ${token}` } : {}),
+export async function saveAnalysisDraftAction(
+	matchId: string,
+	token: string | null,
+) {
+	const res = await fetch(
+		`${process.env.NEST_API_URL}/user-analysis/save-draft`,
+		{
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				...(token ? { Authorization: `Bearer ${token}` } : {}),
+			},
+			body: JSON.stringify({ matchId }),
 		},
-		body: JSON.stringify({ matchId }),
-	});
+	);
 
-	if (!res.ok) throw new Error('Failed to save analysis draft');
+	if (!res.ok) throw new Error("Failed to save analysis draft");
 	return res.json();
 }
 
-export async function discardAnalysisAction(matchId: string, token: string | null) {
-	const res = await fetch(`${process.env.NEST_API_URL}/user-analysis/discard`, {
-		method: 'DELETE',
-		headers: {
-			'Content-Type': 'application/json',
-			...(token ? { Authorization: `Bearer ${token}` } : {}),
+export async function discardAnalysisAction(
+	matchId: string,
+	token: string | null,
+) {
+	const res = await fetch(
+		`${process.env.NEST_API_URL}/user-analysis/discard`,
+		{
+			method: "DELETE",
+			headers: {
+				"Content-Type": "application/json",
+				...(token ? { Authorization: `Bearer ${token}` } : {}),
+			},
+			body: JSON.stringify({ matchId }),
 		},
-		body: JSON.stringify({ matchId }),
-	});
+	);
 
-	if (!res.ok) throw new Error('Failed to discard analysis ' + res.status);
+	if (!res.ok) throw new Error("Failed to discard analysis " + res.status);
 	return res.json();
 }
 
-export async function checkExistingAnalysisAction(matchId: string, userId: number) {
-	const res = await fetch(`${process.env.NEST_API_URL}/user-analysis/is-analyzing/${matchId}/${userId}`);
-		
-	if (!res.ok) throw new Error('Failed to check existing analysis');
+export async function checkExistingAnalysisAction(
+	matchId: string,
+	userId: number,
+) {
+	const res = await fetch(
+		`${process.env.NEST_API_URL}/user-analysis/is-analyzing/${matchId}/${userId}`,
+	);
+
+	if (!res.ok) throw new Error("Failed to check existing analysis");
 	const data = await res.json();
 	return data.isAnalyzing;
 }
 
 export async function loadAnalysisAction(matchId: string, userId: number) {
-	const res = await fetch(`${process.env.NEST_API_URL}/user-analysis/${matchId}/${userId}`);
-		
-	if (!res.ok) throw new Error('Failed to load analysis');
+	const res = await fetch(
+		`${process.env.NEST_API_URL}/user-analysis/${matchId}/${userId}`,
+	);
+
+	if (!res.ok) throw new Error("Failed to load analysis");
 	return res.json();
 }
 
 export async function getPlayerByUsernameAction(username: string) {
-	console.log("[analysis_actions.ts:getPlayerByUsernameAction]", { username });
+	console.log("[analysis_actions.ts:getPlayerByUsernameAction]", {
+		username,
+	});
 	try {
-		const res = await fetch(`${process.env.NEST_API_URL}/user-analysis/by-username/${username}`, {
-			cache: 'no-store'
-		});
+		const res = await fetch(
+			`${process.env.NEST_API_URL}/user-analysis/by-username/${username}`,
+			{
+				cache: "no-store",
+			},
+		);
 
 		if (!res.ok) {
-			return { success: false, error: 'Player not found' };
+			return { success: false, error: "Player not found" };
 		}
 
 		const playerData = await res.json();
 		return { success: true, data: playerData };
 	} catch (error) {
 		console.error("Action Error:", error);
-		return { success: false, error: 'Internal server error' };
+		return { success: false, error: "Internal server error" };
 	}
 }

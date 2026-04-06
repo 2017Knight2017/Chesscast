@@ -116,7 +116,7 @@ export class UserAnalysisService {
 			await this.redisService.deleteUserAnalysis(matchId, userId);
 		} catch (error) {
 			this.logger.error(
-				`Failed to discard analysis for user ${userId}: ${error.message}`,
+				`Failed to discard analysis for user ${userId}: ${error}`,
 			);
 			throw error;
 		}

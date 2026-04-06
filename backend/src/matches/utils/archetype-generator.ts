@@ -14,7 +14,7 @@ When analyzing a chess player, correlate their personality traits with the syste
 Sensitivity to Choice (k):
 
 If the player is a Perfectionist (looking for the only correct move), set k to a minimum value. This will force the system to "hang" when choosing between equivalent lines.
-If they are a Speed ​​Demon (playing the first line without looking), k should be high.
+If they are a Speed Demon (playing the first line without looking), k should be high.
 
 Difficulty Weights:
 
@@ -25,7 +25,7 @@ w3 (Tactics): Weight for "butchers" (Berserker, Attacker). They spend time calcu
 Chaos and Noise (sigma):
 
 High sigma (0.5–0.7) is needed for emotional players (Chaos Attacker, Gambler), whose turn times can fluctuate unpredictably.
-Low sigma (0.2–0.3) is for "machine-like" players (Pragmatist, Speed ​​Demon) with a steady rhythm.
+Low sigma (0.2–0.3) is for "machine-like" players (Pragmatist, Speed Demon) with a steady rhythm.
 
 Group 1: Depth and Precision (Slow Archetypes)
 
@@ -44,14 +44,14 @@ Style: Maximum concentration while defending. Wastes time precisely when the opp
 When to choose: For "impenetrable" players who thrive under pressure.
 Prototypes: Viktor Korchnoi, Sergey Karjakin.
 
-Group 2: Speed ​​and Flow (Fast Archetypes)
+Group 2: Speed and Flow (Fast Archetypes)
 
 Intuitive Genius
 Style: Understanding the harmony of pieces without unnecessary calculation. Moves quickly as long as the position remains within understandable structures.
 When to choose: For positional geniuses who "feel" where to place a piece.
 Prototypes: José Raúl Capablanca, Magnus Carlsen.
 
-Speed ​​Demon
+Speed Demon
 Style: Using time as a weapon. The player deliberately takes risks and simplifications to put pressure on the opponent's clock.
 When to choose: For natural blitz players and those who play "superficially" but with lightning speed.
 Prototypes: Hikaru Nakamura, Viswanathan Anand.
@@ -91,7 +91,7 @@ How to use this description:
 When choosing an archetype, don't look for a perfect match, but identify the player's dominant problem or strength:
 If they're afraid of making mistakes—Perfectionist.
 If they're afraid of not finishing—Calculator.
-If they're afraid of losing on time—Speed ​​Demon.
+If they're afraid of losing on time—Speed Demon.
 If they're afraid of simplifications—Chaos Attacker.
 If they're simply reliable—Pragmatic.
 
@@ -141,7 +141,7 @@ interface params {
 	player2?: string;
 }
 
-interface ArchetypeResponse {
+export interface ArchetypeResponse {
 	results: string[];
 	isAiGenerated: boolean[];
 }
@@ -151,7 +151,7 @@ export const requestArchetypes = async (
 ): Promise<ArchetypeResponse> => {
 	logger.log('[archetype.ts] requestArchetypes called');
 	const expectedCount = players.player1 && players.player2 ? 2 : 1;
-	const isAiGenerated = Array(expectedCount).fill(false);
+	const isAiGenerated = Array<boolean>(expectedCount).fill(false);
 
 	try {
 		const response = await ai.models.generateContent({
@@ -171,8 +171,8 @@ export const requestArchetypes = async (
 		logger.log('Raw AI Response:', text);
 		if (!text) throw new Error('Empty AI response');
 
-		const parsed = JSON.parse(text);
-		const values = Object.values(parsed) as string[];
+		const parsed = JSON.parse(text) as Record<string, string>;
+		const values = Object.values(parsed);
 
 		const validated = values.map((val, index) => {
 			if (archetypes.includes(val)) {
@@ -198,7 +198,7 @@ export const requestArchetypes = async (
 			results: Array.from({ length: expectedCount }, () =>
 				getRandomArchetype(),
 			),
-			isAiGenerated: Array(expectedCount).fill(false),
+			isAiGenerated: Array<boolean>(expectedCount).fill(false),
 		};
 	}
 };

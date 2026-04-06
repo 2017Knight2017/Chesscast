@@ -22,14 +22,14 @@ export interface Match {
 
 export const ARCHETYPE_OPTIONS = {
 	'Desired archetype. Keep empty if unsure': undefined,
-	Calculator: 'calculator',
+	'Calculator': 'calculator',
 	'Intuitive Genius': 'intuitive',
 	'Chaos Attacker': 'attacker',
 	'Solid Pragmatist': 'pragmatic',
 	'Time Trouble Addict': 'time_trouble',
 	'Iron Fortress': 'fortress',
 	'Blunder Prone Gambler': 'gambler',
-	Perfectionist: 'perfectionist',
+	'Perfectionist': 'perfectionist',
 	'Tactical Berserker': 'berserker',
 	'Speed Demon': 'speed_demon',
 	'Psychological Grinder': 'grinder',
