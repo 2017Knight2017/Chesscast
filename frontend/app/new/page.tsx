@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import CreateMatchButton from "@/app/new/match_button";
 import { PlayerInput } from "@/app/new/player_input";
+import { ArchetypeDropdown } from "@/app/new/archetype_dropdown";
 
 export default function BroadcastPage() {
 	console.log("[new/page.tsx:BroadcastPage]");
@@ -28,7 +29,7 @@ export default function BroadcastPage() {
 		"w-full p-3 rounded-sm bg-stone-900 border border-amber-900/30 focus:border-white-500 text-stone-100 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed placeholder:text-stone-600";
 	const labelClasses = `block ${isDisabled ? "opacity-40" : "opacity-100"} transition-opacity`;
 	const titleLabelClasses =
-		"text-xs font-bold uppercase tracking-wider text-amber-200/60 mb-2 block";
+		"text-xs font-bold uppercase tracking-wider text-white mb-2 block";
 
 	const [whitePlayer, setWhitePlayer] = useState("");
 	const [blackPlayer, setBlackPlayer] = useState("");
@@ -47,21 +48,21 @@ export default function BroadcastPage() {
 	}, []);
 
 	const archetypeOptions = [
-		"Desired archetype. Keep empty if unsure",
-		"Calculator",
-		"Intuitive Genius",
-		"Chaos Attacker",
-		"Solid Pragmatist",
-		"Time Trouble Addict",
-		"Iron Fortress",
-		"Blunder Prone Gambler",
-		"Perfectionist",
-		"Tactical Berserker",
-		"Speed Demon",
-		"Psychological Grinder",
+		["Desired archetype. Keep empty if unsure", ""],
+		["Calculator", "Deep calculation in sharp positions (Alekhine style)"],
+		["Intuitive Genius", "Fast, positional play (Capablanca style)"],
+		["Chaos Attacker", "Thrives in tactical complications (Tal style)"],
+		["Solid Pragmatist", "Balanced and safe"],
+		["Time Trouble Addict", "Indecisive, burns time early"],
+		["Iron Fortress", "Thinks longest when under pressure or facing captures"],
+		["Blunder Prone Gambler", "Fast in chaos, slow in boredom"],
+		["Perfectionist", "Struggles with equal choices"],
+		["Tactical Berserker", "Freezes during captures and trades"],
+		["Speed Demon", "Consistent high-speed play"],
+		["Psychological Grinder", "Deep focus on sharp, double-edged positions"],
 	];
-	const [archetype1, setArchetype1] = useState(archetypeOptions[0]);
-	const [archetype2, setArchetype2] = useState(archetypeOptions[0]);
+	const [archetype1, setArchetype1] = useState(archetypeOptions[0][0]);
+	const [archetype2, setArchetype2] = useState(archetypeOptions[0][0]);
 
 	const getLocalDateTime = (date: Date = new Date()): string => {
 		console.log("[new/page.tsx:getLocalDateTime]", { date });
@@ -82,7 +83,7 @@ export default function BroadcastPage() {
 			</div>
 
 			{/* Main Card Container - Dark Paper Style */}
-			<div className="w-full max-w-3xl bg-stone-900/50 rounded border-l-4 border-amber-900 shadow-2xl overflow-hidden sepia-100">
+			<div className="w-full max-w-3xl bg-stone-900/50 rounded border-l-4 border-amber-900 shadow-2xl sepia-100">
 				{/* Tabs Navigation */}
 				<div className="flex border-b border-white/5 bg-black/20">
 					{[
@@ -140,7 +141,7 @@ export default function BroadcastPage() {
 							</label>
 
 							<div>
-								<span className="text-xs font-bold uppercase tracking-wider text-stone-500 mb-4 block border-b border-white/5 pb-2">
+								<span className={`${titleLabelClasses}`}>
 									Time Control
 								</span>
 								<div className="grid gap-6 grid-cols-2">
@@ -210,46 +211,18 @@ export default function BroadcastPage() {
 										}
 									}}
 								/>
-								<label className="block">
-									<span className={titleLabelClasses}>
-										White Archetype
-									</span>
-									<select
-										className="w-full p-2 rounded bg-slate-800 border border-slate-700 focus:border-blue-500 outline-none"
-										value={archetype1}
-										onChange={(e) =>
-											setArchetype1(e.target.value)
-										}
-									>
-										{archetypeOptions.map((opt) => (
-											<option key={opt} value={opt}>
-												{opt}
-											</option>
-										))}
-									</select>
-								</label>
-								<label className="block">
-									<span className={titleLabelClasses}>
-										Black Archetype
-									</span>
-									<select
-										className="w-full p-2 rounded bg-slate-800 border border-slate-700 focus:border-blue-500 outline-none"
-										value={archetype2}
-										onChange={(e) =>
-											setArchetype2(e.target.value)
-										}
-									>
-										{archetypeOptions.map((opt) => (
-											<option
-												key={opt}
-												value={opt}
-												title="fff"
-											>
-												{opt}
-											</option>
-										))}
-									</select>
-								</label>
+								<ArchetypeDropdown
+									label="White Archetype"
+									value={archetype1}
+									onChange={setArchetype1}
+									options={archetypeOptions}
+								/>
+								<ArchetypeDropdown
+									label="Black Archetype"
+									value={archetype2}
+									onChange={setArchetype2}
+									options={archetypeOptions}
+								/>
 							</div>
 
 							<div className="flex justify-between pt-4 border-t border-white/5">
