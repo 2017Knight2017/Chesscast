@@ -9,13 +9,20 @@ export interface Player {
 
 export function PlayerInput({
 	label,
+	query,
+	onQueryChange,
 	onSelect,
+	titleLabelClasses,
+	inputClasses,
 }: {
 	label: string;
+	query: string;
+	onQueryChange: (value: string) => void;
 	onSelect: (player: Player) => void;
+	titleLabelClasses: string;
+	inputClasses: string;
 }) {
 	console.log("[new/player_input.tsx:PlayerInput]", { label });
-	const [query, setQuery] = useState("");
 	const [rawSuggestions, setRawSuggestions] = useState<Player[]>([]);
 	const [showSuggestions, setShowSuggestions] = useState(false);
 	const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -77,18 +84,18 @@ export function PlayerInput({
 		console.log("[new/player_input.tsx:handleInputChange]", {
 			value: e.target.value,
 		});
-		setQuery(e.target.value);
+		onQueryChange(e.target.value);
 		setShowSuggestions(true);
 	};
 
 	const handleSelect = useCallback((player: Player) => {
 		console.log("[new/player_input.tsx:handleSelect]", { player });
-		setQuery(player.name);
+		onQueryChange(player.name);
 		setRawSuggestions([]);
 		setShowSuggestions(false);
 		setSelectedIndex(-1);
 		onSelect(player);
-	}, [onSelect]);
+	}, [onSelect, onQueryChange]);
 
 	const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
 		if (!showSuggestions || suggestions.length === 0) return;
@@ -116,7 +123,7 @@ export function PlayerInput({
 
 	return (
 		<div className="relative" ref={dropdownRef}>
-			<label className="text-xs font-bold uppercase tracking-wider text-white mb-2 block">
+			<label className={titleLabelClasses}>
 				{label}
 			</label>
 			<input
@@ -131,14 +138,14 @@ export function PlayerInput({
 				aria-activedescendant={
 					selectedIndex >= 0 ? `player-option-${selectedIndex}` : undefined
 				}
-				className="w-full p-3 rounded-sm bg-stone-900 border border-amber-900/30 focus:border-white-500 text-stone-100 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed placeholder:text-stone-600"
+				className={inputClasses}
 			/>
 
 			{showSuggestions && suggestions.length > 0 && (
 				<ul
 					ref={listRef}
 					role="listbox"
-					className="absolute z-10 w-full bg-stone-900 border border-amber-900/30 rounded mt-1 shadow-xl max-h-60 overflow-y-auto"
+					className="absolute z-10 w-full bg-white border border-amber-300/50 rounded mt-1 shadow-lg max-h-60 overflow-y-auto"
 				>
 					{suggestions.map((player: Player, index: number) => (
 						<li
@@ -150,8 +157,8 @@ export function PlayerInput({
 							onMouseDown={(e) => e.preventDefault()}
 							className={`p-3 cursor-pointer transition-colors ${
 								index === selectedIndex
-									? "bg-amber-900/30 text-amber-300"
-									: "hover:bg-stone-800 text-stone-100"
+									? "bg-amber-100 text-amber-800"
+									: "hover:bg-orange-50 text-stone-700"
 							}`}
 						>
 							{player.name}

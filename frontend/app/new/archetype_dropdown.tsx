@@ -7,11 +7,15 @@ export function ArchetypeDropdown({
 	value,
 	onChange,
 	options,
+	titleLabelClasses,
+	inputClasses,
 }: {
 	label: string;
 	value: string;
 	onChange: (value: string) => void;
 	options: string[][];
+	titleLabelClasses: string;
+	inputClasses: string;
 }) {
 	console.log("[new/archetype_dropdown.tsx:ArchetypeDropdown]", { label });
 	const [isOpen, setIsOpen] = useState(false);
@@ -105,7 +109,7 @@ export function ArchetypeDropdown({
 
 	return (
 		<div className="relative" ref={dropdownRef}>
-			<label className="text-xs font-bold uppercase tracking-wider text-white mb-2 block">
+			<label className={titleLabelClasses}>
 				{label}
 			</label>
 			<button
@@ -120,10 +124,10 @@ export function ArchetypeDropdown({
 						? `archetype-option-${selectedIndex}`
 						: undefined
 				}
-				className="w-full p-3 rounded-sm bg-stone-900 border border-amber-900/30 focus:border-white-500 text-stone-100 outline-none transition-all hover:border-amber-900/50 text-left flex justify-between items-center"
+				className={`${inputClasses} hover:border-amber-400/70 text-left flex justify-between items-center`}
 			>
 				<span
-					className={selectedOption?.[0] ? "" : "text-stone-600"}
+					className={selectedOption?.[0] ? "" : "text-stone-400"}
 					title={selectedOption?.[1]}
 				>
 					{selectedOption?.[0] || "Select archetype"}
@@ -147,7 +151,7 @@ export function ArchetypeDropdown({
 				<ul
 					ref={listRef}
 					role="listbox"
-					className="absolute z-10 w-full bg-stone-900 border border-amber-900/30 rounded mt-1 shadow-xl max-h-60 overflow-y-auto"
+					className="absolute z-10 w-full bg-white border border-amber-300/50 rounded mt-1 shadow-lg max-h-60 overflow-y-auto"
 				>
 					{options.map(([name, description], index) => (
 						<li
@@ -159,8 +163,8 @@ export function ArchetypeDropdown({
 							onMouseDown={(e) => e.preventDefault()}
 							className={`p-3 cursor-pointer transition-colors ${
 								index === selectedIndex
-									? "bg-amber-900/30 text-amber-300"
-									: "hover:bg-stone-800 text-stone-100"
+									? "bg-amber-100 text-amber-800"
+									: "hover:bg-orange-50 text-stone-700"
 							}`}
 							title={description}
 						>

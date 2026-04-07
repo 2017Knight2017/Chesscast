@@ -94,7 +94,7 @@ export default function CreateMatchButton({
 		<button
 			onClick={handleClick}
 			disabled={isPending}
-			className={`px-8 py-3 text-stone-950 text-sm font-bold tracking-widest uppercase rounded-sm flex items-center gap-2 transition-colors shadow-lg shadow-amber-900/20 ${isPending ? "bg-gray-700 cursor-not-allowed" : "bg-white/50 hover:bg-white/40"}`}
+			className={`px-8 py-3 text-stone-800 text-sm font-bold tracking-widest uppercase rounded-sm flex items-center gap-2 transition-colors shadow-sm shadow-amber-300/40 border border-amber-300/50 ${isPending ? "bg-stone-200 cursor-not-allowed" : "bg-amber-100 hover:bg-amber-200"}`}
 		>
 			{isPending ? "Loading..." : "Create Broadcast"}
 		</button>
