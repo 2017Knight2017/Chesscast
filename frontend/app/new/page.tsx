@@ -75,16 +75,13 @@ export default function BroadcastPage() {
 
 	return (
 		<div className="flex flex-col items-center p-4 md:p-8 pt-12 mt-20 bg-stone-950 min-h-screen text-white">
-			{/* Top Header */}
 			<div className="w-full max-w-3xl flex justify-center items-center mb-8">
 				<div className="text-xl font-bold flex items-center gap-2">
 					<span>New Broadcast</span>
 				</div>
 			</div>
 
-			{/* Main Card Container - Dark Paper Style */}
-			<div className="w-full max-w-3xl bg-stone-900/50 rounded border-l-4 border-amber-900 shadow-2xl sepia-100">
-				{/* Tabs Navigation */}
+			<div className="w-full max-w-3xl bg-orange-50 rounded border-l-4 border-amber-900 shadow-2xl sepia-100">
 				<div className="flex border-b border-white/5 bg-black/20">
 					{[
 						{ id: 1, label: "1. Setup" },
@@ -106,7 +103,6 @@ export default function BroadcastPage() {
 					))}
 				</div>
 
-				{/* Tab Content Area */}
 				<div className="p-6 md:p-10">
 					{/* --- TAB 1: SETUP --- */}
 					{activeTab === 1 && (
@@ -141,10 +137,10 @@ export default function BroadcastPage() {
 							</label>
 
 							<div>
-								<span className={`${titleLabelClasses}`}>
+								<span className="text-base font-bold uppercase tracking-widest text-white">
 									Time Control
 								</span>
-								<div className="grid gap-6 grid-cols-2">
+								<div className="grid gap-6 grid-cols-2 mt-2">
 									<label className="block">
 										<span className={titleLabelClasses}>
 											Base Time (H:MM)
@@ -255,7 +251,7 @@ export default function BroadcastPage() {
 											setIsControlMove(e.target.checked)
 										}
 									/>
-									<span className="text-sm font-bold uppercase tracking-widest text-white-500">
+									<span className="text-sm font-bold uppercase tracking-widest text-white">
 										Enable Control Moves
 									</span>
 								</label>
@@ -380,7 +376,6 @@ export default function BroadcastPage() {
 									Back
 								</button>
 
-								{/* Здесь предполагается, что компонент CreateMatchButton внутри себя также использует палитру amber/stone для кнопки Finish */}
 								<CreateMatchButton
 									pgn={pgnInput}
 									archetypes={[archetype1, archetype2]}

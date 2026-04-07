@@ -46,10 +46,10 @@ export function EvalBar({
 
 	return (
 		<div
-			className={`relative w-full h-full bg-[#312e2b] flex overflow-hidden ${isHorizontal ? "flex-row-reverse" : "flex-col-reverse"}`}
+			className={`relative w-full h-full bg-stone-900 flex overflow-hidden ${isHorizontal ? "flex-row-reverse" : "flex-col-reverse"}`}
 		>
 			<div
-				className="absolute inset-0 bg-[#ffffff] transition-transform duration-300 ease-out origin-bottom left-0"
+				className="absolute inset-0 bg-white transition-transform duration-300 ease-out origin-bottom left-0"
 				style={{
 					willChange: "transform",
 					transform: isHorizontal
@@ -59,7 +59,7 @@ export function EvalBar({
 				}}
 			/>
 
-			{!hideText && (
+			{!hideText && displayValue != "0.0" && (
 				<div
 					className={`absolute inset-0 flex items-center justify-center font-bold z-10 text-[12px] transition-colors duration-300
 					${whitePercentage > 50 ? "text-black" : "text-white"}`}

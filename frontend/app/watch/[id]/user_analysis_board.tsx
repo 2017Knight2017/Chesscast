@@ -179,7 +179,7 @@ export const UserAnalysisBoard = forwardRef<
 				}}
 			/>
 
-			<div className="absolute top-0 -right-10 h-full w-8 rounded-md overflow-hidden border border-[#8b5e34]/20 shadow-xl z-10 transition-all duration-300">
+			<div className="absolute top-0 -right-8 h-full w-8 rounded-md overflow-hidden border border-[#8b5e34]/20 shadow-xl z-10 transition-all duration-300">
 				<EvalBar evaluation={currentEval} isWhite={true} />
 			</div>
 		</div>
