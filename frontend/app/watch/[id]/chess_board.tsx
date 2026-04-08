@@ -337,7 +337,7 @@ export function ChessBoard({
 						height="100%"
 						coordinates={false}
 						movable={{ free: true, color: "both" }}
-						animation={{ enabled: true, duration: 500 }}
+						animation={{ enabled: true, duration: 300 }}
 					/>
 				</div>
 				{!hideTimers && (

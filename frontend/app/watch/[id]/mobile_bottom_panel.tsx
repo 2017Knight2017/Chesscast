@@ -81,6 +81,7 @@ export function MobileBottomPanel({
 							usernames={usernames}
 							guestCount={guestCount}
 							currentMoveData={currentMoveData}
+							isMobile={true}
 						/>
 					)}
 				</div>

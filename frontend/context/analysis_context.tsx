@@ -24,12 +24,14 @@ import {
 interface AnalysisContextType {
 	isAnalysisMode: boolean;
 	inspectedUserId: number | null;
+	inspectedUsername: string | null;
 	analysisTree: Record<number, MoveTreeNode[]>;
 	currentPath: number[];
 	matchId: string | null;
 	selectedMoveIndex: number | null;
 	setAnalysisMode: (mode: boolean, fen?: string) => void;
 	setInspectedUserId: (userId: number | null) => void;
+	setInspectedUsername: (userId: string | null) => void;
 	setAnalysisTree: (tree: Record<number, MoveTreeNode[]>) => void;
 	setMatchId: (id: string | null) => void;
 	addMoveToTree: (
@@ -65,6 +67,7 @@ const AnalysisContext = createContext<AnalysisContextType | undefined>(
 export function AnalysisProvider({ children }: { children: ReactNode }) {
 	const [isAnalysisMode, setIsAnalysisMode] = useState(false);
 	const [inspectedUserId, setInspectedUserId] = useState<number | null>(null);
+	const [inspectedUsername, setInspectedUsername] = useState<string | null>(null);
 	const [analysisTree, setAnalysisTree] = useState<
 		Record<number, MoveTreeNode[]>
 	>({});
@@ -243,6 +246,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 	const resetAnalysis = useCallback(() => {
 		setAnalysisMode(false);
 		setInspectedUserId(null);
+		setInspectedUsername(null);
 		setAnalysisTree({});
 		setCurrentPath([]);
 		setMatchId(null);
@@ -309,12 +313,14 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 			value={{
 				isAnalysisMode,
 				inspectedUserId,
+				inspectedUsername,
 				analysisTree,
 				currentPath,
 				matchId,
 				selectedMoveIndex,
 				setAnalysisMode,
 				setInspectedUserId,
+				setInspectedUsername,
 				setAnalysisTree,
 				setMatchId,
 				addMoveToTree,

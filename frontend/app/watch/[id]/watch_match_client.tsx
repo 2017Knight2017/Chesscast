@@ -87,6 +87,7 @@ export default function WatchMatchClient({
 								guestCount={guestCount}
 								currentMoveData={currentMoveData}
 								setIsSpectatorTab={setIsSpectatorTab}
+								isMobile={false}
 							/>
 						)}
 						{!isSpectatorTab && (

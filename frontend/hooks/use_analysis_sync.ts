@@ -21,8 +21,10 @@ export function useAnalysisSync({
 	const {
 		isAnalysisMode,
 		inspectedUserId,
+		inspectedUsername,
 		setAnalysisMode,
 		setInspectedUserId,
+		setInspectedUsername,
 		setAnalysisTree,
 		currentPath,
 		setCurrentPath,
@@ -105,6 +107,7 @@ export function useAnalysisSync({
 			if (canStart && match && userId) {
 				setAnalysisMode(true, currentMoveData?.fen);
 				setInspectedUserId(null);
+				setInspectedUsername(null);
 
 				if (hasExistingAnalysis && match?.id && userId) {
 					await loadAnalysis(match.id, userId);
@@ -190,6 +193,7 @@ export function useAnalysisSync({
 		const playerData = result.data;
 
 		setInspectedUserId(playerData.userId);
+		setInspectedUsername(playerData.username);
 		setAnalysisMode(true);
 
 		if (match.id) {
