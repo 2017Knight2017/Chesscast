@@ -16,10 +16,11 @@ export const ChessPreview = ({
 }) => {
 	console.log("[chess_preview.tsx:ChessPreview]", { matchId: match.id });
 	const { currentMoveData, isEnded } = useBroadcast(match.id);
-	const isLive = match.status === "in_progress";
+	const finalIsEnded = isEnded || match.status === "finished";
 	const { whiteTimeFormatted, blackTimeFormatted } = useChessClock(
-		isLive ? currentMoveData : null,
+		currentMoveData,
 		match.timeControl * 1000,
+		true
 	);
 
 	const Wrapper = isEmbedded ? "div" : Link;
@@ -44,7 +45,7 @@ export const ChessPreview = ({
 					</span>
 				</div>
 				<div
-					className={`${currentMoveData?.turn == "w" ? "bg-stone-900 text-slate-400" : "bg-white text-black font-bold"} px-2 py-0.5 rounded text-[12px] font-mono`}
+					className={`${currentMoveData?.turn == "b" && !finalIsEnded ? "bg-white text-black font-bold" : "bg-stone-900 text-slate-400"} px-2 py-0.5 rounded text-[12px] font-mono`}
 				>
 					{blackTimeFormatted}
 				</div>
@@ -79,7 +80,7 @@ export const ChessPreview = ({
 					</span>
 				</div>
 				<div
-					className={`${currentMoveData?.turn == "w" ? "bg-white text-black font-bold" : "bg-stone-900 text-slate-400"} px-2 py-0.5 rounded text-[12px] font-mono`}
+					className={`${currentMoveData?.turn == "w" && !finalIsEnded ? "bg-white text-black font-bold" : "bg-stone-900 text-slate-400"} px-2 py-0.5 rounded text-[12px] font-mono`}
 				>
 					{whiteTimeFormatted}
 				</div>
