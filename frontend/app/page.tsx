@@ -24,9 +24,11 @@ export default async function HomePage() {
 					<h2 className="text-xl font-semibold text-slate-200 uppercase tracking-widest">
 						Live
 					</h2>
+					{/*
 					<button className="text-blue-400 text-sm hover:underline">
 						See All
 					</button>
+					*/}
 				</div>
 				<LiveMatchesList liveMatches={liveMatches} styles={styles} />
 			</section>
@@ -35,9 +37,11 @@ export default async function HomePage() {
 					<h2 className="text-xl font-semibold text-slate-200 uppercase tracking-widest">
 						Planned
 					</h2>
+					{/*
 					<button className="text-blue-400 text-sm hover:underline">
 						See All
 					</button>
+					*/}
 				</div>
 				<LiveMatchesList liveMatches={plannedMatches} styles={styles} />
 			</section>
