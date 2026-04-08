@@ -21,6 +21,15 @@ export const useChessClock = (
 	const stateRef = useRef(serverState);
 	const lastWhiteSecRef = useRef(Math.floor((displayWhite || 0) / 1000));
 	const lastBlackSecRef = useRef(Math.floor((displayBlack || 0) / 1000));
+	const unpausedAtRef = useRef<number | null>(null);
+
+	useEffect(() => {
+		if (!isPaused && unpausedAtRef.current === null) {
+			unpausedAtRef.current = Date.now();
+		} else if (isPaused) {
+			unpausedAtRef.current = null;
+		}
+	}, [isPaused]);
 
 	useEffect(() => {
 		stateRef.current = serverState;
@@ -37,10 +46,14 @@ export const useChessClock = (
 			}
 
 			const now = Date.now();
-			const elapsedSinceMove =
-				isPaused || !serverState.newestMoveAt
-					? 0
-					: Math.max(0, now - serverState.newestMoveAt);
+			let referenceTime = now;
+			if (serverState.newestMoveAt > 0) {
+				referenceTime = serverState.newestMoveAt;
+			} else if (unpausedAtRef.current !== null) {
+				referenceTime = unpausedAtRef.current;
+			}
+
+			const elapsedSinceMove = isPaused ? 0 : Math.max(0, now - referenceTime);
 
 			const turn =
 				typeof getTurnFromFen === "function"
@@ -81,10 +94,14 @@ export const useChessClock = (
 			}
 
 			const now = Date.now();
-			const elapsedSinceMove = Math.max(
-				0,
-				now - (currentServerState.newestMoveAt || now),
-			);
+			let referenceTime = now;
+			if (currentServerState.newestMoveAt > 0) {
+			    referenceTime = currentServerState.newestMoveAt;
+			} else if (unpausedAtRef.current !== null) {
+			    referenceTime = unpausedAtRef.current;
+			}
+			
+			const elapsedSinceMove = Math.max(0, now - referenceTime);
 
 			const { fen, whiteTimeMs, blackTimeMs } = currentServerState;
 			const turn =

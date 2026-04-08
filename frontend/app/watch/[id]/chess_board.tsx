@@ -159,9 +159,7 @@ export function ChessBoard({
 		return history.map((move) => {
 			try {
 				tempChess.move(move);
-			} catch {
-				// Игнорируем ошибку, оставляем позицию как есть
-			}
+			} catch {}
 			return tempChess.fen();
 		});
 	}, [currentMoveData]);
@@ -190,7 +188,9 @@ export function ChessBoard({
 	const isPaused = !isBroadcastActive;
 
 	const clockData = useMemo(() => {
-		if (isBroadcastActive) return currentMoveData;
+		if (isBroadcastActive) return currentMoveData; 
+
+		console.log(currentMoveData.history);
 
 		if (selectedMoveIndex !== null && selectedMoveIndex !== undefined) {
 			const idx = selectedMoveIndex;

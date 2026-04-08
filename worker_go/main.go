@@ -98,6 +98,7 @@ func main() {
 			}
 
 			fmt.Printf("[MAIN] Задача %s для матча %s передана в обработку\n", jobID, jobDataPayload.MatchID)
+			fmt.Print(jobDataPayload)
 
 			sem <- struct{}{}
 			wg.Add(1)

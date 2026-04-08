@@ -70,7 +70,10 @@ export function MobileBottomPanel({
 							finalIsEnded={finalIsEnded}
 						/>
 					)}
-					{activeTab === "boards" && <ParaboardList id={matchId} />}
+					{activeTab === "boards" && 
+						<ParaboardList 
+							id={matchId} 
+						/>}
 					{activeTab === "spectators" && (
 						<SpectatorList
 							id={matchId}

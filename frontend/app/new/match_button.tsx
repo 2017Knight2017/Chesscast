@@ -20,7 +20,7 @@ export default function CreateMatchButton({
 	newTimeIncrement,
 	scheduledAt,
 }: CreateMatchData) {
-	console.log("[new/match_button.tsx:CreateMatchButton]", {
+	console.log("[new/match_button.tsx:CreateMatchButton]", JSON.stringify({
 		pgn,
 		archetypes,
 		whitePlayer,
@@ -33,7 +33,7 @@ export default function CreateMatchButton({
 		nextControlMoveAfter,
 		newTimeIncrement,
 		scheduledAt,
-	});
+	}));
 	const [isPending, startTransition] = useTransition();
 
 	const convertTimeControlToSeconds = (timeStr: string): number => {

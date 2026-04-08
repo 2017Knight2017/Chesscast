@@ -21,7 +21,6 @@ export class MatchesService {
 		@InjectQueue('analysis') private analysisQueue: Queue,
 		@Inject(RedisService) private redisService: RedisService,
 		private archetypeService: ArchetypeService,
-		private engineService: EngineService,
 	) {}
 
 	async createBroadcast(
@@ -40,7 +39,23 @@ export class MatchesService {
 		nextControlMoveAfter: number = 0,
 		newTimeIncrement: number = 0,
 	) {
-		this.logger.log('createBroadcast called');
+		
+		this.logger.log('createBroadcast called', JSON.stringify({
+			authorId,
+			author,
+			title,
+			scheduledAt,
+			pgn,
+			whitePlayer,
+			blackPlayer,
+			archetypes,
+			timeControl,
+			timeIncrement,
+			controlMove,
+			bonusTimeMin,
+			nextControlMoveAfter,
+			newTimeIncrement,
+		}));
 
 		const validatedArchetypes = await this.archetypeService.validate(
 			whitePlayer,

@@ -75,11 +75,10 @@ export default function WatchMatchClient({
 		<main className="h-screen w-screen bg-size-[100%_100%] overflow-x-hidden overflow-y-auto lg:overflow-hidden bg-stone-950">
 			{/* Desktop Layout */}
 			<div
-				className={`hidden lg:grid size-full items-center px-6 gap-8 relative z-10
-				${isSpectatorTab ? "grid-cols-[300px_1fr_300px]" : "grid-cols-[376px_1fr_300px]"}`}
+				className="hidden lg:grid size-full items-center px-6 gap-8 relative z-10 grid-cols-[376px_1fr_300px]"
 			>
 				<aside className="h-[75vh] flex flex-col">
-					<div className="bg-orange-50/10 backdrop-blur-sm p-4 h-full border border-amber-900/20 shadow-lg">
+					<div className={`bg-orange-50/10 backdrop-blur-sm p-4 h-full border border-amber-900/20 shadow-lg ${isAnalysisMode ? "max-h-84" : ""}`}>
 						{isSpectatorTab && (
 							<SpectatorList
 								id={match.id}

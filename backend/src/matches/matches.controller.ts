@@ -62,7 +62,7 @@ export class MatchesController {
 			newTimeIncrement?: number;
 		},
 	) {
-		this.logger.log('createBroadcast called');
+		this.logger.log('createBroadcast called', JSON.stringify(body));
 		if (body.nextControlMoveAfter) {
 			return this.matchesService.createBroadcast(
 				req.user.id,
@@ -74,8 +74,8 @@ export class MatchesController {
 				body.blackPlayer,
 				body.archetypes,
 				body.timeControl,
-				body.controlMove!,
 				body.timeIncrement,
+				body.controlMove!,
 				body.bonusTimeMin,
 				body.nextControlMoveAfter,
 				body.newTimeIncrement,
@@ -95,9 +95,10 @@ export class MatchesController {
 				body.blackPlayer,
 				body.archetypes,
 				body.timeControl,
-				body.controlMove,
 				body.timeIncrement,
+				body.controlMove,
 				body.bonusTimeMin,
+				0,
 				body.newTimeIncrement,
 			);
 		} else {

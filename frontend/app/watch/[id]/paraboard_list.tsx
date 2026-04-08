@@ -98,7 +98,7 @@ export function ParaboardList({ id, setIsSpectatorTab }: ParaboardListProps) {
 				)}
 			</div>
 
-			<div className="grid grid-cols-3 lg:grid-cols-2 gap-2 overflow-y-auto">
+			<div className={`grid grid-cols-3 lg:grid-cols-2 gap-2 overflow-y-auto`}>
 				{followedMatches
 					.filter((match) => match.id !== id)
 					.map((match) => (
