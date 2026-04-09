@@ -4,6 +4,10 @@ import { createMatchAction } from "@/actions/match_actions";
 import { CreateMatchData } from "@/types/types";
 import { useTransition } from "react";
 
+interface CreateMatchButtonProps extends CreateMatchData {
+	buttonClasses: string;
+}
+
 export default function CreateMatchButton({
 	pgn,
 	archetypes,
@@ -19,7 +23,8 @@ export default function CreateMatchButton({
 	nextControlMoveAfter,
 	newTimeIncrement,
 	scheduledAt,
-}: CreateMatchData) {
+	buttonClasses,
+}: CreateMatchButtonProps) {
 	console.log("[new/match_button.tsx:CreateMatchButton]", JSON.stringify({
 		pgn,
 		archetypes,
@@ -94,7 +99,7 @@ export default function CreateMatchButton({
 		<button
 			onClick={handleClick}
 			disabled={isPending}
-			className={`px-8 py-3 text-stone-800 text-sm font-bold tracking-widest uppercase rounded-sm flex items-center gap-2 transition-colors shadow-sm shadow-amber-300/40 border border-amber-300/50 ${isPending ? "bg-stone-200 cursor-not-allowed" : "bg-amber-100 hover:bg-amber-200"}`}
+			className={`${buttonClasses} ${isPending ? "bg-stone-200 cursor-not-allowed" : ""}`}
 		>
 			{isPending ? "Loading..." : "Create Broadcast"}
 		</button>

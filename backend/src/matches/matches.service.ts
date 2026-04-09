@@ -159,15 +159,29 @@ export class MatchesService {
 	async getMatchesByTable({
 		table,
 		isJoinTable,
-		userId,
+		username,
 		status,
 	}: {
 		table: PgTableWithColumns<any>;
 		isJoinTable: boolean;
-		userId?: number;
+		username?: string;
 		status?: Match['status'];
 	}): Promise<Match[]> {
 		this.logger.log('getMatchesByTable called');
+
+		if (!username) {
+    	    this.logger.warn('username is undefined');
+    	    return []; 
+    	}
+
+		const user = await this.db.query.users.findFirst({
+		    where: eq(sc.users.username, username),
+		    columns: { id: true }
+		});
+
+		if (!user) {
+		    throw new Error('User not found');
+		}
 
 		const query = this.db
 			.select({
@@ -187,10 +201,10 @@ export class MatchesService {
 			.innerJoin(sc.users, eq(sc.matches.author, sc.users.username))
 			.innerJoin(sc.analysis, eq(sc.analysis.id, sc.matches.id));
 
-		if (isJoinTable && userId) {
+		if (isJoinTable && user) {
 			query
 				.innerJoin(table, eq(sc.matches.id, table.matchId as string))
-				.where(eq(table.userId, userId));
+				.where(eq(table.userId, user.id));
 		} else if (status) {
 			query.where(eq(sc.matches.status, status));
 		}

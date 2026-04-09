@@ -28,6 +28,8 @@ export default function BroadcastPage() {
 	const labelClasses = `block ${isDisabled ? "opacity-40" : "opacity-100"} transition-opacity`;
 	const titleLabelClasses =
 		"text-xs font-mono font-bold uppercase tracking-wider text-stone-900 mb-2 block";
+	const buttonClasses = 
+		"px-8 py-3 bg-oak-light hover:bg-oak text-stone-900 text-sm font-bold tracking-widest uppercase rounded transition-colors border border-oak-dark/50 ring-1 ring-inset ring-white/20 shadow-sm"
 
 	const [whitePlayer, setWhitePlayer] = useState("");
 	const [blackPlayer, setBlackPlayer] = useState("");
@@ -80,9 +82,9 @@ export default function BroadcastPage() {
 					<span>New Broadcast</span>
 				</div>
 			</div>
-			<div className="bg-orange-50/10 backdrop-blur-sm p-4 size-full max-w-3xl border border-amber-900/20 shadow-lg">
-				<div className="bg-orange-50 rounded border-l-4 border-amber-900 shadow-xl">
-					<div className="flex border-b border-amber-700 bg-amber-50/50">
+			<div className="bg-orange-50/10 backdrop-blur-sm p-4 size-full max-w-3xl border border-oak-dark/20 shadow-lg">
+				<div className="bg-orange-50 rounded border-l-4 border-oak-dark shadow-xl">
+					<div className="flex border-b border-oak bg-amber-50/50">
 						{[
 							{ id: 1, label: "1. Setup" },
 							{ id: 2, label: "2. Players" },
@@ -93,7 +95,7 @@ export default function BroadcastPage() {
 								className={`flex-1 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-center border-b-2 transition-colors duration-200
 									${
 										activeTab === tab.id
-											? "text-amber-700 border-amber-900 bg-white"
+											? "text-oak border-oak-dark bg-white"
 											: "text-stone-400 border-transparent hover:text-stone-600 hover:bg-amber-50/50"
 									}`}
 								onClick={() => setActiveTab(tab.id as 1 | 2 | 3)}
@@ -177,7 +179,7 @@ export default function BroadcastPage() {
 								<div className="flex justify-end pt-4">
 									<button
 										onClick={() => setActiveTab(2)}
-										className="px-8 py-3 bg-amber-100 hover:bg-amber-200 text-stone-900 text-sm font-bold tracking-widest uppercase rounded-sm flex items-center gap-2 transition-colors shadow-sm shadow-amber-300/40 border border-amber-300/50"
+										className={buttonClasses}
 									>
 										Next: Players
 									</button>
@@ -242,7 +244,7 @@ export default function BroadcastPage() {
 									</button>
 									<button
 										onClick={() => setActiveTab(3)}
-										className="px-8 py-3 bg-amber-100 hover:bg-amber-200 text-stone-900 text-sm font-bold tracking-widest uppercase rounded-sm flex items-center gap-2 transition-colors shadow-sm shadow-amber-300/40 border border-amber-300/50"
+										className={buttonClasses}
 									>
 										Next: Rules
 									</button>
@@ -253,8 +255,8 @@ export default function BroadcastPage() {
 						{/* --- TAB 3: RULES & PGN --- */}
 						{activeTab === 3 && (
 							<div className="space-y-8 animate-in fade-in duration-300">
-								<div className="space-y-4 bg-amber-50/50 p-6 rounded border border-amber-700">
-									<label className="flex items-center gap-3 cursor-pointer border-b border-amber-700 pb-4 mb-4">
+								<div className="space-y-4 bg-amber-50/50 p-6 rounded border border-oak">
+									<label className="flex items-center gap-3 cursor-pointer border-b border-oak pb-4 mb-4">
 										<input
 											type="checkbox"
 											className="w-5 h-5 rounded border-amber-600 bg-white text-amber-600 focus:ring-amber-500 focus:ring-offset-white"
@@ -389,6 +391,7 @@ export default function BroadcastPage() {
 									</button>
 									
 									<CreateMatchButton
+										buttonClasses={buttonClasses}
 										pgn={pgnInput}
 										archetypes={[archetype1, archetype2]}
 										whitePlayer={whitePlayer}

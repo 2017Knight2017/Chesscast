@@ -18,7 +18,7 @@ export function BackToLiveButton() {
 	return (
 		<button
 			onClick={handleBackToLive}
-			className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-bold rounded-md shadow-lg"
+			className="flex items-center px-4 py-2 bg-oak-light hover:bg-oak text-stone-900 text-sm font-bold tracking-widest uppercase rounded transition-colors border border-oak-dark/50 ring-1 ring-inset ring-white/20 shadow-sm"
 		>
 			<span className="relative flex h-2 w-2">
 				<span className="absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>

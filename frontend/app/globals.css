@@ -14,6 +14,9 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --color-oak-light: oklch(0.70 0.0825 72.23);
+  --color-oak: oklch(0.6232 0.0825 72.23);
+  --color-oak-dark: oklch(0.50 0.0825 72.23);
 }
 
 @media (prefers-color-scheme: dark) {

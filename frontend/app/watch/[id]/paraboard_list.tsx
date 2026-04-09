@@ -7,27 +7,21 @@ import { ChessPreview } from "@/components/chess_preview";
 interface ParaboardListProps {
 	id: string;
 	setIsSpectatorTab?: (value: boolean) => void;
+	username: string | null
 }
 
-export function ParaboardList({ id, setIsSpectatorTab }: ParaboardListProps) {
+export function ParaboardList({ id, setIsSpectatorTab, username }: ParaboardListProps) {
 	console.log("[watch/[id]/paraboard_list.tsx:ParaboardList]", { id });
 
 	const [followedMatches, setFollowedMatches] = useState<Match[]>([]);
 
 	useEffect(() => {
 		const fetchFollowedMatches = async () => {
-			const token = localStorage.getItem("token");
-			if (!token) {
-				return;
-			}
-
+			if (!username) return
 			try {
 				const res = await fetch(
-					`${process.env.NEXT_PUBLIC_SOCKET_URL}/matches/my_followed`,
-					{
-						headers: {
-							Authorization: `Bearer ${token}`,
-						},
+					`${process.env.NEXT_PUBLIC_SOCKET_URL}/matches/${username}/followed`, { 
+						cache: 'no-store' 
 					},
 				);
 
@@ -36,6 +30,7 @@ export function ParaboardList({ id, setIsSpectatorTab }: ParaboardListProps) {
 				}
 
 				const data = await res.json();
+				console.log(JSON.stringify(data))
 				setFollowedMatches(data);
 			} catch (err: unknown) {
 				console.error("Error fetching followed matches:", err);
@@ -46,7 +41,7 @@ export function ParaboardList({ id, setIsSpectatorTab }: ParaboardListProps) {
 	}, [id]);
 
 	return (
-		<div className="h-full flex flex-col p-4 border-l-4 border-amber-900 bg-orange-50 shadow-inner overflow-hidden">
+		<div className="h-full flex flex-col p-4 border-l-4 border-oak bg-orange-50 shadow-inner overflow-hidden">
 			<div className="shrink-0 flex justify-between gap-2 border-b mb-2 pb-1 text-stone-900">
 				<h3 className="font-mono">Paraboards List</h3>
 				{setIsSpectatorTab && (
@@ -97,14 +92,17 @@ export function ParaboardList({ id, setIsSpectatorTab }: ParaboardListProps) {
 					</div>
 				)}
 			</div>
-
-			<div className={`grid grid-cols-3 lg:grid-cols-2 gap-2 overflow-y-auto`}>
-				{followedMatches
-					.filter((match) => match.id !== id)
-					.map((match) => (
-						<ChessPreview key={match.id} match={match} />
-					))}
-			</div>
+			{username ? (
+				<div className={`grid grid-cols-3 lg:grid-cols-2 gap-2 overflow-y-auto`}>
+					{followedMatches
+						.filter((match) => match.id !== id)
+						.map((match) => (
+							<ChessPreview key={match.id} match={match} />
+						))}
+				</div>
+			) : (
+				<h3 className="text-stone-900 text-2xl">Login to follow multiple matches at once!</h3>
+			)}
 		</div>
 	);
 }

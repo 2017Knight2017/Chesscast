@@ -154,7 +154,7 @@ export function SpectatorList({
 	};
 
 	return (
-		<div className="h-full flex flex-col p-4 border-l-4 border-amber-900 bg-orange-50 shadow-inner overflow-hidden">
+		<div className="h-full flex flex-col p-4 border-l-4 border-oak bg-orange-50 shadow-inner overflow-hidden">
 			{isMobile && selectedSpectator ? (
 				<div className="flex flex-row gap-4">
 					<div className="flex-1 flex flex-col">
@@ -406,7 +406,7 @@ export function SpectatorList({
 
 							<button
 								onClick={handleViewFullAnalysis}
-								className="w-full py-1.5 px-3 bg-amber-900 text-orange-50 text-xs font-bold uppercase tracking-wider rounded hover:bg-stone-900 transition-colors shadow-sm"
+								className="w-full px-3 py-1.5 bg-oak-light hover:bg-oak text-stone-900 text-sm font-bold tracking-widest uppercase rounded transition-colors border border-oak-dark/50 ring-1 ring-inset ring-white/20 shadow-sm"
 							>
 								View Full Analysis
 							</button>

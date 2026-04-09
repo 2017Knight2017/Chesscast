@@ -32,18 +32,28 @@ export default function WatchMatchClient({
 		useAnalysisState();
 
 	const [hasExistingAnalysis, setHasExistingAnalysis] = useState(false);
-	const userId = useMemo(() => {
-		if (typeof window === "undefined") return null;
-		const user = localStorage.getItem("user");
-		return user ? JSON.parse(user).id : null;
+	const [isAuthPopupShown, setIsAuthPopupShown] = useState(false);
+	const [user, setUser] = useState({ id: null, username: null });
+
+	useEffect(() => {
+		const stored = localStorage.getItem("user");
+		if (stored) {
+			try {
+				const parsed = JSON.parse(stored);
+				setUser({ id: parsed.id, username: parsed.username });
+			} catch (e) {
+				console.error("Failed to parse user", e);
+			}
+		}
 	}, []);
+
 	const {
 		handleInteractionOnMainBoard,
 		handleMainBoardClick,
 		handleInspectUser,
 	} = useAnalysisSync({
 		match,
-		userId,
+		userId: user.id,
 		hasExistingAnalysis,
 		currentMoveData,
 	});
@@ -59,13 +69,13 @@ export default function WatchMatchClient({
 	const [isOverlayVisible, setIsOverlayVisible] = useState(true);
 
 	useEffect(() => {
-		if (match.id && userId) {
+		if (match.id && user.id) {
 			setMatchId(match.id);
-			checkExistingAnalysis(match.id, userId).then(
+			checkExistingAnalysis(match.id, user.id).then(
 				setHasExistingAnalysis,
 			);
 		}
-	}, [match.id, userId, checkExistingAnalysis, setMatchId]);
+	}, [match.id, user.id, checkExistingAnalysis, setMatchId]);
 
 	if (!currentMoveData) {
 		return <div>Loading match data...</div>;
@@ -94,6 +104,7 @@ export default function WatchMatchClient({
 							<ParaboardList
 								id={match.id}
 								setIsSpectatorTab={setIsSpectatorTab}
+								username={user.username}
 							/>
 						)}
 					</div>
@@ -121,14 +132,21 @@ export default function WatchMatchClient({
 
 				<section className="flex justify-center items-center flex-col gap-4">
 					{!isAnalysisMode && (
+						<>
 						<div className="w-full shadow-2xl flex items-center justify-center max-w-[70vh] aspect-square">
 							<ChessBoard
 								onMove={() =>
-									handleInteractionOnMainBoard("move")
+									user.id ?
+										handleInteractionOnMainBoard("move")
+										: setIsAuthPopupShown(true)
 								}
 								onSelect={() =>
-									handleInteractionOnMainBoard("select")
+									user ?
+										handleInteractionOnMainBoard("select")
+										: setIsAuthPopupShown(true)
 								}
+								isAuthPopupShown={isAuthPopupShown}
+								setIsAuthPopupShown={setIsAuthPopupShown}
 								setIsManualStarted={setIsManualStarted}
 								setIsOverlayVisible={setIsOverlayVisible}
 								isOverlayVisible={isOverlayVisible}
@@ -140,6 +158,7 @@ export default function WatchMatchClient({
 								outcome={outcome}
 							/>
 						</div>
+						</>
 					)}
 
 					{isAnalysisMode && (
@@ -147,7 +166,7 @@ export default function WatchMatchClient({
 							<UserAnalysisBoard
 								ref={userAnalysisBoardRef}
 								matchId={match.id}
-								userId={userId}
+								userId={user.id}
 								matchHistory={currentMoveData.history}
 								currentFen={currentMoveData.fen}
 								evals={currentMoveData.evaluations}
@@ -173,11 +192,17 @@ export default function WatchMatchClient({
 						<div className="w-full max-w-125 my-6 aspect-square shadow-2xl relative">
 							<ChessBoard
 								onMove={() =>
-									handleInteractionOnMainBoard("move")
+									user ?
+										handleInteractionOnMainBoard("move")
+										: setIsAuthPopupShown(true)
 								}
 								onSelect={() =>
-									handleInteractionOnMainBoard("select")
+									user ?
+										handleInteractionOnMainBoard("select")
+										: setIsAuthPopupShown(true)
 								}
+								isAuthPopupShown={isAuthPopupShown}
+								setIsAuthPopupShown={setIsAuthPopupShown}
 								setIsManualStarted={setIsManualStarted}
 								setIsOverlayVisible={setIsOverlayVisible}
 								isOverlayVisible={isOverlayVisible}
@@ -194,7 +219,7 @@ export default function WatchMatchClient({
 							<UserAnalysisBoard
 								ref={userAnalysisBoardRef}
 								matchId={match.id}
-								userId={userId}
+								userId={user.id}
 								matchHistory={currentMoveData.history}
 								currentFen={currentMoveData.fen}
 								evals={currentMoveData.evaluations}
@@ -225,6 +250,7 @@ export default function WatchMatchClient({
 				<div className="mt-auto">
 					<MobileBottomPanel
 						matchId={match.id}
+						username={user.username}
 						onInspectUser={handleInspectUser}
 						currentMoveData={currentMoveData}
 						usernames={usernames}

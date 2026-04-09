@@ -15,6 +15,8 @@ interface ChessBoardProps {
 	onSelect?: (key: string) => void;
 	setIsOverlayVisible: Dispatch<SetStateAction<boolean>>;
 	setIsManualStarted: Dispatch<SetStateAction<boolean>>;
+	setIsAuthPopupShown?: Dispatch<SetStateAction<boolean>>;
+	isAuthPopupShown?: boolean;
 	isOverlayVisible: boolean;
 	isManualStarted: boolean;
 	isBroadcastActive: boolean;
@@ -119,6 +121,8 @@ export function ChessBoard({
 	setIsOverlayVisible,
 	isOverlayVisible,
 	setIsManualStarted,
+	setIsAuthPopupShown,
+	isAuthPopupShown,
 	isManualStarted,
 	isBroadcastActive,
 	finalIsEnded,
@@ -357,6 +361,13 @@ export function ChessBoard({
 					</div>
 				)}
 			</div>
+			{isAuthPopupShown && setIsAuthPopupShown && (
+				<button onClick={() => setIsAuthPopupShown(false)}>
+					<h3 className="absolute -bottom-8 left-0 px-3 py-1 bg-stone-900/90 text-orange-200 text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] rounded-b-sm border-l-3 border-oak/90 shadow-lg backdrop-blur-sm">
+					    × Login to analyze!
+					</h3>
+				</button>
+			)}
 			{!hideTimers && (
 				<div
 					className={`absolute z-10 flex items-center gap-2 transition-all duration-300 ${isAnalysisMode ? "bottom-0 -right-6 lg:-right-11" : "-bottom-10 lg:-bottom-12 right-0"}`}

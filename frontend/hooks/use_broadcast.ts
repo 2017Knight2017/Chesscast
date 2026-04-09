@@ -77,9 +77,7 @@ export const useBroadcast = (matchId: string, initialMatch?: Match) => {
 	}, [matchId, initialMatch]);
 
 	useEffect(() => {
-		const stored = localStorage.getItem("user");
-		const user = stored ? JSON.parse(stored) : null;
-		const username = user?.username;
+		const username = localStorage.getItem("username");
 
 		const handleConnect = () => {
 			socket.emit("joinMatch", { matchId, username, guestId });

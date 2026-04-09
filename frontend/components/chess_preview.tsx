@@ -60,7 +60,7 @@ export const ChessPreview = ({
 					/>
 				</div>
 
-				<div className="w-full h-full aspect-square bg-amber-700 relative rounded-sm overflow-hidden border border-stone-600">
+				<div className="w-full h-full aspect-square bg-oak relative rounded-sm overflow-hidden border border-stone-600">
 					<div className="absolute inset-0">
 						<Chessground
 							fen={currentMoveData?.fen ?? match.fen}

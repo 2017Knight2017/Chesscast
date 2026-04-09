@@ -9,6 +9,7 @@ import { ParaboardList } from "./paraboard_list";
 
 interface MobileBottomPanelProps {
 	matchId: string;
+	username: string | null;
 	onInspectUser: (status: ViewerStatus) => void;
 	currentMoveData: Move | null;
 	usernames: Record<string, ViewerStatus[]>;
@@ -18,6 +19,7 @@ interface MobileBottomPanelProps {
 
 export function MobileBottomPanel({
 	matchId,
+	username,
 	onInspectUser,
 	currentMoveData,
 	usernames,
@@ -72,7 +74,8 @@ export function MobileBottomPanel({
 					)}
 					{activeTab === "boards" && 
 						<ParaboardList 
-							id={matchId} 
+							id={matchId}
+							username={username}
 						/>}
 					{activeTab === "spectators" && (
 						<SpectatorList

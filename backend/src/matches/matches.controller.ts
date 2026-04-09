@@ -150,14 +150,13 @@ export class MatchesController {
 		return await this.matchesService.checkGameState(id);
 	}
 
-	@Get('my_followed')
-	@UseGuards(JwtAuthGuard)
-	async getMyFollowed(@Request() req: userRequest) {
+	@Get(':username/followed')
+	async getMyFollowed(@Param('username') username: string) {
 		this.logger.log('getMyFollowed called');
 		return this.matchesService.getMatchesByTable({
 			table: sc.followedBroadcasts,
 			isJoinTable: true,
-			userId: req.user.id,
+			username: username,
 		});
 	}
 
@@ -194,14 +193,13 @@ export class MatchesController {
 		return { isFollowing };
 	}
 
-	@Get('my_planned')
-	@UseGuards(JwtAuthGuard)
-	async getMyPlanned(@Request() req: userRequest) {
+	@Get(':username/planned')
+	async getMyPlanned(@Param('username') username: string) {
 		this.logger.log('getMyPlanned called');
 		return this.matchesService.getMatchesByTable({
 			table: sc.plannedBroadcasts,
 			isJoinTable: true,
-			userId: req.user.id,
+			username: username,
 		});
 	}
 

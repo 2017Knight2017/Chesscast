@@ -6,7 +6,7 @@ const API_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "";
 
 export const useFollowMatch = (matchId: string) => {
 	const [isFollowing, setIsFollowing] = useState(false);
-	const [isLoading, setIsLoading] = useState(true);
+	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
 	const checkFollowStatus = useCallback(async () => {
@@ -46,6 +46,7 @@ export const useFollowMatch = (matchId: string) => {
 	}, [matchId]);
 
 	useEffect(() => {
+		setIsLoading(true);
 		checkFollowStatus();
 	}, [checkFollowStatus]);
 
