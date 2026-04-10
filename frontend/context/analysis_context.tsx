@@ -46,7 +46,6 @@ interface AnalysisContextType {
 	syncAnalysisToServer: (
 		matchId: string,
 		userId: number,
-		username: string,
 		tree?: Record<number, MoveTreeNode[]>,
 		path?: number[],
 	) => void;
@@ -121,7 +120,6 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 		(
 			matchId: string,
 			userId: number,
-			username: string,
 			tree?: Record<number, MoveTreeNode[]>,
 			path?: number[],
 		) => {
@@ -133,7 +131,6 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 				socket.emit("syncUserAnalysis", {
 					matchId,
 					userId,
-					username,
 					movesTree: tree || analysisTree,
 					currentPath: path || currentPath,
 				});

@@ -263,7 +263,6 @@ export class MatchesGateway
 		data: {
 			matchId: string;
 			userId: number;
-			username: string;
 			movesTree: object;
 			currentPath: number[];
 		},
@@ -280,7 +279,6 @@ export class MatchesGateway
 			.emit('analysisUpdate', {
 				matchId: data.matchId,
 				userId: data.userId,
-				username: data.username,
 				movesTree: data.movesTree,
 				currentPath: data.currentPath,
 			});

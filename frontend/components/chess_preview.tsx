@@ -20,7 +20,7 @@ export const ChessPreview = ({
 	const { whiteTimeFormatted, blackTimeFormatted } = useChessClock(
 		currentMoveData,
 		match.timeControl * 1000,
-		true
+		match.status !== "in_progress"
 	);
 
 	const Wrapper = isEmbedded ? "div" : Link;

@@ -45,7 +45,6 @@ export function useAnalysisSync({
 		const handleAnalysisUpdate = (data: {
 			matchId: string;
 			userId: number;
-			username: string;
 			movesTree: Record<number, MoveTreeNode[]>;
 			currentPath: number[];
 		}) => {
@@ -86,8 +85,8 @@ export function useAnalysisSync({
 	]);
 
 	useEffect(() => {
-		if (isAnalysisMode && match?.id && userId && username && inspectedUserId === null) {
-			syncAnalysisToServer(match.id, userId, username, undefined, currentPath);
+		if (isAnalysisMode && match?.id && userId && inspectedUserId === null) {
+			syncAnalysisToServer(match.id, userId, undefined, currentPath);
 		}
 	}, [
 		currentPath,
