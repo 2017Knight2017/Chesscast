@@ -46,6 +46,7 @@ interface AnalysisContextType {
 	syncAnalysisToServer: (
 		matchId: string,
 		userId: number,
+		username: string,
 		tree?: Record<number, MoveTreeNode[]>,
 		path?: number[],
 	) => void;
@@ -85,8 +86,9 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 		(mode: boolean, fen?: string) => {
 			setIsAnalysisMode(mode);
 
-			const username = localStorage.getItem("username");
-			if (!matchId || !username) return;
+			const user = localStorage.getItem("user");
+			if (!matchId || !user) return;
+			const username = JSON.parse(user).username
 
 			const event = mode ? "userStartedAnalysis" : "userStoppedAnalysis";
 			const data = { matchId, username, currentFen: "" };
@@ -101,8 +103,9 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 	const broadcastFen = useCallback(
 		(fen: string) => {
 			if (matchId) {
-				const username = localStorage.getItem("username");
-				if (username) {
+				const user = localStorage.getItem("user");
+				if (user) {
+					const {username} = JSON.parse(user);
 					socket.emit("broadcastAnalysisPosition", {
 						matchId,
 						username,
@@ -118,6 +121,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 		(
 			matchId: string,
 			userId: number,
+			username: string,
 			tree?: Record<number, MoveTreeNode[]>,
 			path?: number[],
 		) => {
@@ -129,6 +133,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 				socket.emit("syncUserAnalysis", {
 					matchId,
 					userId,
+					username,
 					movesTree: tree || analysisTree,
 					currentPath: path || currentPath,
 				});

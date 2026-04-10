@@ -23,7 +23,7 @@ interface SocketData {
 export class MatchesGateway
 	implements OnGatewayConnection, OnGatewayDisconnect
 {
-	@WebSocketServer() server: Server;
+	@WebSocketServer() server!: Server;
 
 	constructor(
 		@InjectQueue('timer') private readonly timerQueue: Queue,
@@ -104,7 +104,7 @@ export class MatchesGateway
 			'nextStep',
 			{ matchId: data.matchId, moveIndex: 0 },
 			{ jobId: `timer_${data.matchId}` },
-		);
+		); 
 	}
 
 	@SubscribeMessage('leaveMatch')
@@ -263,6 +263,7 @@ export class MatchesGateway
 		data: {
 			matchId: string;
 			userId: number;
+			username: string;
 			movesTree: object;
 			currentPath: number[];
 		},
@@ -279,6 +280,7 @@ export class MatchesGateway
 			.emit('analysisUpdate', {
 				matchId: data.matchId,
 				userId: data.userId,
+				username: data.username,
 				movesTree: data.movesTree,
 				currentPath: data.currentPath,
 			});

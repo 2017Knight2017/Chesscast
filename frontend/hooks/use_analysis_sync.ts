@@ -8,6 +8,7 @@ import { ViewerStatus } from "./use_viewer_counts";
 interface UseAnalysisSyncProps {
 	match: Match;
 	userId: number | null;
+	username: string | null;
 	hasExistingAnalysis: boolean;
 	currentMoveData: Move | null;
 }
@@ -15,6 +16,7 @@ interface UseAnalysisSyncProps {
 export function useAnalysisSync({
 	match,
 	userId,
+	username,
 	hasExistingAnalysis,
 	currentMoveData,
 }: UseAnalysisSyncProps) {
@@ -43,6 +45,7 @@ export function useAnalysisSync({
 		const handleAnalysisUpdate = (data: {
 			matchId: string;
 			userId: number;
+			username: string;
 			movesTree: Record<number, MoveTreeNode[]>;
 			currentPath: number[];
 		}) => {
@@ -83,8 +86,8 @@ export function useAnalysisSync({
 	]);
 
 	useEffect(() => {
-		if (isAnalysisMode && match?.id && userId && inspectedUserId === null) {
-			syncAnalysisToServer(match.id, userId, undefined, currentPath);
+		if (isAnalysisMode && match?.id && userId && username && inspectedUserId === null) {
+			syncAnalysisToServer(match.id, userId, username, undefined, currentPath);
 		}
 	}, [
 		currentPath,
@@ -113,7 +116,7 @@ export function useAnalysisSync({
 					await loadAnalysis(match.id, userId);
 				}
 
-				const username = localStorage.getItem("username");
+				const username = localStorage.getItem("user");
 				socket.emit("joinAnalysisStream", {
 					matchId: match?.id,
 					userId,
@@ -152,7 +155,8 @@ export function useAnalysisSync({
 		setSelectedMoveIndex(null);
 
 		const prevInspectedUserId = inspectedUserId;
-		const username = localStorage.getItem("username");
+		const user = localStorage.getItem("user");
+		const {username} = JSON.parse(user!);
 
 		resetAnalysis();
 

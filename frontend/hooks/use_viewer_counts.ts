@@ -23,10 +23,8 @@ export const useViewerCounts = (matchIds: string[]) => {
 	useEffect(() => {
 		const currentSocket = socket;
 
-		const ids = matchIdsKey;
-
 		const handleConnect = () => {
-			currentSocket.emit("subscribeToCounts", { matchIds: ids });
+			currentSocket.emit("subscribeToCounts", { matchIds });
 		};
 
 		const handleUpdate = ({
@@ -60,7 +58,7 @@ export const useViewerCounts = (matchIds: string[]) => {
 		currentSocket.on("viewer_count_update", handleUpdate);
 
 		return () => {
-			currentSocket.emit("unsubscribeFromCounts", { matchIds: ids });
+			currentSocket.emit("unsubscribeFromCounts", { matchIds });
 			currentSocket.off("connect", handleConnect);
 			currentSocket.off("viewer_count_update", handleUpdate);
 		};

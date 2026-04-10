@@ -77,10 +77,14 @@ export const useBroadcast = (matchId: string, initialMatch?: Match) => {
 	}, [matchId, initialMatch]);
 
 	useEffect(() => {
-		const username = localStorage.getItem("username");
+		const user = localStorage.getItem("user");
+		const {username} = JSON.parse(user!)
 
 		const handleConnect = () => {
-			socket.emit("joinMatch", { matchId, username, guestId });
+			socket.emit("joinMatch", {
+				matchId,
+				...(username ? { username } : { guestId }),
+			});
 		};
 
 		const handleNewMove = (data: NewMoveData) => {
@@ -130,7 +134,10 @@ export const useBroadcast = (matchId: string, initialMatch?: Match) => {
 		socket.on("match_finished", handleMatchFinished);
 
 		return () => {
-			socket.emit("leaveMatch", { matchId, username, guestId });
+			socket.emit("leaveMatch", {
+				matchId,
+				...(username ? { username } : { guestId }),
+			});
 
 			socket.off("connect", handleConnect);
 			socket.off("new_move", handleNewMove);
