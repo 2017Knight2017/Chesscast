@@ -42,6 +42,7 @@ export const useViewerCounts = (matchIds: string[]) => {
 				matchId,
 				count,
 				guestCount,
+				usernames,
 			});
 			setCumulativeCounts((prev) => ({
 				...prev,

@@ -83,10 +83,22 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 
 	const setAnalysisMode = useCallback(
 		(mode: boolean, fen?: string) => {
+			console.log("[analysis_context.tsx:setAnalysisMode]", {
+				mode,
+				fen,
+				matchId,
+			});
+
 			setIsAnalysisMode(mode);
 
 			const user = localStorage.getItem("user");
-			if (!matchId || !user) return;
+			if (!matchId || !user) {
+				console.log("[analysis_context.tsx:setAnalysisMode] Early return - no matchId or user", {
+					matchId,
+					hasUser: !!user,
+				});
+				return;
+			}
 			const username = JSON.parse(user).username
 
 			const event = mode ? "userStartedAnalysis" : "userStoppedAnalysis";
@@ -94,6 +106,11 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 			if (mode && fen) {
 				data.currentFen = fen;
 			}
+
+			console.log("[analysis_context.tsx:setAnalysisMode] Emitting event", {
+				event,
+				data,
+			});
 			socket.emit(event, data);
 		},
 		[matchId, socket],
@@ -251,7 +268,8 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 		setInspectedUsername(null);
 		setAnalysisTree({});
 		setCurrentPath([]);
-		setMatchId(null);
+		// Не сбрасываем matchId — он должен сохраняться, пока пользователь на странице
+		// setMatchId(null);
 		setSelectedMoveIndex(null);
 	}, [setAnalysisMode]);
 

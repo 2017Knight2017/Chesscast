@@ -38,10 +38,25 @@ export function SpectatorList({
 		if (!usernames) return [];
 		return usernames[id] || [];
 	}, [usernames, id]);
+
+	// Извлекаем статус выбранного зрителя для явной зависимости useEffect
+	const selectedSpectatorStatus = useMemo(() => {
+		if (!selectedSpectator) return null;
+		return resolvedUsernames.find(
+			(u) => u.username === selectedSpectator,
+		) || null;
+	}, [resolvedUsernames, selectedSpectator]);
+
 	let resolvedGuestCount = 0;
 	if (guestCount) resolvedGuestCount = guestCount[id] || 0;
 
 	useEffect(() => {
+		console.log("[spectator_list.tsx:useEffect fetchUserFen]", {
+			selectedSpectator,
+			selectedSpectatorStatus,
+			resolvedUsernamesLength: resolvedUsernames.length,
+		});
+
 		let isCurrent = true;
 		const fetchUserFen = async () => {
 			if (!selectedSpectator) {
@@ -52,8 +67,30 @@ export function SpectatorList({
 			const status = resolvedUsernames.find(
 				(u) => u.username === selectedSpectator,
 			);
-			if (status?.currentFen) {
-				if (isCurrent) setPreviewFen(status.currentFen);
+
+			console.log("[spectator_list.tsx:fetchUserFen status]", {
+				username: selectedSpectator,
+				status,
+			});
+
+			if (!status || (!status.isAnalyzing && !status.currentFen)) {
+				console.log("[spectator_list.tsx:fetchUserFen] Status reset, clearing previewFen");
+				if (isCurrent) setPreviewFen(null);
+				return;
+			}
+
+			const hasValidCurrentFen = status.currentFen && status.currentFen.trim() !== "";
+			if (status.isAnalyzing && hasValidCurrentFen) {
+				console.log("[spectator_list.tsx:fetchUserFen] Using currentFen from status", status.currentFen);
+				if (isCurrent) setPreviewFen(status.currentFen!);
+				return;
+			}
+
+			if (status.isAnalyzing && !hasValidCurrentFen) {
+				console.log("[spectator_list.tsx:fetchUserFen] Analyzing but no currentFen, using currentMoveData.fen");
+				if (isCurrent && currentMoveData) {
+					setPreviewFen(currentMoveData.fen);
+				}
 				return;
 			}
 
@@ -134,7 +171,7 @@ export function SpectatorList({
 		return () => {
 			isCurrent = false;
 		};
-	}, [selectedSpectator, id, resolvedUsernames, currentMoveData]);
+	}, [selectedSpectator, id, resolvedUsernames, currentMoveData, selectedSpectatorStatus]);
 
 	const handleSpectatorClick = (username: string) => {
 		console.log("[spectator_list.tsx:handleSpectatorClick]", { username });
