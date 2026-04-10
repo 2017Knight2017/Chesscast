@@ -39,7 +39,6 @@ export function SpectatorList({
 		return usernames[id] || [];
 	}, [usernames, id]);
 
-	// Извлекаем статус выбранного зрителя для явной зависимости useEffect
 	const selectedSpectatorStatus = useMemo(() => {
 		if (!selectedSpectator) return null;
 		return resolvedUsernames.find(
@@ -194,6 +193,38 @@ export function SpectatorList({
 		<div className="h-full flex flex-col p-4 border-l-4 border-oak bg-orange-50 shadow-inner overflow-hidden overflow-y-auto">
 			{isMobile && selectedSpectator ? (
 				<div className="flex flex-row gap-4">
+					<div className="shrink-0">
+						<div className="p-3 bg-orange-100 border-2 border-double border-amber-900/40 flex flex-col items-center max-w-fit">
+							<div className="flex justify-between w-full items-start mb-2">
+								<h4 className="font-bold text-stone-900 text-sm truncate pr-2">
+									Preview: {selectedSpectator}
+								</h4>
+							</div>
+
+							{previewFen && (
+								<div
+									className="w-full aspect-square max-w-40 mx-auto mb-3 border-2 border-amber-900/30 shrink-0 cursor-pointer hover:border-amber-900 transition-colors"
+									onClick={handleViewFullAnalysis}
+									title="Click to view full analysis"
+								>
+									<Chessground
+										fen={previewFen}
+										viewOnly={true}
+										coordinates={false}
+										width="100%"
+										height="100%"
+									/>
+								</div>
+							)}
+
+							<button
+								onClick={handleViewFullAnalysis}
+								className="w-full py-1.5 px-3 bg-amber-900 text-orange-50 text-xs font-bold uppercase tracking-wider rounded hover:bg-stone-900 transition-colors shadow-sm"
+							>
+								View Full Analysis
+							</button>
+						</div>
+					</div>
 					<div className="flex-1 flex flex-col">
 						<div className="shrink-0 flex justify-between gap-2 border-b mb-2 pb-1 text-stone-900">
 							<h3 className="font-mono">Spectator List</h3>
@@ -296,39 +327,6 @@ export function SpectatorList({
 							{resolvedGuestCount > 0 && (
 								<div className="italic">+ {resolvedGuestCount} guests</div>
 							)}
-						</div>
-					</div>
-
-					<div className="shrink-0">
-						<div className="p-3 bg-orange-100 border-2 border-double border-amber-900/40 flex flex-col items-center max-w-fit">
-							<div className="flex justify-between w-full items-start mb-2">
-								<h4 className="font-bold text-stone-900 text-sm truncate pr-2">
-									Preview: {selectedSpectator}
-								</h4>
-							</div>
-
-							{previewFen && (
-								<div
-									className="w-full aspect-square max-w-40 mx-auto mb-3 border-2 border-amber-900/30 shrink-0 cursor-pointer hover:border-amber-900 transition-colors"
-									onClick={handleViewFullAnalysis}
-									title="Click to view full analysis"
-								>
-									<Chessground
-										fen={previewFen}
-										viewOnly={true}
-										coordinates={false}
-										width="100%"
-										height="100%"
-									/>
-								</div>
-							)}
-
-							<button
-								onClick={handleViewFullAnalysis}
-								className="w-full py-1.5 px-3 bg-amber-900 text-orange-50 text-xs font-bold uppercase tracking-wider rounded hover:bg-stone-900 transition-colors shadow-sm"
-							>
-								View Full Analysis
-							</button>
 						</div>
 					</div>
 				</div>

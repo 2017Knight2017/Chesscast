@@ -31,13 +31,13 @@ export function MobileBottomPanel({
 	>("moves");
 
 	return (
-		<div className="flex flex-col h-[40vh] bg-amber-950 border-t border-amber-800/30">
-			<div className="flex border-b border-amber-800/20">
+		<div className="flex flex-col h-[40vh] bg-oak-dark border-t border-oak/30">
+			<div className="flex">
 				<button
 					onClick={() => setActiveTab("moves")}
 					className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-colors ${
 						activeTab === "moves"
-							? "bg-amber-800 text-amber-50"
+							? "bg-oak text-amber-50"
 							: "text-amber-50/60 hover:text-amber-50"
 					}`}
 				>
@@ -47,7 +47,7 @@ export function MobileBottomPanel({
 					onClick={() => setActiveTab("boards")}
 					className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-colors ${
 						activeTab === "boards"
-							? "bg-amber-800 text-amber-50"
+							? "bg-oak text-amber-50"
 							: "text-amber-50/60 hover:text-amber-50"
 					}`}
 				>
@@ -57,7 +57,7 @@ export function MobileBottomPanel({
 					onClick={() => setActiveTab("spectators")}
 					className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-colors ${
 						activeTab === "spectators"
-							? "bg-amber-800 text-amber-50"
+							? "bg-oak text-amber-50"
 							: "text-amber-50/60 hover:text-amber-50"
 					}`}
 				>

@@ -215,7 +215,7 @@ export function MoveList({ matchHistory: propMatchHistory, currentMoveData, fina
 	return (
 		<div className="h-full flex flex-col p-4 border-l-4 border-oak bg-orange-50 shadow-inner overflow-hidden font-mono text-stone-900">
 			<div className="shrink-0 flex justify-between items-center border-b mb-2 pb-1">
-				<h3>Moves Record</h3>
+				<h3>Move Record</h3>
 				{isAnalysisMode &&
 					currentPath.length > 0 &&
 					selectedMoveIndex !== null &&

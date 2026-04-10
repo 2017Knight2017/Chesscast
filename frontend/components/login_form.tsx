@@ -20,7 +20,7 @@ export function LoginForm({ isRegister }: { isRegister: boolean }) {
 		setIsLoading(true);
 
 		if (confirmPassword && password !== confirmPassword) {
-			setError("Пароли не совпадают");
+			setError("Passwords do not match.");
 			setIsLoading(false);
 			return;
 		}
@@ -72,7 +72,7 @@ export function LoginForm({ isRegister }: { isRegister: boolean }) {
 	return (
 		<div className="bg-white bg-opacity-90 backdrop-blur-sm rounded-lg shadow-lg p-8 w-full max-w-md">
 			<h2 className="text-2xl font-serif font-bold text-center mb-6 text-[#5d4037]">
-				{isRegister ? "Регистрация" : "Вход"}
+				{isRegister ? "Register" : "Login"}
 			</h2>
 			<form onSubmit={handleSubmit} className="space-y-4">
 				<div>
@@ -80,7 +80,7 @@ export function LoginForm({ isRegister }: { isRegister: boolean }) {
 						htmlFor="username"
 						className="block text-sm font-medium text-[#5d4037] mb-1"
 					>
-						Имя пользователя
+						Username
 					</label>
 					<input
 						type="text"
@@ -97,7 +97,7 @@ export function LoginForm({ isRegister }: { isRegister: boolean }) {
 							htmlFor="email"
 							className="block text-sm font-medium text-[#5d4037] mb-1"
 						>
-							Электронная почта
+							Email
 						</label>
 						<input
 							type="email"
@@ -114,7 +114,7 @@ export function LoginForm({ isRegister }: { isRegister: boolean }) {
 						htmlFor="password"
 						className="block text-sm font-medium text-[#5d4037] mb-1"
 					>
-						Пароль
+						Password
 					</label>
 					<input
 						type="password"
@@ -131,7 +131,7 @@ export function LoginForm({ isRegister }: { isRegister: boolean }) {
 							htmlFor="confirmPassword"
 							className="block text-sm font-medium text-[#5d4037] mb-1"
 						>
-							Подтверждение пароля
+							Confirm password
 						</label>
 						<input
 							type="password"
@@ -148,25 +148,25 @@ export function LoginForm({ isRegister }: { isRegister: boolean }) {
 					disabled={isLoading}
 					className="w-full py-2 bg-[#5d4037] text-white font-semibold rounded-md hover:bg-[#8d6e63] focus:outline-none focus:ring-2 focus:ring-[#8d6e63]"
 				>
-					{isRegister ? "Зарегистрироваться" : "Войти"}
+					{isRegister ? "Register" : "Login"}
 				</button>
 				{error && (
 					<div className="text-red-500 text-sm mt-2">{error}</div>
 				)}
 				{isLoading && (
 					<div className="text-gray-500 text-sm mt-2">
-						Загрузка...
+						Loading...
 					</div>
 				)}
 			</form>
 			{!isRegister && (
 				<p className="text-sm text-center text-[#5d4037] mt-4">
-					Нет аккаунта?{" "}
+					Have no account yet?{" "}
 					<a
 						href="/register"
 						className="text-[#5d4037] hover:underline"
 					>
-						Зарегистрироваться
+						Register
 					</a>
 				</p>
 			)}

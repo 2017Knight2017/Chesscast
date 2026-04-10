@@ -21,9 +21,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-	title: "Chesscast - Платформа для онлайн-трансляций шахматных турниров",
+	title: "Chesscast — Online Chess Tournament Broadcasting Platform",
 	description:
-		"Chesscast — это платформа для трансляций шахматных партий мастеров прошлого. Думайте над следующим ходом вместе с гроссмейстером!",
+		"Chesscast is a platform for broadcasting chess games of the masters of the past. Anticipate the next move along with a grandmaster!",
 };
 
 export const viewport: Viewport = {
