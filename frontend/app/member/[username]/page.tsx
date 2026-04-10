@@ -37,7 +37,7 @@ export default async function DashboardPage({
 		);
 
 		const liveMatches = allUniqueMatches.filter(m => m.status === "in_progress");
-		const plannedMatches = allUniqueMatches.filter(m => m.status === "waiting");
+		const plannedMatches = allUniqueMatches.filter(m => m.status === "waiting" || m.status === "processing");
 		const finishedMatches = allUniqueMatches.filter(m => m.status === "finished");
 
 		return (
