@@ -4,7 +4,9 @@ import { Move, MoveRecord, MoveTreeNode } from "@/types/types";
 import { useCallback, useEffect, useMemo, useRef, memo } from "react";
 import { BackToLiveButton } from "./back_to_live_button";
 import { useAnalysisState } from "@/context/analysis_context";
+import { useKeyboardNavigation } from "@/hooks/use_keyboard_navigation";
 import { MoveNode } from "./move_node";
+import { ChessBoard, ChessBoardProps } from "./chess_board";
 
 const EMPTY_ARRAY: number[] = [];
 
@@ -26,6 +28,8 @@ interface MoveListProps {
 	matchHistory?: string[];
 	currentMoveData: Move | null;
 	finalIsEnded: boolean;
+	isMobile?: boolean;
+	chessBoardProps?: ChessBoardProps;
 }
 
 const MoveBtn = memo(({ text, isActive, onClick }: MoveBtnProps) => (
@@ -143,7 +147,7 @@ const MovePairItem = memo(function MovePairItem({
 	);
 });
 
-export function MoveList({ matchHistory: propMatchHistory, currentMoveData, finalIsEnded }: MoveListProps) {
+export function MoveList({ matchHistory: propMatchHistory, currentMoveData, finalIsEnded, isMobile, chessBoardProps }: MoveListProps) {
 	const {
 		isAnalysisMode,
 		analysisTree,
@@ -157,7 +161,10 @@ export function MoveList({ matchHistory: propMatchHistory, currentMoveData, fina
 
 	const socketHistory = currentMoveData?.history || [];
 	const matchHistory = propMatchHistory || socketHistory;
+	const totalMoves = matchHistory.length;
 	const activeRef = useRef<HTMLDivElement | null>(null);
+
+	useKeyboardNavigation(totalMoves);
 
 	useEffect(() => {
 		let rafId: number;
@@ -213,89 +220,154 @@ export function MoveList({ matchHistory: propMatchHistory, currentMoveData, fina
 	if (!isAnalysisMode && !currentMoveData) return <div>Loading...</div>;
 
 	return (
-		<div className="h-full flex flex-col p-4 border-l-4 border-oak bg-orange-50 shadow-inner overflow-hidden font-mono text-stone-900">
-			<div className="shrink-0 flex justify-between items-center border-b mb-2 pb-1">
-				<h3>Move Record</h3>
-				{isAnalysisMode &&
-					currentPath.length > 0 &&
-					selectedMoveIndex !== null &&
-					inspectedUserId === null && (
-						<button
-							onClick={() => deleteBranch(selectedMoveIndex, currentPath)}
-							className="text-[10px] text-red-500 hover:text-red-700 transition-colors uppercase font-bold flex items-center gap-1"
-							title="Delete current variation"
-						>
-							<span>Delete Branch</span>
-							<span className="text-xs">×</span>
-						</button>
-					)}
-			</div>
-
-			<div className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden mb-4 pr-2">
-				<div
-					className="h-full flex flex-col content-start gap-2 flex-wrap"
-					style={{ overscrollBehaviorX: "contain" }}
-				>
-					{/* Starting position variations */}
-					{isAnalysisMode &&
-						analysisTree[-1] &&
-						analysisTree[-1].map((node, idx) => (
-							<div
-								key={idx}
-								className="flex items-center h-7 pl-2 ml-4 border-l-2 border-amber-300 bg-amber-50/30 rounded-r"
-							>
-								<MoveNode
-									node={node}
-									path={[idx]}
-									branchPoint={-1}
-									currentPath={selectedMoveIndex === -1 ? currentPath : EMPTY_ARRAY}
-									onPathClick={handlePathClick}
-									moveIndex={0}
-								/>
-							</div>
-						))}
-
-					{pairs.map((pair, i) => {
-						const whiteIndex = i * 2;
-						const blackIndex = i * 2 + 1;
-
-						const isWhiteActive = currentPath.length === 0 && selectedMoveIndex === whiteIndex;
-						const isBlackActive = currentPath.length === 0 && selectedMoveIndex === blackIndex;
-						const isPairActive = isWhiteActive || isBlackActive;
-
-						const whiteVars = isAnalysisMode ? analysisTree[whiteIndex] : null;
-						const blackVars = isAnalysisMode && pair.black !== "..." ? analysisTree[blackIndex] : null;
-
-						const activeWhitePath = selectedMoveIndex === whiteIndex ? currentPath : EMPTY_ARRAY;
-						const activeBlackPath = selectedMoveIndex === blackIndex ? currentPath : EMPTY_ARRAY;
-
-						return (
-							<MovePairItem
-								key={i}
-								pair={pair}
-								whiteIndex={whiteIndex}
-								blackIndex={blackIndex}
-								isWhiteActive={isWhiteActive}
-								isBlackActive={isBlackActive}
-								isPairActive={isPairActive}
-								whiteVars={whiteVars}
-								blackVars={blackVars}
-								activeWhitePath={activeWhitePath}
-								activeBlackPath={activeBlackPath}
-								handleMoveClick={handleMoveClick}
-								handlePathClick={handlePathClick}
-								scrollToActive={scrollToActive}
-							/>
-						);
-					})}
-				</div>
-			</div>
-
-			{!finalIsEnded && (
-				<div className="shrink-0 mt-auto pt-4 border-t border-black/5">
-					<BackToLiveButton />
+		<div className="h-full flex gap-4 p-4 border-l-4 border-oak bg-orange-50 shadow-inner overflow-hidden font-mono text-stone-900">
+			{isMobile && chessBoardProps && isAnalysisMode && (
+				<div className="aspect-square">
+					<ChessBoard {...chessBoardProps} />
 				</div>
 			)}
+			<div className="flex flex-col w-full">
+				<div className="shrink-0 flex justify-between items-center border-b mb-2 pb-1">
+					<h3>Move Record</h3>
+					{isAnalysisMode &&
+						currentPath.length > 0 &&
+						selectedMoveIndex !== null &&
+						inspectedUserId === null && (
+							<button
+								onClick={() => deleteBranch(selectedMoveIndex, currentPath)}
+								className="text-[10px] text-red-500 hover:text-red-700 transition-colors uppercase font-bold flex items-center gap-1"
+								title="Delete current variation"
+							>
+								<span>Delete Branch</span>
+								<span className="text-xs">×</span>
+							</button>
+						)}
+				</div>
+
+				<div className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden mb-4 pr-2">
+					<div
+						className="h-full flex flex-col content-start gap-2 flex-wrap"
+						style={{ overscrollBehaviorX: "contain" }}
+					>
+						{/* Starting position variations */}
+						{isAnalysisMode &&
+							analysisTree[-1] &&
+							analysisTree[-1].map((node, idx) => (
+								<div
+									key={idx}
+									className="flex items-center h-7 pl-2 ml-4 border-l-2 border-oak-light bg-amber-50/30 rounded-r"
+								>
+									<MoveNode
+										node={node}
+										path={[idx]}
+										branchPoint={-1}
+										currentPath={selectedMoveIndex === -1 ? currentPath : EMPTY_ARRAY}
+										onPathClick={handlePathClick}
+										moveIndex={0}
+									/>
+								</div>
+							))}
+
+						{pairs.map((pair, i) => {
+							const whiteIndex = i * 2;
+							const blackIndex = i * 2 + 1;
+
+							const isWhiteActive = currentPath.length === 0 && selectedMoveIndex === whiteIndex;
+							const isBlackActive = currentPath.length === 0 && selectedMoveIndex === blackIndex;
+							const isPairActive = isWhiteActive || isBlackActive;
+
+							const whiteVars = isAnalysisMode ? analysisTree[whiteIndex] : null;
+							const blackVars = isAnalysisMode && pair.black !== "..." ? analysisTree[blackIndex] : null;
+
+							const activeWhitePath = selectedMoveIndex === whiteIndex ? currentPath : EMPTY_ARRAY;
+							const activeBlackPath = selectedMoveIndex === blackIndex ? currentPath : EMPTY_ARRAY;
+
+							return (
+								<MovePairItem
+									key={i}
+									pair={pair}
+									whiteIndex={whiteIndex}
+									blackIndex={blackIndex}
+									isWhiteActive={isWhiteActive}
+									isBlackActive={isBlackActive}
+									isPairActive={isPairActive}
+									whiteVars={whiteVars}
+									blackVars={blackVars}
+									activeWhitePath={activeWhitePath}
+									activeBlackPath={activeBlackPath}
+									handleMoveClick={handleMoveClick}
+									handlePathClick={handlePathClick}
+									scrollToActive={scrollToActive}
+								/>
+							);
+						})}
+					</div>
+				</div>
+				<div className="flex flex-row justify-between">
+					{isMobile && (
+						<button
+							onClick={() => {
+								if (isAnalysisMode) {
+									if (currentPath.length > 0) {
+										setCurrentPath(currentPath.slice(0, -1));
+									} else {
+										const idx = selectedMoveIndex ?? totalMoves - 1;
+										if (idx > -1) setSelectedMoveIndex(idx - 1);
+									}
+								} else {
+									const currentIndex = selectedMoveIndex ?? totalMoves - 1;
+									if (currentIndex > -1) {
+										setSelectedMoveIndex(currentIndex - 1);
+									}
+								}
+							}}
+							className="flex items-center justify-center w-18 h-15 bg-oak-light hover:bg-oak text-stone-900 text-lg font-bold rounded transition-colors border border-oak-dark/50 ring-1 ring-inset ring-white/20 shadow-sm"
+						>
+							←
+						</button>
+					)}
+					{!finalIsEnded && (
+						<div className="shrink-0 mt-auto pt-4 border-t border-black/5">
+							<BackToLiveButton />
+						</div>
+					)}
+					{isMobile && (
+						<button
+							onClick={() => {
+								const branchPoint = selectedMoveIndex ?? totalMoves - 1;
+								if (isAnalysisMode) {
+									if (currentPath.length > 0) {
+										let currentLevel = analysisTree[branchPoint] || [];
+										for (const idx of currentPath) {
+											currentLevel = currentLevel[idx]?.s || [];
+										}
+										if (currentLevel.length > 0) {
+											setCurrentPath([...currentPath, 0]);
+										}
+									} else {
+										const idx = selectedMoveIndex ?? totalMoves - 1;
+										if (idx < totalMoves - 1) {
+											setSelectedMoveIndex(idx + 1);
+										} else {
+											setSelectedMoveIndex(null);
+										}
+									}
+								} else {
+									const currentIndex = selectedMoveIndex ?? totalMoves - 1;
+									if (currentIndex < totalMoves - 1) {
+										setSelectedMoveIndex(currentIndex + 1);
+									} else {
+										setSelectedMoveIndex(null);
+									}
+								}
+							}}
+							className="flex items-center justify-center w-18 h-15 bg-oak-light hover:bg-oak text-stone-900 text-lg font-bold rounded transition-colors border border-oak-dark/50 ring-1 ring-inset ring-white/20 shadow-sm"
+						>
+							→
+						</button>
+					)}
+				</div>
+			</div>
 		</div>
 	);
 }

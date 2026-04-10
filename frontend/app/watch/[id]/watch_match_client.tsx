@@ -224,25 +224,6 @@ export default function WatchMatchClient({
 								currentFen={currentMoveData.fen}
 								evals={currentMoveData.evaluations}
 							/>
-							<div className="fixed bottom-4 right-4 w-32 h-32 z-50 shadow-2xl border-2 border-amber-900 bg-stone-950 rounded-md overflow-hidden">
-								<ChessBoard
-									onSelect={async () => {
-										const exists =
-											await handleMainBoardClick();
-										setHasExistingAnalysis(exists);
-									}}
-									setIsManualStarted={setIsManualStarted}
-									setIsOverlayVisible={setIsOverlayVisible}
-									isOverlayVisible={isOverlayVisible}
-									isManualStarted={isManualStarted}
-									match={match}
-									currentMoveData={currentMoveData}
-									isBroadcastActive={isBroadcastActive}
-									finalIsEnded={finalIsEnded}
-									outcome={outcome}
-									hideTimers={true}
-								/>
-							</div>
 						</div>
 					)}
 				</section>
@@ -256,6 +237,23 @@ export default function WatchMatchClient({
 						usernames={usernames}
 						guestCount={guestCount}
 						finalIsEnded={finalIsEnded}
+						chessBoardProps={{
+							onSelect: (async () => {
+								const exists =
+									await handleMainBoardClick();
+								setHasExistingAnalysis(exists);
+							}),
+							setIsManualStarted: setIsManualStarted,
+							setIsOverlayVisible: setIsOverlayVisible,
+							isOverlayVisible: isOverlayVisible,
+							isManualStarted: isManualStarted,
+							match: match,
+							currentMoveData: currentMoveData,
+							isBroadcastActive: isBroadcastActive,
+							finalIsEnded: finalIsEnded,
+							outcome: outcome,
+							hideTimers: true,
+						}}
 					/>
 				</div>
 			</div>

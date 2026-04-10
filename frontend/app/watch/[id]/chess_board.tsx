@@ -10,7 +10,7 @@ import { Chess } from "chess.js";
 import { launchMatchAction } from "@/actions/match_actions";
 import { EvalBar } from "@/components/eval_bar";
 
-interface ChessBoardProps {
+export interface ChessBoardProps {
 	onMove?: (orig: string, dest: string) => void;
 	onSelect?: (key: string) => void;
 	setIsOverlayVisible: Dispatch<SetStateAction<boolean>>;

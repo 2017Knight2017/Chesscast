@@ -6,6 +6,7 @@ import { SpectatorList } from "./spectator_list";
 import { ViewerStatus } from "@/hooks/use_viewer_counts";
 import { Move } from "@/types/types";
 import { ParaboardList } from "./paraboard_list";
+import { ChessBoardProps } from "./chess_board";
 
 interface MobileBottomPanelProps {
 	matchId: string;
@@ -15,6 +16,7 @@ interface MobileBottomPanelProps {
 	usernames: Record<string, ViewerStatus[]>;
 	guestCount: Record<string, number>;
 	finalIsEnded: boolean;
+	chessBoardProps: ChessBoardProps
 }
 
 export function MobileBottomPanel({
@@ -25,6 +27,7 @@ export function MobileBottomPanel({
 	usernames,
 	guestCount,
 	finalIsEnded,
+	chessBoardProps,
 }: MobileBottomPanelProps) {
 	const [activeTab, setActiveTab] = useState<
 		"moves" | "spectators" | "boards"
@@ -70,6 +73,8 @@ export function MobileBottomPanel({
 						<MoveList
 							currentMoveData={currentMoveData}
 							finalIsEnded={finalIsEnded}
+							isMobile={true}
+							chessBoardProps={chessBoardProps}
 						/>
 					)}
 					{activeTab === "boards" && 
