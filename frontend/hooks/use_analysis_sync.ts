@@ -8,7 +8,6 @@ import { ViewerStatus } from "./use_viewer_counts";
 interface UseAnalysisSyncProps {
 	match: Match;
 	userId: number | null;
-	username: string | null;
 	hasExistingAnalysis: boolean;
 	currentMoveData: Move | null;
 }
@@ -16,7 +15,6 @@ interface UseAnalysisSyncProps {
 export function useAnalysisSync({
 	match,
 	userId,
-	username,
 	hasExistingAnalysis,
 	currentMoveData,
 }: UseAnalysisSyncProps) {
