@@ -154,7 +154,7 @@ export function SpectatorList({
 	};
 
 	return (
-		<div className="h-full flex flex-col p-4 border-l-4 border-oak bg-orange-50 shadow-inner overflow-hidden">
+		<div className="h-full flex flex-col p-4 border-l-4 border-oak bg-orange-50 shadow-inner overflow-hidden overflow-y-auto">
 			{isMobile && selectedSpectator ? (
 				<div className="flex flex-row gap-4">
 					<div className="flex-1 flex flex-col">

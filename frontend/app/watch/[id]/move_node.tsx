@@ -1,4 +1,5 @@
 import { MoveTreeNode } from "@/types/types";
+import { memo } from "react";
 
 interface MoveNodeProps {
 	node: MoveTreeNode;
@@ -14,7 +15,7 @@ const isVerticalBranching = (node: MoveTreeNode) => {
 	return node.s && node.s.length > 2;
 };
 
-export function MoveNode({
+const MoveNodeComponent = ({
 	node,
 	path,
 	branchPoint,
@@ -22,7 +23,7 @@ export function MoveNode({
 	onPathClick,
 	moveIndex,
 	isFirstInVar = false,
-}: MoveNodeProps) {
+}: MoveNodeProps) => {
 	const isWhite = moveIndex % 2 === 0;
 	const moveNum = Math.floor(moveIndex / 2) + 1;
 
@@ -40,11 +41,7 @@ export function MoveNode({
 
 	return (
 		<div className={isVertical ? "flex flex-col w-full" : "inline"}>
-			<div
-				className={
-					isVertical ? "flex items-center h-8 lg:h-7" : "inline"
-				}
-			>
+			<div className={isVertical ? "flex items-center h-8 lg:h-7" : "inline"}>
 				<button
 					onClick={() => onPathClick(branchPoint, path)}
 					className={`inline-block text-[11px] rounded px-2 py-1 lg:px-1 lg:py-0 transition-colors hover:bg-black/5
@@ -55,15 +52,11 @@ export function MoveNode({
 				</button>
 			</div>
 
-			{node.s &&
-				node.s.length > 0 &&
-				(isVertical ? (
+			{node.s && node.s.length > 0 && (
+				isVertical ? (
 					<div className="flex flex-col ml-3 pl-2 border-l-2 border-black/10">
 						{node.s.map((childNode, childIdx) => (
-							<div
-								key={childIdx}
-								className="flex items-center flex-wrap"
-							>
+							<div key={childIdx} className="flex items-center flex-wrap">
 								<MoveNode
 									node={childNode}
 									path={[...path, childIdx]}
@@ -97,10 +90,7 @@ export function MoveNode({
 								);
 							} else {
 								return (
-									<span
-										key={childIdx}
-										className="text-slate-500 italic mr-1"
-									>
+									<span key={childIdx} className="text-slate-500 italic mr-1">
 										(
 										<MoveNode
 											node={childNode}
@@ -117,7 +107,34 @@ export function MoveNode({
 							}
 						})}
 					</span>
-				))}
+				)
+			)}
 		</div>
 	);
 };
+
+export const MoveNode = memo(MoveNodeComponent, (prev, next) => {
+	if (prev.node !== next.node) return false;
+
+	const myPathStr = next.path.join('-');
+	const prevActiveStr = prev.currentPath.join('-');
+	const nextActiveStr = next.currentPath.join('-');
+
+	if (prevActiveStr === nextActiveStr) return true;
+
+	if (myPathStr === prevActiveStr || myPathStr === nextActiveStr) {
+		return false;
+	}
+
+	const prefix = myPathStr ? `${myPathStr}-` : '';
+	if (
+		(prefix && prevActiveStr.startsWith(prefix)) || 
+		(prefix && nextActiveStr.startsWith(prefix))
+	) {
+		return false;
+	}
+
+	return true; 
+});
+
+MoveNode.displayName = "MoveNode";

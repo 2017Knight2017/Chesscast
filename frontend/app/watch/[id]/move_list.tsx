@@ -55,7 +55,7 @@ const VariationBlock = memo(({ vars, branchPoint, currentPath, onPathClick, move
 		{vars.map((node: MoveTreeNode, idx: number) => (
 			<div
 				key={idx}
-				className="flex items-center flex-wrap pl-2 ml-4 pb-2 border-l-2 border-amber-300 bg-amber-50/30 rounded-r"
+				className="flex items-center flex-wrap pl-2 ml-4 pb-2 border-l-2 border-oak-light bg-amber-50/30 rounded-r"
 			>
 				<MoveNode
 					node={node}
@@ -72,7 +72,6 @@ const VariationBlock = memo(({ vars, branchPoint, currentPath, onPathClick, move
 ));
 VariationBlock.displayName = "VariationBlock";
 
-// 2. НОВЫЙ КОМПОНЕНТ: Мемоизированная пара ходов
 interface MovePairItemProps {
 	pair: MoveRecord;
 	whiteIndex: number;
@@ -256,7 +255,6 @@ export function MoveList({ matchHistory: propMatchHistory, currentMoveData, fina
 							</div>
 						))}
 
-					{/* 4. ЧИСТЫЙ РЕНДЕР: Вычисляем пропсы и передаем в мемоизированный компонент */}
 					{pairs.map((pair, i) => {
 						const whiteIndex = i * 2;
 						const blackIndex = i * 2 + 1;
@@ -268,7 +266,6 @@ export function MoveList({ matchHistory: propMatchHistory, currentMoveData, fina
 						const whiteVars = isAnalysisMode ? analysisTree[whiteIndex] : null;
 						const blackVars = isAnalysisMode && pair.black !== "..." ? analysisTree[blackIndex] : null;
 
-						// Тот самый трюк со ссылками: если ход не активен, мы передаем стабильный EMPTY_ARRAY
 						const activeWhitePath = selectedMoveIndex === whiteIndex ? currentPath : EMPTY_ARRAY;
 						const activeBlackPath = selectedMoveIndex === blackIndex ? currentPath : EMPTY_ARRAY;
 
