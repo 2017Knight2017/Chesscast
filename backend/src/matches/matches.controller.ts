@@ -207,7 +207,7 @@ export class MatchesController {
 	async getPlanned(): Promise<Match[]> {
 		this.logger.log('getPlanned called');
 		return this.matchesService.getMatchesByTable({
-			table: sc.followedBroadcasts,
+			table: sc.matches,
 			isJoinTable: false,
 			status: 'waiting',
 		});
@@ -217,7 +217,7 @@ export class MatchesController {
 	async getLiveMatches(): Promise<Match[]> {
 		this.logger.log('getLiveMatches called');
 		return this.matchesService.getMatchesByTable({
-			table: sc.followedBroadcasts,
+			table: sc.matches,
 			isJoinTable: false,
 			status: 'in_progress',
 		});

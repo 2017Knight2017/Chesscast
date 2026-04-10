@@ -169,20 +169,6 @@ export class MatchesService {
 	}): Promise<Match[]> {
 		this.logger.log('getMatchesByTable called');
 
-		if (!username) {
-    	    this.logger.warn('username is undefined');
-    	    return []; 
-    	}
-
-		const user = await this.db.query.users.findFirst({
-		    where: eq(sc.users.username, username),
-		    columns: { id: true }
-		});
-
-		if (!user) {
-		    throw new Error('User not found');
-		}
-
 		const query = this.db
 			.select({
 				id: sc.matches.id,
@@ -201,7 +187,16 @@ export class MatchesService {
 			.innerJoin(sc.users, eq(sc.matches.author, sc.users.username))
 			.innerJoin(sc.analysis, eq(sc.analysis.id, sc.matches.id));
 
-		if (isJoinTable && user) {
+		if (isJoinTable && username) {
+			const user = await this.db.query.users.findFirst({
+			    where: eq(sc.users.username, username),
+			    columns: { id: true }
+			});
+
+			if (!user) {
+			    throw new Error('User not found');
+			}
+			
 			query
 				.innerJoin(table, eq(sc.matches.id, table.matchId as string))
 				.where(eq(table.userId, user.id));

@@ -1,21 +1,16 @@
 services:
   backend:
-    build: 
-      context: ./backend
-      target: dev
+    build: ./backend
     ports:
       - "3001:3000"
     command: >
-      sh -c "bun run migrate && bun run start:dev"
+      sh -c "bun run migrate && bun run start:prod"
     environment:
       - DATABASE_URL=postgresql://admin:BtoiKe22dLq00N78@db:5432/chess_platform?schema=public
       - REDIS_HOST=redis
       - PORT=3000
       - KEY=8Gs6MfIK9JE0CT22
       - GEMINI_KEY=AIzaSyCqKK67QHLslTaSQkWygaMMJB2-nqEeajw
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
     depends_on:
       db:
         condition: service_healthy
