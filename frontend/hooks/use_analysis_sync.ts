@@ -52,24 +52,13 @@ export function useAnalysisSync({
 				if (data.movesTree) {
 					setAnalysisTree({ ...data.movesTree });
 				}
-				// Do NOT update currentPath — inspector navigates independently.
 			}
 		};
 
-		const handleStreamEnded = (_data: {
-			matchId: string;
-			username: string;
-		}) => {
-			// Inspector stays in inspection mode — the loaded analysis remains visible
-			// even after the inspected user leaves analysis mode.
-		};
-
-		socket.on("analysisUpdate", handleAnalysisUpdate);
-		socket.on("analysisStreamEnded", handleStreamEnded);
+		socket.on("analysis_update", handleAnalysisUpdate);
 
 		return () => {
-			socket.off("analysisUpdate", handleAnalysisUpdate);
-			socket.off("analysisStreamEnded", handleStreamEnded);
+			socket.off("analysis_update", handleAnalysisUpdate);
 		};
 	}, [
 		inspectedUserId,

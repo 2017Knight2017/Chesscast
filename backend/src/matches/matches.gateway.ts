@@ -50,13 +50,6 @@ export class MatchesGateway
 				await this.redisService.removeViewer(matchId, username);
 				await this.redisService.removeUserStatus(matchId, username);
 
-				this.server
-					.to(`analysis_stream_status:${matchId}:${username}`)
-					.emit('analysisStreamEnded', {
-						matchId,
-						username,
-					});
-
 				const counts = await this.redisService.getViewerData(matchId);
 				this.server
 					.to(`counter:${matchId}`)
@@ -126,12 +119,6 @@ export class MatchesGateway
 				data.username,
 			);
 
-			this.server
-				.to(`analysis_stream_status:${data.matchId}:${data.username}`)
-				.emit('analysisStreamEnded', {
-					matchId: data.matchId,
-					username: data.username,
-				});
 		} else if (data.guestId) {
 			await this.redisService.removeGuestViewer(
 				data.matchId,
@@ -176,13 +163,6 @@ export class MatchesGateway
 	) {
 		this.logger.log('handleUserStoppedAnalysis called');
 		await this.redisService.removeUserStatus(data.matchId, data.username);
-
-		this.server
-			.to(`analysis_stream_status:${data.matchId}:${data.username}`)
-			.emit('analysisStreamEnded', {
-				matchId: data.matchId,
-				username: data.username,
-			});
 
 		const counts = await this.redisService.getViewerData(data.matchId);
 		this.server
@@ -276,7 +256,7 @@ export class MatchesGateway
 
 		this.server
 			.to(`analysis_stream:${data.matchId}:user:${data.userId}`)
-			.emit('analysisUpdate', {
+			.emit('analysis_update', {
 				matchId: data.matchId,
 				userId: data.userId,
 				movesTree: data.movesTree,
