@@ -13,6 +13,7 @@ import {
 } from "react";
 import { MoveTreeNode } from "@/types/types";
 import { useSocket } from "@/context/socket_context";
+import { useAuth } from "@/hooks/use_auth";
 import {
 	saveAnalysisAction,
 	discardAnalysisAction,
@@ -78,6 +79,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 	);
 
 	const socket = useSocket();
+	const { user, token } = useAuth();
 	const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 	const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -91,7 +93,6 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 
 			setIsAnalysisMode(mode);
 
-			const user = localStorage.getItem("user");
 			if (!matchId || !user) {
 				console.log("[analysis_context.tsx:setAnalysisMode] Early return - no matchId or user", {
 					matchId,
@@ -99,7 +100,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 				});
 				return;
 			}
-			const username = JSON.parse(user).username
+			const username = user.username;
 
 			const event = mode ? "userStartedAnalysis" : "userStoppedAnalysis";
 			const data = { matchId, username, currentFen: "" };
@@ -113,24 +114,20 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 			});
 			socket.emit(event, data);
 		},
-		[matchId, socket],
+		[matchId, socket, user],
 	);
 
 	const broadcastFen = useCallback(
 		(fen: string) => {
-			if (matchId) {
-				const user = localStorage.getItem("user");
-				if (user) {
-					const {username} = JSON.parse(user);
-					socket.emit("broadcastAnalysisPosition", {
-						matchId,
-						username,
-						fen,
-					});
-				}
+			if (matchId && user) {
+				socket.emit("broadcastAnalysisPosition", {
+					matchId,
+					username: user.username,
+					fen,
+				});
 			}
 		},
-		[matchId, socket],
+		[matchId, socket, user],
 	);
 
 	const syncAnalysisToServer = useCallback(
@@ -158,13 +155,12 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 
 	const saveDraft = useCallback(async (currentMatchId: string) => {
 		try {
-			const token = localStorage.getItem("token");
 			if (!token) return;
 			await saveAnalysisDraftAction(currentMatchId, token);
 		} catch (error) {
 			console.error("Failed to save analysis draft:", error);
 		}
-	}, []);
+	}, [token]);
 
 	useEffect(() => {
 		if (isAnalysisMode && matchId && inspectedUserId === null) {
@@ -268,35 +264,31 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 		setInspectedUsername(null);
 		setAnalysisTree({});
 		setCurrentPath([]);
-		// Не сбрасываем matchId — он должен сохраняться, пока пользователь на странице
-		// setMatchId(null);
 		setSelectedMoveIndex(null);
 	}, [setAnalysisMode]);
 
 	const saveAnalysis = useCallback(
 		async (currentMatchId: string) => {
 			try {
-				const token = localStorage.getItem("token");
 				await saveAnalysisAction(currentMatchId, analysisTree, token);
 				resetAnalysis();
 			} catch (error) {
 				console.error("Failed to save analysis:", error);
 			}
 		},
-		[analysisTree, resetAnalysis],
+		[analysisTree, resetAnalysis, token],
 	);
 
 	const discardAnalysis = useCallback(
 		async (currentMatchId: string) => {
 			try {
-				const token = localStorage.getItem("token");
 				await discardAnalysisAction(currentMatchId, token);
 				resetAnalysis();
 			} catch (error) {
 				console.error("Failed to discard analysis:", error);
 			}
 		},
-		[resetAnalysis],
+		[resetAnalysis, token],
 	);
 
 	const checkExistingAnalysis = useCallback(

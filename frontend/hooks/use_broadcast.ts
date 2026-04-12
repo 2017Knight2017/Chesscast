@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useSocket } from "@/context/socket_context";
 import { Move, Match, NewMoveData } from "@/types/types";
 import { useGuestId } from "./use_guest_id";
+import { useAuth } from "@/hooks/use_auth";
 
 export const useBroadcast = (matchId: string, initialMatch?: Match) => {
 	const [currentMoveData, setCurrentMoveData] = useState<Move | null>(() => {
@@ -30,6 +31,7 @@ export const useBroadcast = (matchId: string, initialMatch?: Match) => {
 
 	const guestId = useGuestId();
 	const socket = useSocket();
+	const { user } = useAuth();
 
 	const hasLiveMove = useRef(false);
 
@@ -78,8 +80,7 @@ export const useBroadcast = (matchId: string, initialMatch?: Match) => {
 	}, [matchId, initialMatch]);
 
 	useEffect(() => {
-		const user = localStorage.getItem("user");
-		const username = user ? JSON.parse(user).username : null;
+		const username = user?.username || null;
 
 		const handleConnect = () => {
 			socket.emit("joinMatch", {
@@ -144,7 +145,7 @@ export const useBroadcast = (matchId: string, initialMatch?: Match) => {
 			socket.off("new_move", handleNewMove);
 			socket.off("match_finished", handleMatchFinished);
 		};
-	}, [matchId, guestId, socket]);
+	}, [matchId, guestId, socket, user]);
 
 	return { currentMoveData, isEnded, outcome };
 };

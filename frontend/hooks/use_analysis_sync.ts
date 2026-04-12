@@ -1,6 +1,7 @@
 import { useEffect, useCallback } from "react";
 import { useSocket } from "@/context/socket_context";
 import { useAnalysisState } from "../context/analysis_context";
+import { useAuth } from "@/hooks/use_auth";
 import { Match, Move, MoveTreeNode } from "@/types/types";
 import { getPlayerByUsernameAction } from "@/actions/analysis_actions";
 import { ViewerStatus } from "./use_viewer_counts";
@@ -38,6 +39,7 @@ export function useAnalysisSync({
 	} = useAnalysisState();
 
 	const socket = useSocket();
+	const { user } = useAuth();
 
 	useEffect(() => {
 		const handleAnalysisUpdate = (data: {
@@ -113,11 +115,10 @@ export function useAnalysisSync({
 					await loadAnalysis(match.id, userId);
 				}
 
-				const username = localStorage.getItem("user");
 				socket.emit("joinAnalysisStream", {
 					matchId: match?.id,
 					userId,
-					username,
+					username: user?.username,
 				});
 			}
 		},
@@ -130,6 +131,7 @@ export function useAnalysisSync({
 			setInspectedUserId,
 			loadAnalysis,
 			currentMoveData,
+			user?.username,
 		],
 	);
 
@@ -152,8 +154,7 @@ export function useAnalysisSync({
 		setSelectedMoveIndex(null);
 
 		const prevInspectedUserId = inspectedUserId;
-		const user = localStorage.getItem("user");
-		const {username} = JSON.parse(user!);
+		const username = user?.username || "";
 
 		resetAnalysis();
 
@@ -180,6 +181,7 @@ export function useAnalysisSync({
 		socket,
 		discardAnalysis,
 		hasExistingAnalysis,
+		user?.username,
 	]);
 
 	const handleInspectUser = async (status: ViewerStatus | string) => {

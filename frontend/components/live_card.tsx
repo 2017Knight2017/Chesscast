@@ -5,6 +5,7 @@ import { ChessPreview } from "./chess_preview";
 import { useProcessing } from "@/hooks/use_processing";
 import Link from "next/link";
 import { useFollowMatch } from "@/hooks/use_follow_match";
+import { useAuth } from "@/hooks/use_auth";
 
 export const LiveCard = ({
 	match,
@@ -15,6 +16,7 @@ export const LiveCard = ({
 }) => {
 	console.log("[live_card.tsx:LiveCard]", { matchId: match.id, viewerCount });
 	const { isProcessing } = useProcessing(match);
+	const { isAuthenticated } = useAuth();
 
 	const { isFollowing, isLoading, toggleFollow } = useFollowMatch(match.id);
 
@@ -77,26 +79,28 @@ export const LiveCard = ({
 						}`}
 					>
 						{match.title}
-						<button
-							onClick={handleFollowClick}
-							disabled={isLoading}
-							className="absolute top-2 right-1 z-10 p-1 rounded hover:bg-white/10 transition-colors disabled:opacity-50"
-							title={
-								isFollowing ? "Unfollow match" : "Follow match"
-							}
-						>
-							<svg
-								width="16"
-								height="16"
-								viewBox="0 0 24 24"
-								fill={isFollowing ? "#fbbf24" : "none"}
-								stroke="#fbbf24"
-								strokeWidth="2"
-								className="block"
+						{isAuthenticated && (
+							<button
+								onClick={handleFollowClick}
+								disabled={isLoading}
+								className="absolute top-2 right-1 z-10 p-1 rounded hover:bg-white/10 transition-colors disabled:opacity-50"
+								title={
+									isFollowing ? "Unfollow match" : "Follow match"
+								}
 							>
-								<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-							</svg>
-						</button>
+								<svg
+									width="16"
+									height="16"
+									viewBox="0 0 24 24"
+									fill={isFollowing ? "#fbbf24" : "none"}
+									stroke="#fbbf24"
+									strokeWidth="2"
+									className="block"
+								>
+									<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+								</svg>
+							</button>
+						)}
 					</h3>
 					<div className="flex items-center justify-between mt-1">
 						<span className="text-[11px] text-slate-500">

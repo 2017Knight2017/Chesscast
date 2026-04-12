@@ -1,27 +1,24 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useAuth } from "@/hooks/use_auth";
 
 const API_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "";
 
 export const useFollowMatch = (matchId: string) => {
 	const [isFollowing, setIsFollowing] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
-	const [error, setError] = useState<string | null>(null);
+	const { token, isAuthenticated } = useAuth();
 
 	const checkFollowStatus = useCallback(async () => {
-		const token = localStorage.getItem("token");
-		if (!token) {
+		if (!token || !isAuthenticated) {
+			setIsFollowing(false);
 			setIsLoading(false);
 			return;
-		}
+		} 
 
 		try {
 			const url = `${API_URL}/matches/${matchId}/follow/status`;
-			console.log("[use_follow_match] Checking status:", {
-				url,
-				hasToken: !!token,
-			});
 			const res = await fetch(url, {
 				headers: {
 					Authorization: `Bearer ${token}`,
@@ -39,11 +36,10 @@ export const useFollowMatch = (matchId: string) => {
 			setIsFollowing(data.isFollowing);
 		} catch (err: unknown) {
 			console.error("Error checking follow status:", err);
-			setError(err instanceof Error ? err.message : "Unknown error");
 		} finally {
 			setIsLoading(false);
 		}
-	}, [matchId]);
+	}, [matchId, token, isAuthenticated]);
 
 	useEffect(() => {
 		setIsLoading(true);
@@ -51,14 +47,11 @@ export const useFollowMatch = (matchId: string) => {
 	}, [checkFollowStatus]);
 
 	const toggleFollow = useCallback(async () => {
-		const token = localStorage.getItem("token");
-		if (!token) {
-			setError("User not authenticated");
+		if (!token || !isAuthenticated) {
 			return;
 		}
 
 		setIsLoading(true);
-		setError(null);
 
 		try {
 			const method = isFollowing ? "DELETE" : "POST";
@@ -86,16 +79,14 @@ export const useFollowMatch = (matchId: string) => {
 			setIsFollowing(!isFollowing);
 		} catch (err: unknown) {
 			console.error("Error toggling follow:", err);
-			setError(err instanceof Error ? err.message : "Unknown error");
 		} finally {
 			setIsLoading(false);
 		}
-	}, [isFollowing, matchId]);
+	}, [isFollowing, matchId, token, isAuthenticated]);
 
 	return {
 		isFollowing,
 		isLoading,
-		error,
 		toggleFollow,
 		refetch: checkFollowStatus,
 	};

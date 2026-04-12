@@ -363,7 +363,7 @@ export function ChessBoard({
 			</div>
 			{isAuthPopupShown && setIsAuthPopupShown && (
 				<button onClick={() => setIsAuthPopupShown(false)}>
-					<h3 className="absolute -bottom-8 left-0 px-3 py-1 bg-stone-900/90 text-orange-200 text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] rounded-b-sm border-l-3 border-oak shadow-lg backdrop-blur-sm">
+					<h3 className="absolute -bottom-8 left-0 px-3 py-1 bg-stone-600 text-orange-200 text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] rounded-b-sm border-l-3 border-oak-light shadow-lg backdrop-blur-sm">
 					    × Login to analyze!
 					</h3>
 				</button>

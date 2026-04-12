@@ -2,6 +2,7 @@
 
 import { useState, SubmitEvent } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/use_auth";
 
 export function LoginForm({ isRegister }: { isRegister: boolean }) {
 	const [email, setEmail] = useState("");
@@ -12,6 +13,7 @@ export function LoginForm({ isRegister }: { isRegister: boolean }) {
 	const [isLoading, setIsLoading] = useState(false);
 
 	const router = useRouter();
+	const { refetch } = useAuth();
 
 	const handleSubmit = async (e: SubmitEvent) => {
 		console.log("[login_form.tsx:handleSubmit]", { isRegister, username });
@@ -56,6 +58,8 @@ export function LoginForm({ isRegister }: { isRegister: boolean }) {
 				if (data.user) {
 					localStorage.setItem("user", JSON.stringify(data.user));
 				}
+
+				await refetch();
 
 				router.push(
 					"/member/" + encodeURIComponent(data.user.username),
