@@ -52,20 +52,16 @@ export function useAnalysisSync({
 				if (data.movesTree) {
 					setAnalysisTree({ ...data.movesTree });
 				}
-				if (data.currentPath) {
-					setCurrentPath([...data.currentPath]);
-				}
+				// Do NOT update currentPath — inspector navigates independently.
 			}
 		};
 
-		const handleStreamEnded = (data: {
+		const handleStreamEnded = (_data: {
 			matchId: string;
 			username: string;
 		}) => {
-			if (data.matchId === match?.id && inspectedUserId !== null) {
-				alert(`Analysis by ${data.username} has ended.`);
-				resetAnalysis();
-			}
+			// Inspector stays in inspection mode — the loaded analysis remains visible
+			// even after the inspected user leaves analysis mode.
 		};
 
 		socket.on("analysisUpdate", handleAnalysisUpdate);
@@ -78,10 +74,8 @@ export function useAnalysisSync({
 	}, [
 		inspectedUserId,
 		setAnalysisTree,
-		setCurrentPath,
 		socket,
 		match?.id,
-		resetAnalysis,
 	]);
 
 	useEffect(() => {
