@@ -340,7 +340,7 @@ export function ChessBoard({
 						width="100%"
 						height="100%"
 						coordinates={false}
-						movable={{ free: true, color: "both" }}
+						movable={{ free: !isAuthPopupShown, color: "both" }}
 						animation={{ enabled: true, duration: 300 }}
 					/>
 				</div>
