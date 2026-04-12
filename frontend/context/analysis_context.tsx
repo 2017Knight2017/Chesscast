@@ -312,6 +312,21 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 				const data = await loadAnalysisAction(currentMatchId, userId);
 				if (data && data.data) {
 					setAnalysisTree(data.data);
+
+					// Calculate the last move index of the loaded analysis
+					// and set selectedMoveIndex so the inspector starts there
+					const tree = data.data as Record<number, MoveTreeNode[]>;
+					const startKey = tree[-1]?.length > 0 ? -1 : 0;
+
+					if (tree[startKey]?.length > 0) {
+						let moveCount = startKey > 0 ? startKey : 0;
+						let currentLevel = tree[startKey];
+						while (currentLevel && currentLevel.length > 0) {
+							moveCount++;
+							currentLevel = currentLevel[0].s || [];
+						}
+						setSelectedMoveIndex(moveCount - 1);
+					}
 				}
 			} catch (error) {
 				console.error("Failed to load analysis:", error);

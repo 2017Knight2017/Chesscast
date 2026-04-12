@@ -230,9 +230,9 @@ export class MatchesGateway
 		@ConnectedSocket() client: Socket,
 	) {
 		this.logger.log('handleJoinAnalysisStream called');
-		await client.join(`
-			analysis_stream:${data.matchId}:user:${data.userId}
-		`);
+		await client.join(
+			`analysis_stream:${data.matchId}:user:${data.userId}`,
+		);
 		if (data.username) {
 			await client.join(
 				`analysis_stream_status:${data.matchId}:${data.username}`,
@@ -247,9 +247,9 @@ export class MatchesGateway
 		@ConnectedSocket() client: Socket,
 	) {
 		this.logger.log('handleLeaveAnalysisStream called');
-		await client.leave(`
-			analysis_stream:${data.matchId}:user:${data.userId}
-		`);
+		await client.leave(
+			`analysis_stream:${data.matchId}:user:${data.userId}`,
+		);
 		if (data.username) {
 			await client.leave(
 				`analysis_stream_status:${data.matchId}:${data.username}`,

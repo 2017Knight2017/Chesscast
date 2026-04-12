@@ -37,11 +37,45 @@ export const UserAnalysisBoard = forwardRef<
 		inspectedUsername,
 		selectedMoveIndex,
 		setSelectedMoveIndex,
+		isAnalysisMode,
 	} = useAnalysisState();
 
 	const chessRef = useRef(new Chess(currentFen));
 
 	const isReadOnly = inspectedUserId !== null;
+
+	// In inspection mode, extract the inspected user's mainline from analysisTree
+	const effectiveMainline = useMemo(() => {
+		if (!isAnalysisMode || inspectedUserId === null) {
+			return matchHistory;
+		}
+
+		const moves: string[] = [];
+		const startKey = analysisTree[-1]?.length > 0 ? -1 : 0;
+
+		if (analysisTree[startKey]?.length > 0) {
+			if (startKey > 0) {
+				for (let i = 0; i < startKey; i++) {
+					if (matchHistory[i]) {
+						moves.push(matchHistory[i]);
+					}
+				}
+			}
+
+			let currentLevel = analysisTree[startKey];
+			while (currentLevel && currentLevel.length > 0) {
+				const node = currentLevel[0];
+				moves.push(node.m);
+				currentLevel = node.s || [];
+			}
+		} else {
+			return matchHistory;
+		}
+
+		return moves;
+	}, [isAnalysisMode, inspectedUserId, analysisTree, matchHistory]);
+
+	const boardHistory = effectiveMainline;
 
 	useEffect(() => {
 		chessRef.current = new Chess(currentFen);
@@ -50,19 +84,25 @@ export const UserAnalysisBoard = forwardRef<
 	const computedChess = useMemo(() => {
 		const chess = new Chess();
 
+		// In inspection mode, never auto-follow — stay at fixed position
 		const branchPoint =
 			selectedMoveIndex !== null
-				? selectedMoveIndex
-				: matchHistory.length - 1;
+				? Math.max(
+						-1,
+						Math.min(selectedMoveIndex, boardHistory.length - 1),
+					)
+				: isReadOnly
+					? 0
+					: boardHistory.length - 1;
 
 		for (let i = 0; i <= branchPoint; i++) {
-			if (matchHistory[i]) {
+			if (boardHistory[i]) {
 				try {
-					chess.move(matchHistory[i]);
+					chess.move(boardHistory[i]);
 				} catch (error) {
 					console.error(
 						"Failed to apply history move",
-						matchHistory[i],
+						boardHistory[i],
 						error,
 					);
 				}
@@ -86,7 +126,7 @@ export const UserAnalysisBoard = forwardRef<
 		}
 
 		return chess;
-	}, [analysisTree, currentPath, selectedMoveIndex, matchHistory]);
+	}, [analysisTree, currentPath, selectedMoveIndex, boardHistory]);
 
 	const computedFen = computedChess.fen();
 
@@ -116,7 +156,7 @@ export const UserAnalysisBoard = forwardRef<
 			const branchPoint =
 				selectedMoveIndex !== null
 					? selectedMoveIndex
-					: matchHistory.length - 1;
+					: boardHistory.length - 1;
 
 			if (selectedMoveIndex === null) {
 				setSelectedMoveIndex(branchPoint);

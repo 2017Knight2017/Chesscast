@@ -160,9 +160,42 @@ export function MoveList({ matchHistory: propMatchHistory, currentMoveData, fina
 	} = useAnalysisState();
 
 	const socketHistory = currentMoveData?.history || [];
-	const matchHistory = propMatchHistory || socketHistory;
-	const totalMoves = matchHistory.length;
+	const baseMatchHistory = propMatchHistory || socketHistory;
+	const totalMoves = baseMatchHistory.length;
 	const activeRef = useRef<HTMLDivElement | null>(null);
+
+	// In inspection mode, extract the inspected user's mainline from analysisTree
+	const effectiveMainline = useMemo(() => {
+		if (!isAnalysisMode || inspectedUserId === null) {
+			return baseMatchHistory;
+		}
+
+		const moves: string[] = [];
+		const startKey = analysisTree[-1]?.length > 0 ? -1 : 0;
+
+		if (analysisTree[startKey]?.length > 0) {
+			if (startKey > 0) {
+				for (let i = 0; i < startKey; i++) {
+					if (baseMatchHistory[i]) {
+						moves.push(baseMatchHistory[i]);
+					}
+				}
+			}
+
+			let currentLevel = analysisTree[startKey];
+			while (currentLevel && currentLevel.length > 0) {
+				const node = currentLevel[0];
+				moves.push(node.m);
+				currentLevel = node.s || [];
+			}
+		} else {
+			return baseMatchHistory;
+		}
+
+		return moves;
+	}, [isAnalysisMode, inspectedUserId, analysisTree, baseMatchHistory]);
+
+	const matchHistory = effectiveMainline;
 
 	useKeyboardNavigation(totalMoves);
 

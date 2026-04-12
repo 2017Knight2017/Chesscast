@@ -50,10 +50,10 @@ export function useAnalysisSync({
 		}) => {
 			if (data.matchId === match?.id && data.userId === inspectedUserId) {
 				if (data.movesTree) {
-					setAnalysisTree(data.movesTree);
+					setAnalysisTree({ ...data.movesTree });
 				}
 				if (data.currentPath) {
-					setCurrentPath(data.currentPath);
+					setCurrentPath([...data.currentPath]);
 				}
 			}
 		};
