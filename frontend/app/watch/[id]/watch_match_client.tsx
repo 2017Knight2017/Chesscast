@@ -16,6 +16,7 @@ import { useAnalysisSync } from "@/hooks/use_analysis_sync";
 import { MobileBottomPanel } from "@/app/watch/[id]/mobile_bottom_panel";
 import { ParaboardList } from "./paraboard_list";
 import { useAuth } from "@/hooks/use_auth";
+import { MoveSoundPlayer } from "./move_sound_player";
 
 export default function WatchMatchClient({
 	match,
@@ -73,6 +74,8 @@ export default function WatchMatchClient({
 
 	return (
 		<main className="h-screen w-screen bg-size-[100%_100%] overflow-x-hidden overflow-y-auto lg:overflow-hidden bg-stone-950">
+			<MoveSoundPlayer history={currentMoveData?.history || []} />
+
 			{/* Desktop Layout */}
 			<div
 				className="hidden lg:grid size-full items-center px-6 gap-8 relative z-10 grid-cols-[376px_1fr_300px]"
