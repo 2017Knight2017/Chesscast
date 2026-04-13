@@ -19,15 +19,74 @@ export function MoveSoundPlayer({ history, analysisTree }: MoveSoundPlayerProps)
 	const isFirstRun = useRef(true);
 	const prevSelectedIndexRef = useRef<number | null | undefined>(null);
 
+	const activeSoundsRef = useRef<HTMLAudioElement[]>([]);
+	const stopTimerRef = useRef<NodeJS.Timeout | null>(null);
+
 	useEffect(() => {
 		moveSoundRef.current = new Audio("/Move.ogg");
 		captureSoundRef.current = new Audio("/Capture.ogg");
+	}, []);
+
+	const stopAllSounds = () => {
+		for (const audio of activeSoundsRef.current) {
+			audio.pause();
+			audio.currentTime = 0;
+		}
+		activeSoundsRef.current = [];
+	};
+
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) {
+				// Если нажали кнопку — отменяем запланированную остановку
+				if (stopTimerRef.current) {
+					clearTimeout(stopTimerRef.current);
+					stopTimerRef.current = null;
+				}
+			}
+		};
+
+		const handleKeyUp = (e: KeyboardEvent) => {
+			if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) {
+				// Когда отпустили, планируем остановку через 100мс
+				if (stopTimerRef.current) clearTimeout(stopTimerRef.current);
+				
+				stopTimerRef.current = setTimeout(() => {
+					stopAllSounds();
+					stopTimerRef.current = null;
+				}, 100);
+			}
+		};
+
+		window.addEventListener("keydown", handleKeyDown);
+		window.addEventListener("keyup", handleKeyUp);
+		
+		return () => {
+			window.removeEventListener("keydown", handleKeyDown);
+			window.removeEventListener("keyup", handleKeyUp);
+			if (stopTimerRef.current) clearTimeout(stopTimerRef.current);
+		};
 	}, []);
 
 	useLayoutEffect(() => {
 		const moveSound = moveSoundRef.current;
 		const captureSound = captureSoundRef.current;
 		if (!moveSound || !captureSound) return;
+
+		const playPolyphonicSound = (isCapture: boolean) => {
+			const baseAudio = isCapture ? captureSoundRef.current : moveSoundRef.current;
+			if (!baseAudio) return;
+
+			const audioClone = baseAudio.cloneNode(true) as HTMLAudioElement;
+			activeSoundsRef.current.push(audioClone);
+			
+			audioClone.addEventListener("ended", () => {
+				const idx = activeSoundsRef.current.indexOf(audioClone);
+				if (idx !== -1) activeSoundsRef.current.splice(idx, 1);
+			});
+
+			audioClone.play().catch(() => {});
+		};
 
 		const prevIndex = prevSelectedIndexRef.current;
 		prevSelectedIndexRef.current = selectedMoveIndex;
@@ -72,20 +131,20 @@ export function MoveSoundPlayer({ history, analysisTree }: MoveSoundPlayerProps)
 				}
 			}
 
+			let playedNew = false;
+			let lastWasCapture = false;
+
 			for (let i = prevCount; i < currCount; i++) {
 				try {
 					const move = chess.move(history[i]);
-					if (move && move.captured) {
-						captureSound.currentTime = 0;
-						captureSound.play().catch(() => {});
-					} else {
-						moveSound.currentTime = 0;
-						moveSound.play().catch(() => {});
-					}
+					lastWasCapture = !!(move && move.captured);
+					playedNew = true;
 				} catch {
 					break;
 				}
 			}
+
+			if (playedNew) playPolyphonicSound(lastWasCapture);
 
 			chessRef.current = chess;
 			playedCountRef.current = currCount;
@@ -98,6 +157,7 @@ export function MoveSoundPlayer({ history, analysisTree }: MoveSoundPlayerProps)
 			return;
 		}
 
+		// #2: Analysis Mode
 		const idx = selectedMoveIndex;
 
 		const moves: string[] = [];
@@ -139,23 +199,24 @@ export function MoveSoundPlayer({ history, analysisTree }: MoveSoundPlayerProps)
 			}
 		}
 
+		let playedNew = false;
+		let lastWasCapture = false;
+
 		for (let i = prevCount; i < currCount; i++) {
 			try {
 				const move = chess.move(moves[i]);
-				if (move && move.captured) {
-					captureSound.currentTime = 0;
-					captureSound.play().catch(() => {});
-				} else {
-					moveSound.currentTime = 0;
-					moveSound.play().catch(() => {});
-				}
+				lastWasCapture = !!(move && move.captured);
+				playedNew = true;
 			} catch {
 				break;
 			}
 		}
 
+		if (playedNew) playPolyphonicSound(lastWasCapture);
+
 		chessRef.current = chess;
 		playedCountRef.current = currCount;
+
 	}, [selectedMoveIndex, currentPath, history, analysisTree]);
 
 	return null;
