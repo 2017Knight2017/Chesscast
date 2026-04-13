@@ -30,7 +30,7 @@ export default function WatchMatchClient({
 	});
 	const { currentMoveData, isEnded, outcome } = useBroadcast(match.id, match);
 	const { usernames, guestCount } = useViewerCounts([match.id]);
-	const { isAnalysisMode, setMatchId, checkExistingAnalysis } =
+	const { isAnalysisMode, setMatchId, checkExistingAnalysis, analysisTree } =
 		useAnalysisState();
 
 	const [hasExistingAnalysis, setHasExistingAnalysis] = useState(false);
@@ -74,7 +74,7 @@ export default function WatchMatchClient({
 
 	return (
 		<main className="h-screen w-screen bg-size-[100%_100%] overflow-x-hidden overflow-y-auto lg:overflow-hidden bg-stone-950">
-			<MoveSoundPlayer history={currentMoveData?.history || []} />
+			<MoveSoundPlayer history={currentMoveData?.history || []} analysisTree={analysisTree} />
 
 			{/* Desktop Layout */}
 			<div
