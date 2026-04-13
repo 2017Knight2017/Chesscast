@@ -313,8 +313,6 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 				if (data && data.data) {
 					setAnalysisTree(data.data);
 
-					// Calculate the last move index of the loaded analysis
-					// and set selectedMoveIndex so the inspector starts there
 					const tree = data.data as Record<number, MoveTreeNode[]>;
 					const startKey = tree[-1]?.length > 0 ? -1 : 0;
 

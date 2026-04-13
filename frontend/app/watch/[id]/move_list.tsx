@@ -164,7 +164,6 @@ export function MoveList({ matchHistory: propMatchHistory, currentMoveData, fina
 	const totalMoves = baseMatchHistory.length;
 	const activeRef = useRef<HTMLDivElement | null>(null);
 
-	// In inspection mode, extract the inspected user's mainline from analysisTree
 	const effectiveMainline = useMemo(() => {
 		if (!isAnalysisMode || inspectedUserId === null) {
 			return baseMatchHistory;

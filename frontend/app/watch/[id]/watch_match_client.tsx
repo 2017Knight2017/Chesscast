@@ -50,7 +50,7 @@ export default function WatchMatchClient({
 	});
 
 	const [isManualStarted, setIsManualStarted] = useState<boolean>(false);
-	const isBroadcastActive = match.status === "in_progress" || isManualStarted;
+	const isBroadcastActive = (match.status === "in_progress" || isManualStarted) && !isEnded;
 	const finalIsEnded = match.status === "finished" || isEnded;
 
 	const userAnalysisBoardRef = useRef<UserAnalysisBoardRef>(null);

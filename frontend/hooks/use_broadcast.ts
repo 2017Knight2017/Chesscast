@@ -28,6 +28,12 @@ export const useBroadcast = (matchId: string, initialMatch?: Match) => {
 	const [outcome, setOutcome] = useState<string | undefined>(
 		initialMatch?.outcome,
 	);
+	
+	const finishSoundRef = useRef<HTMLAudioElement | null>(null);
+	useEffect(() => {
+		finishSoundRef.current = new Audio("/GenericNotify.ogg");
+		finishSoundRef.current.load();
+	}, []);
 
 	const guestId = useGuestId();
 	const socket = useSocket();
@@ -125,6 +131,8 @@ export const useBroadcast = (matchId: string, initialMatch?: Match) => {
 			if (data.matchId !== matchId) return;
 			setIsEnded(true);
 			setOutcome(data.outcome);
+			finishSoundRef.current!.currentTime = 0;
+			finishSoundRef.current!.play().catch((e) => {console.warn(e)});
 		};
 
 		if (socket.connected) {

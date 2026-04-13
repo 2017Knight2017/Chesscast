@@ -16,6 +16,8 @@ export function MoveSoundPlayer({ history, analysisTree }: MoveSoundPlayerProps)
 	const captureSoundRef = useRef<HTMLAudioElement | null>(null);
 	const chessRef = useRef<Chess | null>(null);
 	const playedCountRef = useRef<number>(0);
+	const isFirstRun = useRef(true);
+	const prevSelectedIndexRef = useRef<number | null | undefined>(null);
 
 	useEffect(() => {
 		moveSoundRef.current = new Audio("/Move.ogg");
@@ -27,8 +29,70 @@ export function MoveSoundPlayer({ history, analysisTree }: MoveSoundPlayerProps)
 		const captureSound = captureSoundRef.current;
 		if (!moveSound || !captureSound) return;
 
-		// Starting position or no selection — reset
-		if (selectedMoveIndex === null || selectedMoveIndex === undefined || selectedMoveIndex === -1) {
+		const prevIndex = prevSelectedIndexRef.current;
+		prevSelectedIndexRef.current = selectedMoveIndex;
+
+		if (isFirstRun.current) {
+			const chess = new Chess();
+			for (let i = 0; i < history.length; i++) {
+				try { chess.move(history[i]); } catch {}
+			}
+			chessRef.current = chess;
+			playedCountRef.current = history.length;
+			isFirstRun.current = false;
+			return;
+		}
+
+		if (
+			selectedMoveIndex === null &&
+			prevIndex !== null &&
+			prevIndex !== undefined &&
+			prevIndex !== -1
+		) {
+			const chess = new Chess();
+			for (let i = 0; i < history.length; i++) {
+				try { chess.move(history[i]); } catch {}
+			}
+			chessRef.current = chess;
+			playedCountRef.current = history.length;
+			return;
+		}
+
+		if (selectedMoveIndex === null) {
+			const prevCount = playedCountRef.current;
+			const currCount = history.length;
+
+			if (currCount <= prevCount) return;
+
+			let chess = chessRef.current;
+			if (!chess) {
+				chess = new Chess();
+				for (let i = 0; i < prevCount; i++) {
+					try { chess.move(history[i]); } catch {}
+				}
+			}
+
+			for (let i = prevCount; i < currCount; i++) {
+				try {
+					const move = chess.move(history[i]);
+					if (move && move.captured) {
+						captureSound.currentTime = 0;
+						captureSound.play().catch(() => {});
+					} else {
+						moveSound.currentTime = 0;
+						moveSound.play().catch(() => {});
+					}
+				} catch {
+					break;
+				}
+			}
+
+			chessRef.current = chess;
+			playedCountRef.current = currCount;
+			return;
+		}
+
+		if (selectedMoveIndex === undefined || selectedMoveIndex === -1) {
 			chessRef.current = new Chess();
 			playedCountRef.current = 0;
 			return;
@@ -36,7 +100,6 @@ export function MoveSoundPlayer({ history, analysisTree }: MoveSoundPlayerProps)
 
 		const idx = selectedMoveIndex;
 
-		// Build current move sequence inline (no useMemo overhead)
 		const moves: string[] = [];
 		if (idx >= 0) {
 			for (let i = 0; i <= idx && i < history.length; i++) {
@@ -56,10 +119,8 @@ export function MoveSoundPlayer({ history, analysisTree }: MoveSoundPlayerProps)
 		const prevCount = playedCountRef.current;
 		const currCount = moves.length;
 
-		// Moving backward or staying the same — no sound
 		if (currCount <= prevCount) {
 			if (currCount < prevCount) {
-				// Rebuild chess state from scratch for consistency
 				const chess = new Chess();
 				for (let i = 0; i < currCount; i++) {
 					try { chess.move(moves[i]); } catch {}

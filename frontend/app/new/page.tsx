@@ -12,14 +12,14 @@ export default function BroadcastPage() {
 
 	const [pgnInput, setPgnInput] = useState("");
 	const [title, setTitle] = useState("");
-	const [timeControl, setTimeControl] = useState("1:00");
+	const [timeControl, setTimeControl] = useState("1:30");
 	const [timeIncrement, setTimeIncrement] = useState(5);
 
 	const [isControlMove, setIsControlMove] = useState(false);
-	const [controlMove, setControlMove] = useState(25);
+	const [controlMove, setControlMove] = useState(40);
 	const [isRepeatableControlMove, setIsRepeatableControlMove] = useState(false);
 	const [bonusTimeMin, setBonusTimeMin] = useState(30);
-	const [nextControlMoveAfter, setNextControlMoveAfter] = useState(16);
+	const [nextControlMoveAfter, setNextControlMoveAfter] = useState(15);
 	const [newTimeIncrement, setNewTimeIncrement] = useState(30);
 
 	const isDisabled = !isControlMove;
@@ -63,6 +63,21 @@ export default function BroadcastPage() {
 		["Speed Demon", "Consistent high-speed play"],
 		["Psychological Grinder", "Deep focus on sharp, double-edged positions"],
 	];
+
+	const dbKeyToLabel: Record<string, string> = {
+		"calculator": "Calculator",
+		"intuitive": "Intuitive Genius",
+		"attacker": "Chaos Attacker",
+		"pragmatic": "Solid Pragmatist",
+		"time_trouble": "Time Trouble Addict",
+		"fortress": "Iron Fortress",
+		"gambler": "Blunder Prone Gambler",
+		"perfectionist": "Perfectionist",
+		"berserker": "Tactical Berserker",
+		"speed_demon": "Speed Demon",
+		"grinder": "Psychological Grinder",
+	};
+
 	const [archetype1, setArchetype1] = useState(archetypeOptions[0][0]);
 	const [archetype2, setArchetype2] = useState(archetypeOptions[0][0]);
 
@@ -83,7 +98,7 @@ export default function BroadcastPage() {
 				</div>
 			</div>
 			<div className="bg-orange-50/10 backdrop-blur-sm p-4 size-full max-w-3xl border border-oak-dark/20 shadow-lg">
-				<div className="bg-orange-50 rounded border-l-4 border-oak-dark shadow-xl">
+				<div className="bg-orange-50 border-l-4 border-oak-dark shadow-xl">
 					<div className="flex border-b border-oak bg-amber-50/50">
 						{[
 							{ id: 1, label: "1. Setup" },
@@ -152,9 +167,20 @@ export default function BroadcastPage() {
 												placeholder="1:30"
 												className={inputClasses}
 												value={timeControl}
-												onChange={(e) =>
-													setTimeControl(e.target.value)
-												}
+												onChange={(e) => {
+													let value = e.target.value.replace(/\D/g, '');
+																	
+													if (value.length > 3) {
+														value = value.slice(0, 3);
+													}
+												
+													if (value.length <= 2) {
+														setTimeControl(value);
+													} else {
+														setTimeControl(value.slice(0, value.length - 2) + ':' + value.slice(-2));
+													}
+												}}
+												maxLength={5}
 											/>
 										</label>
 										<label className="block">
@@ -198,7 +224,8 @@ export default function BroadcastPage() {
 										onSelect={(player) => {
 											setWhitePlayer(player.name);
 											if (player.archetype) {
-												setArchetype1(player.archetype);
+												const label = dbKeyToLabel[player.archetype] || player.archetype;
+												setArchetype1(label);
 											}
 										}}
 										titleLabelClasses={titleLabelClasses}
@@ -211,7 +238,8 @@ export default function BroadcastPage() {
 										onSelect={(player) => {
 											setBlackPlayer(player.name);
 											if (player.archetype) {
-												setArchetype2(player.archetype);
+												const label = dbKeyToLabel[player.archetype] || player.archetype;
+												setArchetype2(label);
 											}
 										}}
 										titleLabelClasses={titleLabelClasses}

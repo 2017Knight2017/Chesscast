@@ -29,7 +29,7 @@ export function ArchetypeDropdown({
 			const idx = options.findIndex((opt) => opt[0] === value);
 			setSelectedIndex(idx >= 0 ? idx : 0);
 		}
-	}, [isOpen]);
+	}, [isOpen, value, options]);
 
 	useEffect(() => {
 		if (listRef.current && selectedIndex >= 0) {

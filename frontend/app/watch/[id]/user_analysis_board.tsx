@@ -44,7 +44,6 @@ export const UserAnalysisBoard = forwardRef<
 
 	const isReadOnly = inspectedUserId !== null;
 
-	// In inspection mode, extract the inspected user's mainline from analysisTree
 	const effectiveMainline = useMemo(() => {
 		if (!isAnalysisMode || inspectedUserId === null) {
 			return matchHistory;
@@ -84,7 +83,6 @@ export const UserAnalysisBoard = forwardRef<
 	const computedChess = useMemo(() => {
 		const chess = new Chess();
 
-		// In inspection mode, never auto-follow — stay at fixed position
 		const branchPoint =
 			selectedMoveIndex !== null
 				? Math.max(
