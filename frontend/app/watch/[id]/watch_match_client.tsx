@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ChessBoard } from "@/app/watch/[id]/chess_board";
 import {
 	UserAnalysisBoard,
@@ -52,6 +52,7 @@ export default function WatchMatchClient({
 	const [isManualStarted, setIsManualStarted] = useState<boolean>(false);
 	const isBroadcastActive = (match.status === "in_progress" || isManualStarted) && !isEnded;
 	const finalIsEnded = match.status === "finished" || isEnded;
+	const isAuthor = user?.username === match.author;
 
 	const userAnalysisBoardRef = useRef<UserAnalysisBoardRef>(null);
 
@@ -118,6 +119,7 @@ export default function WatchMatchClient({
 								isBroadcastActive={isBroadcastActive}
 								finalIsEnded={finalIsEnded}
 								outcome={outcome}
+								isAuthor={isAuthor}
 							/>
 						</div>
 					)}
@@ -149,6 +151,7 @@ export default function WatchMatchClient({
 								isBroadcastActive={isBroadcastActive}
 								finalIsEnded={finalIsEnded}
 								outcome={outcome}
+								isAuthor={isAuthor}
 							/>
 						</div>
 						</>
@@ -205,6 +208,7 @@ export default function WatchMatchClient({
 								isBroadcastActive={isBroadcastActive}
 								finalIsEnded={finalIsEnded}
 								outcome={outcome}
+								isAuthor={isAuthor}
 							/>
 						</div>
 					) : (
@@ -246,6 +250,7 @@ export default function WatchMatchClient({
 							finalIsEnded: finalIsEnded,
 							outcome: outcome,
 							hideTimers: true,
+							isAuthor: isAuthor,
 						}}
 					/>
 				</div>

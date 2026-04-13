@@ -25,6 +25,7 @@ export interface ChessBoardProps {
 	currentMoveData: Move;
 	outcome: string | undefined;
 	hideTimers?: boolean;
+	isAuthor?: boolean;
 }
 
 interface ChessTimerProps {
@@ -130,6 +131,7 @@ export function ChessBoard({
 	currentMoveData,
 	outcome,
 	hideTimers = false,
+	isAuthor = false,
 }: ChessBoardProps) {
 	console.log("[watch/[id]/chess_board.tsx:ChessBoard]", {
 		onMove,
@@ -290,7 +292,7 @@ export function ChessBoard({
 						isBroadcastActive ||
 						finalIsEnded ||
 						isManualStarted
-					) && (
+					) && isAuthor && (
 						<button
 							className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 p-3 z-10 border-4 rounded-lg bg-amber-900 border-amber-700 hover:bg-amber-800 hover:border-amber-600"
 							onClick={() => handleStart()}
