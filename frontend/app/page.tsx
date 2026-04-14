@@ -1,4 +1,5 @@
 import { LiveMatchesList } from "@/components/live_matches_list";
+import Link from "next/link";
 
 export default async function HomePage() {
 	console.log("[page.tsx:HomePage]");
@@ -28,12 +29,12 @@ export default async function HomePage() {
 					<h2 className="text-xl font-semibold text-slate-200 uppercase tracking-widest">
 						Live
 					</h2>
-					<a
+					<Link
 						href="/all-matches?category=live"
 						className="text-blue-400 text-sm hover:underline"
 					>
 						See All
-					</a>
+					</Link>
 				</div>
 				<LiveMatchesList liveMatches={liveMatches} styles={styles} />
 			</section>
@@ -42,12 +43,12 @@ export default async function HomePage() {
 					<h2 className="text-xl font-semibold text-slate-200 uppercase tracking-widest">
 						Planned
 					</h2>
-					<a
+					<Link
 						href="/all-matches?category=planned"
 						className="text-blue-400 text-sm hover:underline"
 					>
 						See All
-					</a>
+					</Link>
 				</div>
 				<LiveMatchesList liveMatches={plannedMatches} styles={styles} />
 			</section>

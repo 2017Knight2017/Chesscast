@@ -1,5 +1,6 @@
 import { LiveMatchesList } from "@/components/live_matches_list";
 import { Pagination } from "@/components/pagination";
+import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 
 const CATEGORIES = ["live", "planned", "finished"] as const;
@@ -86,9 +87,9 @@ export default async function UserMatchesPage({
 			<h1 className="text-3xl font-serif font-bold border-b-2 border-oak/80 pb-4">
 				{decodedUsername} — {CATEGORY_TITLES[category]}
 			</h1>
-			<a href={`/member/${decodedUsername}`} className="mb-0 -mt-6 block text-xl font-semibold text-slate-200/30 uppercase tracking-widest">
+			<Link href={`/member/${decodedUsername}`} className="mb-0 -mt-6 block text-xl font-semibold text-slate-200/30 uppercase tracking-widest">
 				← Back
-			</a>
+			</Link>
 
 			<section className="space-y-6">
 				<div className="flex justify-between items-end mt-4">

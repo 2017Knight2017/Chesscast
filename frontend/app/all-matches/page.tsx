@@ -1,5 +1,6 @@
 import { LiveMatchesList } from "@/components/live_matches_list";
 import { Pagination } from "@/components/pagination";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 const CATEGORIES = ["live", "planned"] as const;
@@ -74,9 +75,9 @@ export default async function AllMatchesPage({
 
 	return (
 		<main className="max-w-7xl mx-auto px-6 pt-24 py-12 flex flex-col gap-8">
-			<a href="/" className="text-xl font-semibold text-slate-200/30 uppercase tracking-widest">
+			<Link href="/" className="text-xl font-semibold text-slate-200/30 uppercase tracking-widest">
 				← Back
-			</a>
+			</Link>
 			<section>
 				<div className="flex justify-between items-end mb-6">
 					<h2 className="text-xl font-semibold text-slate-200 uppercase tracking-widest">

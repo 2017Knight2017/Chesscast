@@ -1,4 +1,5 @@
 import { LiveMatchesList } from "@/components/live_matches_list";
+import Link from "next/link";
 
 export default async function DashboardPage({
 	params,
@@ -57,12 +58,12 @@ export default async function DashboardPage({
 							<span className="w-3 h-3 rounded-full bg-red-500 animate-pulse inline-block mr-2"></span>
 							Live
 						</h2>
-						<a
+						<Link
 							href={`/member/${decodedUsername}/matches?category=live`}
 							className="text-blue-400 text-sm hover:underline"
 						>
 							See All
-						</a>
+						</Link>
 					</div>
 					<LiveMatchesList liveMatches={liveMatches} styles={styles} />
 				</section>
@@ -72,12 +73,12 @@ export default async function DashboardPage({
 						<h2 className="text-2xl font-semibold border-oak/80 border-l-4 pl-4">
 							Planned
 						</h2>
-						<a
+						<Link
 							href={`/member/${decodedUsername}/matches?category=planned`}
 							className="text-blue-400 text-sm hover:underline"
 						>
 							See All
-						</a>
+						</Link>
 					</div>
 					<LiveMatchesList liveMatches={plannedMatches} styles={styles} />
 				</section>
@@ -87,12 +88,12 @@ export default async function DashboardPage({
 						<h2 className="text-2xl font-semibold border-oak/80 border-l-4 pl-4">
 							Finished
 						</h2>
-						<a
+						<Link
 							href={`/member/${decodedUsername}/matches?category=finished`}
 							className="text-blue-400 text-sm hover:underline"
 						>
 							See All
-						</a>
+						</Link>
 					</div>
 					<LiveMatchesList liveMatches={finishedMatches} styles={styles} />
 				</section>
