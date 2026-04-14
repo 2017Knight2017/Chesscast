@@ -101,7 +101,7 @@ export function ParaboardList({ id, setIsSpectatorTab, username }: ParaboardList
 						))}
 				</div>
 			) : (
-				<h3 className="text-stone-900 text-2xl">Login to follow multiple matches at once!</h3>
+				<h3 className="absolute -top-10 left-0 px-3 py-1 bg-stone-900/90 text-orange-200 text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] rounded-t-sm border-l-3 border-oak shadow-lg backdrop-blur-sm">Login to follow multiple matches at once!</h3>
 			)}
 		</div>
 	);

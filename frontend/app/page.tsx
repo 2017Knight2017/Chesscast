@@ -10,10 +10,12 @@ export default async function HomePage() {
 			headers: { "Content-Type": "application/json" },
 		}),
 	]);
-	const [liveMatches, plannedMatches] = await Promise.all([
+	const [liveData, plannedData] = await Promise.all([
 		liveRes.json(),
 		plannedRes.json(),
 	]);
+	const liveMatches = liveData.matches || liveData;
+	const plannedMatches = plannedData.matches || plannedData;
 	console.log(liveMatches);
 	console.log(plannedMatches);
 	const styles =
@@ -26,11 +28,12 @@ export default async function HomePage() {
 					<h2 className="text-xl font-semibold text-slate-200 uppercase tracking-widest">
 						Live
 					</h2>
-					{/*
-					<button className="text-blue-400 text-sm hover:underline">
+					<a
+						href="/all-matches?category=live"
+						className="text-blue-400 text-sm hover:underline"
+					>
 						See All
-					</button>
-					*/}
+					</a>
 				</div>
 				<LiveMatchesList liveMatches={liveMatches} styles={styles} />
 			</section>
@@ -39,11 +42,12 @@ export default async function HomePage() {
 					<h2 className="text-xl font-semibold text-slate-200 uppercase tracking-widest">
 						Planned
 					</h2>
-					{/*
-					<button className="text-blue-400 text-sm hover:underline">
+					<a
+						href="/all-matches?category=planned"
+						className="text-blue-400 text-sm hover:underline"
+					>
 						See All
-					</button>
-					*/}
+					</a>
 				</div>
 				<LiveMatchesList liveMatches={plannedMatches} styles={styles} />
 			</section>

@@ -7,19 +7,22 @@ import { Match } from "@/types/types";
 export function LiveMatchesList({
 	liveMatches,
 	styles,
+	maxItems = 10,
 }: {
 	liveMatches: Match[];
 	styles: string;
+	maxItems?: number;
 }) {
 	console.log("[live_matches_list.tsx:LiveMatchesList]", {
 		matchCount: liveMatches.length,
 	});
-	const matchIds = liveMatches.map((m) => m.id);
+	const displayMatches = liveMatches.slice(0, maxItems);
+	const matchIds = displayMatches.map((m) => m.id);
 	const { cumulativeCounts } = useViewerCounts(matchIds);
 
 	return (
 		<div className={styles}>
-			{liveMatches.map((match: Match) => (
+			{displayMatches.map((match: Match) => (
 				<LiveCard
 					key={match.id}
 					match={match}

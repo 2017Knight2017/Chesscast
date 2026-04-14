@@ -156,17 +156,154 @@ export class MatchesService {
 		};
 	}
 
+	async getUserMatchesAll({
+		username,
+		category,
+		page = 1,
+		limit = 25,
+	}: {
+		username: string;
+		category: 'live' | 'planned' | 'finished';
+		page?: number;
+		limit?: number;
+	}): Promise<{ matches: Match[]; total: number; page: number; limit: number; totalPages: number }> {
+		this.logger.log('getUserMatchesAll called');
+
+		const user = await this.db.query.users.findFirst({
+			where: eq(sc.users.username, username),
+			columns: { id: true },
+		});
+
+		if (!user) {
+			throw new Error('User not found');
+		}
+
+		const categoryStatusMap = {
+			live: ['in_progress'],
+			planned: ['waiting', 'processing'],
+			finished: ['finished'],
+		};
+
+		const statusFilter = categoryStatusMap[category];
+
+		const ownedMatches = await this.db
+			.select({
+				id: sc.matches.id,
+				author: sc.users.username,
+				title: sc.matches.title,
+				status: sc.matches.status,
+				whitePlayer: sc.matches.whitePlayer,
+				blackPlayer: sc.matches.blackPlayer,
+				whitePlayerTime: sc.matches.whitePlayerTime,
+				blackPlayerTime: sc.matches.blackPlayerTime,
+				timeControl: sc.analysis.timeControl,
+				fen: sc.matches.fen,
+				newestMoveAt: sc.matches.newestMoveAt,
+			})
+			.from(sc.matches)
+			.innerJoin(sc.users, eq(sc.matches.author, sc.users.username))
+			.innerJoin(sc.analysis, eq(sc.analysis.id, sc.matches.id))
+			.innerJoin(
+				sc.plannedBroadcasts,
+				eq(sc.matches.id, sc.plannedBroadcasts.matchId),
+			)
+			.where(eq(sc.plannedBroadcasts.userId, user.id));
+
+		const followedMatches = await this.db
+			.select({
+				id: sc.matches.id,
+				author: sc.users.username,
+				title: sc.matches.title,
+				status: sc.matches.status,
+				whitePlayer: sc.matches.whitePlayer,
+				blackPlayer: sc.matches.blackPlayer,
+				whitePlayerTime: sc.matches.whitePlayerTime,
+				blackPlayerTime: sc.matches.blackPlayerTime,
+				timeControl: sc.analysis.timeControl,
+				fen: sc.matches.fen,
+				newestMoveAt: sc.matches.newestMoveAt,
+			})
+			.from(sc.matches)
+			.innerJoin(sc.users, eq(sc.matches.author, sc.users.username))
+			.innerJoin(sc.analysis, eq(sc.analysis.id, sc.matches.id))
+			.innerJoin(
+				sc.followedBroadcasts,
+				eq(sc.matches.id, sc.followedBroadcasts.matchId),
+			)
+			.where(eq(sc.followedBroadcasts.userId, user.id));
+
+		const allMatches = Array.from(
+			new Map(
+				[...ownedMatches, ...followedMatches].map((m) => [m.id, m])
+			).values()
+		);
+
+		const filteredMatches = allMatches.filter((m) =>
+			statusFilter.includes(m.status),
+		);
+
+		const total = filteredMatches.length;
+
+		const paginatedMatches = filteredMatches
+			.sort((a, b) => {
+				const aTime = a.newestMoveAt?.getTime() || 0;
+				const bTime = b.newestMoveAt?.getTime() || 0;
+				return bTime - aTime;
+			})
+			.slice((page - 1) * limit, page * limit);
+
+		const viewerCounts = await Promise.all(
+			paginatedMatches.map((match) => this.redisService.getViewerData(match.id)),
+		);
+
+		const matches = paginatedMatches.map((match, index) => ({
+			id: match.id,
+			title: match.title,
+			author: match.author,
+			timeControl: match.timeControl,
+			status: match.status,
+			white: {
+				name: match.whitePlayer,
+				time: formatTime(match.whitePlayerTime),
+				timeMs: match.whitePlayerTime,
+			},
+			black: {
+				name: match.blackPlayer,
+				time: formatTime(match.blackPlayerTime),
+				timeMs: match.blackPlayerTime,
+			},
+			fen: match.fen || '',
+			viewerCount:
+				viewerCounts[index].count + viewerCounts[index].guestCount || 0,
+			newestMoveAt: match.newestMoveAt?.getTime(),
+		}));
+
+		return {
+			matches,
+			total,
+			page,
+			limit,
+			totalPages: Math.ceil(total / limit),
+		};
+	}
+
 	async getMatchesByTable({
 		table,
 		isJoinTable,
 		username,
 		status,
+		page = 1,
+		limit = 25,
+		paginate = false,
 	}: {
 		table: PgTableWithColumns<any>;
 		isJoinTable: boolean;
 		username?: string;
 		status?: Match['status'];
-	}): Promise<Match[]> {
+		page?: number;
+		limit?: number;
+		paginate?: boolean;
+	}): Promise<{ matches: Match[]; total: number; page: number; limit: number; totalPages: number } | Match[]> {
 		this.logger.log('getMatchesByTable called');
 
 		const query = this.db
@@ -196,7 +333,7 @@ export class MatchesService {
 			if (!user) {
 			    throw new Error('User not found');
 			}
-			
+
 			query
 				.innerJoin(table, eq(sc.matches.id, table.matchId as string))
 				.where(eq(table.userId, user.id));
@@ -204,31 +341,94 @@ export class MatchesService {
 			query.where(eq(sc.matches.status, status));
 		}
 
-		const raw = await query.orderBy(desc(sc.matches.createdAt)).limit(10);
-		const viewerCounts = await Promise.all(
-			raw.map((match) => this.redisService.getViewerData(match.id)),
-		);
+		if (paginate) {
+			const countQuery = this.db
+				.select({ count: sc.matches.id })
+				.from(sc.matches)
+				.innerJoin(sc.users, eq(sc.matches.author, sc.users.username))
+				.innerJoin(sc.analysis, eq(sc.analysis.id, sc.matches.id));
 
-		return raw.map((match, index) => ({
-			id: match.id,
-			title: match.title,
-			author: match.author,
-			timeControl: match.timeControl,
-			status: match.status,
-			white: {
-				name: match.whitePlayer,
-				time: formatTime(match.whitePlayerTime),
-				timeMs: match.whitePlayerTime,
-			},
-			black: {
-				name: match.blackPlayer,
-				time: formatTime(match.blackPlayerTime),
-				timeMs: match.blackPlayerTime,
-			},
-			fen: match.fen || '',
-			viewerCount:
-				viewerCounts[index].count + viewerCounts[index].guestCount || 0,
-			newestMoveAt: match.newestMoveAt?.getTime(),
-		}));
+			if (isJoinTable && username) {
+				const user = await this.db.query.users.findFirst({
+					where: eq(sc.users.username, username),
+					columns: { id: true }
+				});
+
+				if (!user) {
+					throw new Error('User not found');
+				}
+
+				countQuery
+					.innerJoin(table, eq(sc.matches.id, table.matchId as string))
+					.where(eq(table.userId, user.id));
+			} else if (status) {
+				countQuery.where(eq(sc.matches.status, status));
+			}
+
+			const totalResult = await countQuery;
+			const total = totalResult.length;
+
+			const raw = await query.orderBy(desc(sc.matches.createdAt)).limit(limit).offset((page - 1) * limit);
+			const viewerCounts = await Promise.all(
+				raw.map((match) => this.redisService.getViewerData(match.id)),
+			);
+
+			const matches = raw.map((match, index) => ({
+				id: match.id,
+				title: match.title,
+				author: match.author,
+				timeControl: match.timeControl,
+				status: match.status,
+				white: {
+					name: match.whitePlayer,
+					time: formatTime(match.whitePlayerTime),
+					timeMs: match.whitePlayerTime,
+				},
+				black: {
+					name: match.blackPlayer,
+					time: formatTime(match.blackPlayerTime),
+					timeMs: match.blackPlayerTime,
+				},
+				fen: match.fen || '',
+				viewerCount:
+					viewerCounts[index].count + viewerCounts[index].guestCount || 0,
+				newestMoveAt: match.newestMoveAt?.getTime(),
+			}));
+
+			return {
+				matches,
+				total,
+				page,
+				limit,
+				totalPages: Math.ceil(total / limit),
+			};
+		} else {
+			const raw = await query.orderBy(desc(sc.matches.createdAt)).limit(15);
+			const viewerCounts = await Promise.all(
+				raw.map((match) => this.redisService.getViewerData(match.id)),
+			);
+
+			return raw.map((match, index) => ({
+				id: match.id,
+				title: match.title,
+				author: match.author,
+				timeControl: match.timeControl,
+				status: match.status,
+				white: {
+					name: match.whitePlayer,
+					time: formatTime(match.whitePlayerTime),
+					timeMs: match.whitePlayerTime,
+				},
+				black: {
+					name: match.blackPlayer,
+					time: formatTime(match.blackPlayerTime),
+					timeMs: match.blackPlayerTime,
+				},
+				fen: match.fen || '',
+				viewerCount:
+					viewerCounts[index].count + viewerCounts[index].guestCount || 0,
+				newestMoveAt: match.newestMoveAt?.getTime(),
+			}));
+		}
 	}
 }

@@ -40,7 +40,7 @@ export class MatchCronService {
 				await this.matchLifecycleService.startBroadcast(match.id);
 			} catch (err) {
 				this.logger.error(
-					`Ошибка запуска таймера для ${match.id}:`,
+					`Launching error for ${match.id}:`,
 					err,
 				);
 			}

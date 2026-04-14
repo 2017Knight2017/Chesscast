@@ -3,6 +3,7 @@ import {
 	Post,
 	Get,
 	Param,
+	Query,
 	HttpCode,
 	HttpStatus,
 	Body,
@@ -150,6 +151,32 @@ export class MatchesController {
 		return await this.matchesService.checkGameState(id);
 	}
 
+	@Get(':username/all')
+	async getUserAllMatches(
+		@Param('username') username: string,
+		@Query('category') category: 'live' | 'planned' | 'finished',
+		@Query('page') page?: string,
+		@Query('limit') limit?: string,
+	) {
+		this.logger.log('getUserAllMatches called');
+
+		if (!category || !['live', 'planned', 'finished'].includes(category)) {
+			throw new Error('Invalid category. Must be one of: live, planned, finished');
+		}
+
+		const pageNum = page ? parseInt(page, 10) : 1;
+		const limitNum = limit ? parseInt(limit, 10) : 25;
+
+		const result = await this.matchesService.getUserMatchesAll({
+			username,
+			category,
+			page: pageNum,
+			limit: limitNum,
+		});
+
+		return result;
+	}
+
 	@Get(':username/followed')
 	async getMyFollowed(@Param('username') username: string) {
 		this.logger.log('getMyFollowed called');
@@ -204,22 +231,44 @@ export class MatchesController {
 	}
 
 	@Get('planned')
-	async getPlanned(): Promise<Match[]> {
+	async getPlanned(
+		@Query('page') page?: string,
+		@Query('limit') limit?: string,
+	) {
 		this.logger.log('getPlanned called');
-		return this.matchesService.getMatchesByTable({
+		const pageNum = page ? parseInt(page, 10) : 1;
+		const limitNum = limit ? parseInt(limit, 10) : 25;
+
+		const result = await this.matchesService.getMatchesByTable({
 			table: sc.matches,
 			isJoinTable: false,
 			status: 'waiting',
+			page: pageNum,
+			limit: limitNum,
+			paginate: true,
 		});
+
+		return result;
 	}
 
 	@Get('live')
-	async getLiveMatches(): Promise<Match[]> {
+	async getLiveMatches(
+		@Query('page') page?: string,
+		@Query('limit') limit?: string,
+	) {
 		this.logger.log('getLiveMatches called');
-		return this.matchesService.getMatchesByTable({
+		const pageNum = page ? parseInt(page, 10) : 1;
+		const limitNum = limit ? parseInt(limit, 10) : 25;
+
+		const result = await this.matchesService.getMatchesByTable({
 			table: sc.matches,
 			isJoinTable: false,
 			status: 'in_progress',
+			page: pageNum,
+			limit: limitNum,
+			paginate: true,
 		});
+
+		return result;
 	}
 }

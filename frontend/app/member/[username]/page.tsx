@@ -25,10 +25,13 @@ export default async function DashboardPage({
 			throw new Error("User not found");
 		}
 
-		const [ownedMatches, followedMatches] = await Promise.all([
+		const [ownedData, followedData] = await Promise.all([
 			ownedRes.json(),
 			followedRes.json(),
 		]);
+
+		const ownedMatches = ownedData.matches || ownedData;
+		const followedMatches = followedData.matches || followedData;
 
 		const allUniqueMatches = Array.from(
 			new Map(
@@ -49,24 +52,48 @@ export default async function DashboardPage({
 				</header>
 
 				<section className="space-y-6">
-					<h2 className="text-2xl font-semibold border-oak/80 border-l-4 pl-4">
-						<span className="w-3 h-3 rounded-full bg-red-500 animate-pulse"></span>
-						Live 
-					</h2>
+					<div className="flex justify-between items-end">
+						<h2 className="text-2xl font-semibold border-oak/80 border-l-4 pl-4">
+							<span className="w-3 h-3 rounded-full bg-red-500 animate-pulse inline-block mr-2"></span>
+							Live
+						</h2>
+						<a
+							href={`/member/${decodedUsername}/matches?category=live`}
+							className="text-blue-400 text-sm hover:underline"
+						>
+							See All
+						</a>
+					</div>
 					<LiveMatchesList liveMatches={liveMatches} styles={styles} />
 				</section>
 
 				<section className="space-y-6">
-					<h2 className="text-2xl font-semibold border-oak/80 border-l-4 pl-4">
-						Planned
-					</h2>
+					<div className="flex justify-between items-end">
+						<h2 className="text-2xl font-semibold border-oak/80 border-l-4 pl-4">
+							Planned
+						</h2>
+						<a
+							href={`/member/${decodedUsername}/matches?category=planned`}
+							className="text-blue-400 text-sm hover:underline"
+						>
+							See All
+						</a>
+					</div>
 					<LiveMatchesList liveMatches={plannedMatches} styles={styles} />
 				</section>
 
 				<section className="space-y-6">
-					<h2 className="text-2xl font-semibold border-oak/80 border-l-4 pl-4">
-						Finished 
-					</h2>
+					<div className="flex justify-between items-end">
+						<h2 className="text-2xl font-semibold border-oak/80 border-l-4 pl-4">
+							Finished
+						</h2>
+						<a
+							href={`/member/${decodedUsername}/matches?category=finished`}
+							className="text-blue-400 text-sm hover:underline"
+						>
+							See All
+						</a>
+					</div>
 					<LiveMatchesList liveMatches={finishedMatches} styles={styles} />
 				</section>
 			</div>
