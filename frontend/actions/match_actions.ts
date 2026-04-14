@@ -6,6 +6,7 @@ import { cookies } from "next/headers";
 export interface StartMatchResponse {
 	success: boolean;
 	message: string;
+	isLimitError?: boolean;
 }
 
 export async function createMatchAction({
@@ -89,9 +90,18 @@ export async function createMatchAction({
 
 		if (!res.ok) {
 			const errorData = await res.json();
+			const message = errorData.message || "Error on creating a broadcast";
+			// Check if the error is about the active matches limit
+			if (message.toLowerCase().includes("limit")) {
+				return {
+					success: false,
+					message,
+					isLimitError: true,
+				};
+			}
 			return {
 				success: false,
-				message: errorData.message || "Error on creating a broadcast",
+				message,
 			};
 		}
 

@@ -177,16 +177,6 @@ export class MatchesController {
 		return result;
 	}
 
-	@Get(':username/followed')
-	async getMyFollowed(@Param('username') username: string) {
-		this.logger.log('getMyFollowed called');
-		return this.matchesService.getMatchesByTable({
-			table: sc.followedBroadcasts,
-			isJoinTable: true,
-			username: username,
-		});
-	}
-
 	@Post(':id/follow')
 	@UseGuards(JwtAuthGuard)
 	@HttpCode(HttpStatus.CREATED)
@@ -218,16 +208,6 @@ export class MatchesController {
 			id,
 		);
 		return { isFollowing };
-	}
-
-	@Get(':username/planned')
-	async getMyPlanned(@Param('username') username: string) {
-		this.logger.log('getMyPlanned called');
-		return this.matchesService.getMatchesByTable({
-			table: sc.plannedBroadcasts,
-			isJoinTable: true,
-			username: username,
-		});
 	}
 
 	@Get('planned')

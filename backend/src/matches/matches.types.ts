@@ -18,7 +18,10 @@ export interface Match {
 	timesRemaining?: number[] | null;
 	outcome?: string;
 	newestMoveAt?: number;
+	isFollowed?: boolean;
 }
+
+export const MAX_ACTIVE_MATCHES_PER_USER = 10;
 
 export const ARCHETYPE_OPTIONS = {
 	'Desired archetype. Keep empty if unsure': undefined,

@@ -1,5 +1,6 @@
 import { LiveMatchesList } from "@/components/live_matches_list";
 import Link from "next/link";
+import { Match } from "@/types/types";
 
 export default async function DashboardPage({
 	params,
@@ -12,37 +13,28 @@ export default async function DashboardPage({
 	const styles = "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6";
 
 	try {
-		const [ownedRes, followedRes] = await Promise.all([
-			fetch(`${process.env.NEST_API_URL}/matches/${decodedUsername}/planned`, { 
-				cache: 'no-store'
-			}),
-			fetch(`${process.env.NEST_API_URL}/matches/${decodedUsername}/followed`, { 
-				cache: 'no-store' 
-			}),
-		]);
+		const categories = ["live", "planned", "finished"] as const;
+		const results = await Promise.all(
+			categories.map((cat) =>
+				fetch(
+					`${process.env.NEST_API_URL}/matches/${decodedUsername}/all?category=${cat}&page=1&limit=100`,
+					{ cache: "no-store" }
+				)
+			)
+		);
 
-		if (!ownedRes.ok || !followedRes.ok) {
-			console.log(ownedRes.status)
+		if (results.some((r) => !r.ok)) {
+			console.log(results.map((r) => r.status));
 			throw new Error("User not found");
 		}
 
-		const [ownedData, followedData] = await Promise.all([
-			ownedRes.json(),
-			followedRes.json(),
-		]);
-
-		const ownedMatches = ownedData.matches || ownedData;
-		const followedMatches = followedData.matches || followedData;
-
-		const allUniqueMatches = Array.from(
-			new Map(
-				[...followedMatches, ...ownedMatches].map((m) => [m.id, m])
-			).values()
+		const [liveData, plannedData, finishedData] = await Promise.all(
+			results.map((r) => r.json())
 		);
 
-		const liveMatches = allUniqueMatches.filter(m => m.status === "in_progress");
-		const plannedMatches = allUniqueMatches.filter(m => m.status === "waiting" || m.status === "processing");
-		const finishedMatches = allUniqueMatches.filter(m => m.status === "finished");
+		const liveMatches: Match[] = liveData.matches || [];
+		const plannedMatches: Match[] = plannedData.matches || [];
+		const finishedMatches: Match[] = finishedData.matches || [];
 
 		return (
 			<div className="max-w-6xl mx-auto p-6 pt-20 space-y-12">

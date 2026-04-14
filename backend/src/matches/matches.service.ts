@@ -1,15 +1,14 @@
-import { Injectable, Inject, Logger } from '@nestjs/common';
+import { Injectable, Inject, Logger, BadRequestException } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, and, ne, count } from 'drizzle-orm';
 import { Queue } from 'bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
 import { PgTableWithColumns } from 'drizzle-orm/pg-core';
 import * as sc from '../schema';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { RedisService } from 'src/redis/redis.service';
-import { EngineService } from './engine.service';
 import { ArchetypeService } from './archetype.service';
-import { Match } from './matches.types';
+import { Match, MAX_ACTIVE_MATCHES_PER_USER } from './matches.types';
 import { formatTime } from './utils/format-time';
 
 @Injectable()
@@ -62,6 +61,13 @@ export class MatchesService {
 			blackPlayer,
 			archetypes,
 		);
+
+		const activeCount = await this.getActiveMatchesCount(author);
+		if (activeCount >= MAX_ACTIVE_MATCHES_PER_USER) {
+			throw new BadRequestException(
+				`Limit: ${MAX_ACTIVE_MATCHES_PER_USER} active matches maximum at a time. Wait for them to finish or delete them manually.`,
+			);
+		}
 
 		const [analysis] = await this.db
 			.insert(sc.analysis)
@@ -232,20 +238,26 @@ export class MatchesService {
 			)
 			.where(eq(sc.followedBroadcasts.userId, user.id));
 
+		const followedSet = new Set(followedMatches.map((m) => m.id));
+
 		const allMatches = Array.from(
 			new Map(
-				[...ownedMatches, ...followedMatches].map((m) => [m.id, m])
+				[...followedMatches, ...ownedMatches].map((m) => [m.id, m])
 			).values()
 		);
 
-		const filteredMatches = allMatches.filter((m) =>
-			statusFilter.includes(m.status),
-		);
+		const filteredMatches = allMatches
+			.map((m) => ({ ...m, isFollowed: followedSet.has(m.id) }))
+			.filter((m) => statusFilter.includes(m.status));
 
 		const total = filteredMatches.length;
 
 		const paginatedMatches = filteredMatches
 			.sort((a, b) => {
+				// followed матчи идут первыми
+				if (a.isFollowed && !b.isFollowed) return -1;
+				if (!a.isFollowed && b.isFollowed) return 1;
+				// затем сортировка по дате
 				const aTime = a.newestMoveAt?.getTime() || 0;
 				const bTime = b.newestMoveAt?.getTime() || 0;
 				return bTime - aTime;
@@ -276,6 +288,7 @@ export class MatchesService {
 			viewerCount:
 				viewerCounts[index].count + viewerCounts[index].guestCount || 0,
 			newestMoveAt: match.newestMoveAt?.getTime(),
+			isFollowed: match.isFollowed,
 		}));
 
 		return {
@@ -403,7 +416,7 @@ export class MatchesService {
 				totalPages: Math.ceil(total / limit),
 			};
 		} else {
-			const raw = await query.orderBy(desc(sc.matches.createdAt)).limit(15);
+			const raw = await query.orderBy(desc(sc.matches.createdAt)).limit(10);
 			const viewerCounts = await Promise.all(
 				raw.map((match) => this.redisService.getViewerData(match.id)),
 			);
@@ -430,5 +443,18 @@ export class MatchesService {
 				newestMoveAt: match.newestMoveAt?.getTime(),
 			}));
 		}
+	}
+
+	private async getActiveMatchesCount(username: string): Promise<number> {
+		const result = await this.db
+			.select({ count: count() })
+			.from(sc.matches)
+			.where(
+				and(
+					eq(sc.matches.author, username),
+					ne(sc.matches.status, 'finished'),
+				),
+			);
+		return Number(result[0].count);
 	}
 }

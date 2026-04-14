@@ -13,6 +13,7 @@ export interface Match {
 	timesRemaining?: number[];
 	outcome?: string;
 	newestMoveAt?: number;
+	isFollowed?: boolean;
 }
 
 export interface Move {
@@ -78,4 +79,12 @@ export interface CreateMatchData {
 	bonusTimeMin: number;
 	newTimeIncrement: number;
 	nextControlMoveAfter: number;
+}
+
+export interface UserMatchesResponse {
+	matches: Match[];
+	total: number;
+	page: number;
+	limit: number;
+	totalPages: number;
 }

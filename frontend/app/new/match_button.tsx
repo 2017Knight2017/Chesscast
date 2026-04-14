@@ -52,18 +52,18 @@ export default function CreateMatchButton({
 	const handleClick = () => {
 		console.log("[new/match_button.tsx:handleClick]");
 		let errorMessage = "";
-		if (!pgn.trim()) errorMessage += "PGN не может быть пустым\n";
+		if (!pgn.trim()) errorMessage += "PGN cannot be empty\n";
 		if (!title.trim())
-			errorMessage += "Название партии не может быть пустым\n";
+			errorMessage += "Broadcast title cannot be empty\n";
 		if (!whitePlayer.trim())
-			errorMessage += "Имя игрока 1 не может быть пустым\n";
+			errorMessage += "White player name cannot be empty\n";
 		if (!blackPlayer.trim())
-			errorMessage += "Имя игрока 2 не может быть пустым\n";
+			errorMessage += "Black player name cannot be empty\n";
 		if (!/^([0-9]+:)?[0-5]?[0-9]$/.test(timeControlStr!))
-			errorMessage += "Неверный формат временного контроля\n";
+			errorMessage += "Invalid time control format\n";
 		const scheduledDate = new Date(scheduledAt);
 		if (isNaN(scheduledDate.getTime()) || scheduledDate < new Date())
-			errorMessage += "Неверная дата и время трансляции\n";
+			errorMessage += "Invalid broadcast date and time\n";
 		if (errorMessage != "") {
 			alert(errorMessage);
 			return;
@@ -89,6 +89,8 @@ export default function CreateMatchButton({
 
 			if (result.success) {
 				alert("Success: " + result.message);
+			} else if (result.isLimitError) {
+				alert("⚠️ " + result.message);
 			} else {
 				alert("Error: " + result.message);
 			}

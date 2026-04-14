@@ -1,16 +1,11 @@
 import { LiveMatchesList } from "@/components/live_matches_list";
 import { Pagination } from "@/components/pagination";
+import { UserMatchesResponse } from "@/types/types";
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 
 const CATEGORIES = ["live", "planned", "finished"] as const;
 type Category = (typeof CATEGORIES)[number];
-
-const CATEGORY_STATUS_MAP: Record<Category, string[]> = {
-	live: ["in_progress"],
-	planned: ["waiting", "processing"],
-	finished: ["finished"],
-};
 
 const CATEGORY_TITLES: Record<Category, string> = {
 	live: "Live Matches",
@@ -69,8 +64,12 @@ export default async function UserMatchesPage({
 		);
 	}
 
-	const data = await res.json();
-	const matches = data.matches || [];
+	const data: UserMatchesResponse = await res.json();
+	const matches = Array.from(
+		new Map(
+			data.matches.map((m) => [m.id, m])
+		).values()
+	);
 	const totalPages = data.totalPages || 1;
 
 	if (currentPage > totalPages) {
