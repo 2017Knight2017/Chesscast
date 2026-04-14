@@ -177,6 +177,14 @@ export class MatchesController {
 		return result;
 	}
 
+	@Delete(':id')
+	@UseGuards(JwtAuthGuard)
+	@HttpCode(HttpStatus.NO_CONTENT)
+	async deleteMatch(@Request() req: userRequest, @Param('id') id: string) {
+		this.logger.log(`deleteMatch called: userId=${req.user.id}, matchId=${id}`);
+		await this.matchesService.deleteMatch(id, req.user.username);
+	}
+
 	@Post(':id/follow')
 	@UseGuards(JwtAuthGuard)
 	@HttpCode(HttpStatus.CREATED)

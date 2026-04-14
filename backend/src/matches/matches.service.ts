@@ -445,6 +445,26 @@ export class MatchesService {
 		}
 	}
 
+	async deleteMatch(matchId: string, username: string): Promise<void> {
+		this.logger.log('deleteMatch called', JSON.stringify({ matchId, username }));
+
+		const match = await this.db.query.matches.findFirst({
+			where: eq(sc.matches.id, matchId),
+		});
+
+		if (!match) {
+			throw new BadRequestException('Match not found');
+		}
+
+		if (match.author !== username) {
+			throw new BadRequestException('Only the match author can delete it');
+		}
+
+		await this.db.delete(sc.matches).where(eq(sc.matches.id, matchId));
+
+		await this.redisService.clearMatchData(matchId);
+	}
+
 	private async getActiveMatchesCount(username: string): Promise<number> {
 		const result = await this.db
 			.select({ count: count() })

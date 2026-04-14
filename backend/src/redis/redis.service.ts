@@ -100,4 +100,34 @@ export class RedisService {
 		const key = `analysis_cache:match:${matchId}:user:${userId}`;
 		await this.redis.del(key);
 	}
+
+	async clearMatchData(matchId: string) {
+		this.logger.log('clearMatchData called');
+		const keys = [
+			`match:${matchId}:viewers_list`,
+			`match:${matchId}:guest_viewers_list`,
+			`match:${matchId}:user_statuses`,
+			`analysis_cache:match:${matchId}:user:*`,
+		];
+
+		await this.redis.del(
+			keys.filter((k) => !k.endsWith('*')),
+		);
+
+		const pattern = `analysis_cache:match:${matchId}:user:*`;
+		let cursor = 0;
+		do {
+			const [nextCursor, foundKeys] = await this.redis.scan(
+				cursor,
+				'MATCH',
+				pattern,
+				'COUNT',
+				100,
+			);
+			cursor = Number(nextCursor);
+			if (foundKeys.length > 0) {
+				await this.redis.del(...foundKeys);
+			}
+		} while (cursor !== 0);
+	}
 }
