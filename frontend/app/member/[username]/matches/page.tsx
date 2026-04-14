@@ -82,15 +82,16 @@ export default async function UserMatchesPage({
 		"grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6";
 
 	return (
-		<div className="max-w-6xl mx-auto p-6 pt-20 space-y-12">
-			<header>
-				<h1 className="text-3xl font-serif font-bold border-b-2 border-oak/80 pb-4">
-					{decodedUsername} — {CATEGORY_TITLES[category]}
-				</h1>
-			</header>
+		<div className="max-w-6xl mx-auto p-6 pt-22 space-y-12">
+			<h1 className="text-3xl font-serif font-bold border-b-2 border-oak/80 pb-4">
+				{decodedUsername} — {CATEGORY_TITLES[category]}
+			</h1>
+			<a href={`/member/${decodedUsername}`} className="mb-0 -mt-6 block text-xl font-semibold text-slate-200/30 uppercase tracking-widest">
+				← Back
+			</a>
 
 			<section className="space-y-6">
-				<div className="flex justify-between items-end">
+				<div className="flex justify-between items-end mt-4">
 					<h2 className="text-2xl font-semibold border-oak/80 border-l-4 pl-4">
 						{category === "live" && (
 							<span className="w-3 h-3 rounded-full bg-red-500 animate-pulse inline-block mr-2" />

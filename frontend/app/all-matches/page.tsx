@@ -74,6 +74,9 @@ export default async function AllMatchesPage({
 
 	return (
 		<main className="max-w-7xl mx-auto px-6 pt-24 py-12 flex flex-col gap-8">
+			<a href="/" className="text-xl font-semibold text-slate-200/30 uppercase tracking-widest">
+				← Back
+			</a>
 			<section>
 				<div className="flex justify-between items-end mb-6">
 					<h2 className="text-xl font-semibold text-slate-200 uppercase tracking-widest">
@@ -84,13 +87,7 @@ export default async function AllMatchesPage({
 					</span>
 				</div>
 
-				{matches.length > 0 ? (
-					<LiveMatchesList liveMatches={matches} styles={styles} maxItems={limit}/>
-				) : (
-					<p className="text-slate-400 text-center py-12">
-						No {category} matches available at the moment.
-					</p>
-				)}
+				<LiveMatchesList liveMatches={matches} styles={styles} maxItems={limit}/>
 
 				<Pagination
 					currentPage={currentPage}
