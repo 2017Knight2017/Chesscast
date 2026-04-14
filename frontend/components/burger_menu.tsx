@@ -61,11 +61,11 @@ export function BurgerMenu({ username, token }: BurgerMenuProps) {
 				<div className="overflow-hidden">
 					<div className="bg-[#f4ead5] flex flex-col items-start p-6 rounded-b-lg shadow-2xl gap-4 text-xl border border-[#3e2b1d1a]">
 						<Link
-							href="/"
+							href="/about"
 							onClick={toggleMenu}
 							className="text-[#3e2b1d] opacity-80 hover:opacity-100 transition-opacity w-full"
 						>
-							Matches
+							About
 						</Link>
 						<Link
 							href="/new"
@@ -74,7 +74,6 @@ export function BurgerMenu({ username, token }: BurgerMenuProps) {
 						>
 							Create
 						</Link>
-
 						{username ? (
 							<Link
 								href={`/member/${username}`}

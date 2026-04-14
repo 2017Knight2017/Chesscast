@@ -97,7 +97,7 @@ export default function BroadcastPage() {
 					<span>New Broadcast</span>
 				</div>
 			</div>
-			<div className="bg-orange-50/10 backdrop-blur-sm p-4 size-full max-w-3xl border border-oak-dark/20 shadow-lg">
+			<main className="bg-orange-50/10 backdrop-blur-sm p-4 size-full max-w-3xl border border-oak-dark/20 shadow-lg">
 				<div className="bg-orange-50 border-l-4 border-oak-dark shadow-xl">
 					<div className="flex border-b border-oak bg-amber-50/50">
 						{[
@@ -448,7 +448,7 @@ export default function BroadcastPage() {
 						)}
 					</div>
 				</div>
-			</div>
+			</main>
 		</div>
 	);
 }

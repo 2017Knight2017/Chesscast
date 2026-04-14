@@ -21,7 +21,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-	title: "Chesscast — Online Chess Tournament Broadcasting Platform",
+	title: "Chesscast — Online Chess Broadcasting Platform",
 	description:
 		"Chesscast is a platform for broadcasting chess games of the masters of the past. Anticipate the next move along with a grandmaster!",
 };
@@ -69,10 +69,10 @@ export default async function RootLayout({
 
 						<nav className="hidden md:flex items-center gap-8 ml-10">
 							<Link
-								href="/"
+								href="/about"
 								className="text-[#d9c5b2]/70 hover:text-[#d9c5b2] transition-colors"
 							>
-								Matches
+								About
 							</Link>
 							<Link
 								href="/new"
