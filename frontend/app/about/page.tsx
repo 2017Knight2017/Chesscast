@@ -24,7 +24,7 @@ export default function AboutPage() {
 						which I was the most familiar with.<br /><br /> 
 
 						The idea of using it in a broadcasting website came to me while I was watching a video 
-						called "how we made our own Onlyfans" (this <a href={videoLink}>video </a> is family-friendly, 
+						called <a className="hover:underline text-stone-600" href={videoLink}>"how we made our own Onlyfans"</a> (this video is family-friendly, 
 						i promise). In this video, the author explained the architecture of contemporary web-applications 
 						and various useful utilities, including Redis, Docker, asynchronous worker-processes, etc. 
 						"Why can't I make something alike?" — I thought then.<br /><br />
