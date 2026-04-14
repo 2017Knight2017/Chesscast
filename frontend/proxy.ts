@@ -3,7 +3,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const protectedRoutes = ['/new', '/member'];
+const protectedRoutes = ['/new'];
 
 const authRoutes = ['/login', '/register'];
 
