@@ -70,27 +70,27 @@ const VIRTUAL_MOVES_TILL_END = 15
 func init() {
 	logFile, err := os.OpenFile("worker.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Ошибка при открытии файла логов: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Failed to open log file: %v\n", err)
 		logger = log.New(os.Stdout, "[WORKER] ", log.LstdFlags|log.Lshortfile)
 	} else {
 		logger = log.New(logFile, "[WORKER] ", log.LstdFlags|log.Lshortfile)
 	}
 
-	logger.Println("=== Запуск worker ===")
+	logger.Println("=== Worker started ===")
 	loadArchetypes("archetypes.json")
 }
 
 func loadArchetypes(path string) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		logger.Printf("Внимание: не удалось загрузить %s: %v", path, err)
+		logger.Printf("Warning: failed to load %s: %v", path, err)
 		return
 	}
 	err = json.Unmarshal(data, &archetypesCache)
 	if err != nil {
-		logger.Fatalf("Ошибка парсинга архетипов: %v", err)
+		logger.Fatalf("Failed to parse archetypes: %v", err)
 	}
-	logger.Printf("Архетипы загружены успешно (всего: %d)", len(archetypesCache))
+	logger.Printf("Archetypes loaded successfully (total: %d)", len(archetypesCache))
 }
 
 func getBias(name string) Bias {
@@ -153,14 +153,14 @@ func ProcessGame(
 		nextControlAfter = 0
 	}
 
-	logger.Printf("Начинаем обработку матча %s с архетипами %v", matchID, archNames)
+	logger.Printf("Processing match %s with archetypes %v", matchID, archNames)
 
 	biasWhite := getBias(archNames[0])
 	biasBlack := getBias(archNames[1])
 
 	scanner := chess.NewScanner(strings.NewReader(pgn))
 	if !scanner.Scan() {
-		return fmt.Errorf("не удалось прочитать PGN или файл пуст")
+		return fmt.Errorf("failed to read PGN or file is empty")
 	}
 
 	game := scanner.Next()
@@ -195,11 +195,11 @@ func ProcessGame(
 	engPath := "/usr/games/stockfish"
 	eng, err := NewLongLivedEngine(ctx, engPath)
 	if err != nil {
-		return fmt.Errorf("не удалось запустить движок: %v", err)
+		return fmt.Errorf("failed to start engine: %v", err)
 	}
 	defer eng.Close()
 
-	logger.Printf("Начинаем обработку %d полуходов. EngPath: %s", len(moves), engPath)
+	logger.Printf("Processing %d half-moves. Engine path: %s", len(moves), engPath)
 
 	for _, move := range moves {
 		select {
@@ -277,7 +277,7 @@ func ProcessGame(
 	}
 
 	reportAnalysis(matchID, evaluations, timesRemaining, notation, string(game.Outcome()))
-	logger.Printf("Игра %s обработана: %d полуходов", matchID, len(evaluations))
+	logger.Printf("Match %s processed: %d half-moves", matchID, len(evaluations))
 	return nil
 }
 
@@ -386,7 +386,7 @@ type LongLivedEngine struct {
 }
 
 func NewLongLivedEngine(ctx context.Context, path string) (*LongLivedEngine, error) {
-	logger.Printf("Создаем движок: %s", path)
+	logger.Printf("Creating engine: %s", path)
 	cmd := exec.CommandContext(ctx, path)
 
 	stdin, err := cmd.StdinPipe()
@@ -399,7 +399,7 @@ func NewLongLivedEngine(ctx context.Context, path string) (*LongLivedEngine, err
 		return nil, err
 	}
 
-	logger.Println("Запускаем движок...")
+	logger.Println("Starting engine...")
 	err = cmd.Start()
 	if err != nil {
 		return nil, err
@@ -422,7 +422,7 @@ func NewLongLivedEngine(ctx context.Context, path string) (*LongLivedEngine, err
 
 	fmt.Fprintf(eng.stdin, "setoption name MultiPV value 3\n")
 
-	logger.Println("Движок успешно инициализирован")
+	logger.Println("Engine initialized successfully")
 	return eng, nil
 }
 
@@ -534,7 +534,7 @@ func calculateMoveTimeWithEngine(ctx context.Context, eng *LongLivedEngine, time
 
 	fenFunc, err := chess.FEN(fen)
 	if err != nil {
-		return 0, 0, 0, fmt.Errorf("ошибка парсинга FEN: %v", err)
+		return 0, 0, 0, fmt.Errorf("failed to parse FEN: %v", err)
 	}
 
 	game := chess.NewGame(fenFunc)
@@ -584,7 +584,7 @@ func calculateMoveTimeWithEngine(ctx context.Context, eng *LongLivedEngine, time
 
 func reportAnalysis(matchID string, evaluations []int, timesRemaining []int, notation []string, outcome string) {
 	url := fmt.Sprintf("%s/matches/%s/report", os.Getenv("BACKEND_URL"), matchID)
-	logger.Printf("Отправляем отчет для матча %s на URL: %s", matchID, url)
+	logger.Printf("Sending report for match %s to URL: %s", matchID, url)
 
 	if outcome == "*" {
 		outcome = "1/2-1/2"
@@ -599,21 +599,21 @@ func reportAnalysis(matchID string, evaluations []int, timesRemaining []int, not
 
 	data, err := json.Marshal(payload)
 	if err != nil {
-		logger.Printf("Ошибка маршалинга: %v", err)
+		logger.Printf("Marshaling error: %v", err)
 		return
 	}
 
 	client := &http.Client{Timeout: 5 * time.Second}
 	resp, err := client.Post(url, "application/json", bytes.NewBuffer(data))
 	if err != nil {
-		logger.Printf("Ошибка при связи с бэкендом: %v", err)
+		logger.Printf("Failed to communicate with backend: %v", err)
 		return
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
-		logger.Printf("Бэкенд вернул ошибку: %s", resp.Status)
+		logger.Printf("Backend returned error: %s", resp.Status)
 	} else {
-		logger.Printf("Отчет успешно отправлен! (%d полуходов обработано)", len(evaluations))
+		logger.Printf("Report sent successfully! (%d half-moves processed)", len(evaluations))
 	}
 }

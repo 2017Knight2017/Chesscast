@@ -30,11 +30,11 @@ func main() {
 
 	go func() {
 		<-sigChan
-		fmt.Println("\n[MAIN] Получен сигнал завершения, останавливаем воркер...")
+		fmt.Println("\n[MAIN] Received shutdown signal, stopping worker...")
 		cancel()
 	}()
 
-	fmt.Printf("[MAIN] Воркер запущен. Очередь: %s, Redis: %s\n", queueName, redisAddr)
+	fmt.Printf("[MAIN] Worker started. Queue: %s, Redis: %s\n", queueName, redisAddr)
 
 	bullQueueKey := fmt.Sprintf("bull:%s:wait", queueName)
 
@@ -45,7 +45,7 @@ func main() {
 	for {
 		select {
 		case <-ctx.Done():
-			fmt.Println("[MAIN] Ожидание завершения активных задач...")
+			fmt.Println("[MAIN] Waiting for active tasks to complete...")
 			wg.Wait()
 			return
 		default:
@@ -54,7 +54,7 @@ func main() {
 				if err == redis.Nil {
 					continue
 				}
-				log.Printf("[ERROR] Ошибка чтения из Redis: %v", err)
+				log.Printf("[ERROR] Failed to read from Redis: %v", err)
 				time.Sleep(2 * time.Second)
 				continue
 			}
@@ -64,12 +64,12 @@ func main() {
 
 			jobData, err := rdb.HGetAll(ctx, jobKey).Result()
 			if err != nil {
-				log.Printf("[ERROR] Не удалось получить данные задачи %s: %v", jobID, err)
+				log.Printf("[ERROR] Failed to fetch job data for %s: %v", jobID, err)
 				continue
 			}
 
 			if len(jobData) == 0 {
-				log.Printf("[ERROR] Данные задачи %s не найдены в Redis", jobID)
+				log.Printf("[ERROR] Job data for %s not found in Redis", jobID)
 				continue
 			}
 
@@ -89,15 +89,15 @@ func main() {
 
 			if dataStr, exists := jobData["data"]; exists {
 				if err := json.Unmarshal([]byte(dataStr), &jobDataPayload); err != nil {
-					log.Printf("[ERROR] Не удалось распарсить данные задачи: %v", err)
+					log.Printf("[ERROR] Failed to parse job data: %v", err)
 					continue
 				}
 			} else {
-				log.Printf("[ERROR] Поле 'data' не найдено в задаче %s", jobID)
+				log.Printf("[ERROR] Field 'data' not found in job %s", jobID)
 				continue
 			}
 
-			fmt.Printf("[MAIN] Задача %s для матча %s передана в обработку\n", jobID, jobDataPayload.MatchID)
+			fmt.Printf("[MAIN] Job %s for match %s queued for processing\n", jobID, jobDataPayload.MatchID)
 			fmt.Print(jobDataPayload)
 
 			sem <- struct{}{}
@@ -122,9 +122,9 @@ func main() {
 				)
 
 				if err != nil {
-					log.Printf("[ERROR] Ошибка при обработке игры %s: %v", payload.MatchID, err)
+					log.Printf("[ERROR] Failed to process game for match %s: %v", payload.MatchID, err)
 				} else {
-					fmt.Printf("[SUCCESS] Матч %s успешно обработан\n", payload.MatchID)
+					fmt.Printf("[SUCCESS] Match %s processed successfully\n", payload.MatchID)
 				}
 			}(jobDataPayload)
 		}

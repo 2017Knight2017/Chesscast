@@ -28,20 +28,20 @@ func TestProcessGame(t *testing.T) {
 	newIncrement := 30
 	archetypes := []string{"attacker", "pragmatic"}
 
-	fmt.Println("Начинаем тест обработки игры...")
+	fmt.Println("Starting game processing test...")
 
 	ctx := context.Background()
 	err := ProcessGame(ctx, matchID, pgn, initialTime, &controlMove, timeIncrement, &bonusTimeMin, &nextControlAfter, &newIncrement, archetypes)
 
 	if err != nil {
-		t.Errorf("Ошибка при обработке игры: %v", err)
+		t.Errorf("Error processing game: %v", err)
 	}
 }
 
 func TestReportAnalysis(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			t.Errorf("Ожидался POST, пришел %s", r.Method)
+			t.Errorf("Expected POST, got %s", r.Method)
 		}
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status": "ok"}`))
