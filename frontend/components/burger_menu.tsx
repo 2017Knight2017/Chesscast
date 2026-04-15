@@ -67,6 +67,12 @@ export function BurgerMenu({ username, token }: BurgerMenuProps) {
 						>
 							About
 						</Link>
+						<a
+							href="https://github.com/2017Knight2017/chess_tournaments"
+							className="text-[#3e2b1d] opacity-80 hover:opacity-100 transition-opacity w-full"
+						>
+							GitHub
+						</a>
 						<Link
 							href="/new"
 							onClick={toggleMenu}

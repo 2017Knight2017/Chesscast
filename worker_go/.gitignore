@@ -1,0 +1,38 @@
+# Compiled output
+/dist
+/node_modules
+/build
+/drizzle
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+.temp/
+
+# Test files
+test.pgn
+test_*.pgn
+*_test.go
+
+# Archetypes configuration (may contain sensitive tuning data)
+archetypes.json

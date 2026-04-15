@@ -38,7 +38,7 @@ const MoveBtn = memo(({ text, isActive, onClick }: MoveBtnProps) => (
 		className={`flex-1 text-sm rounded px-2 py-1.5 lg:px-1 lg:py-0 text-left whitespace-nowrap transition-colors ${
 			isActive
 				? "bg-amber-400 font-bold text-black shadow-sm"
-				: "hover:bg-black/5"
+				: "hover:bg-black/5 hover:cursor-pointer"
 		}`}
 	>
 		{text}
@@ -92,10 +92,10 @@ interface MovePairItemProps {
 	scrollToActive: (node: HTMLDivElement | null) => void;
 }
 
-const MovePairItem = memo(function MovePairItem({
+const MovePairItem = memo(({
 	pair, whiteIndex, blackIndex, isWhiteActive, isBlackActive, isPairActive,
 	whiteVars, blackVars, activeWhitePath, activeBlackPath, handleMoveClick, handlePathClick, scrollToActive
-}: MovePairItemProps) {
+}: MovePairItemProps) => {
 	
 	const onWhiteClick = useCallback(() => handleMoveClick(whiteIndex), [handleMoveClick, whiteIndex]);
 	const onBlackClick = useCallback(() => handleMoveClick(blackIndex), [handleMoveClick, blackIndex]);
@@ -146,6 +146,7 @@ const MovePairItem = memo(function MovePairItem({
 		</div>
 	);
 });
+MovePairItem.displayName = "MovePairItem";
 
 export function MoveList({ matchHistory: propMatchHistory, currentMoveData, finalIsEnded, isMobile, chessBoardProps }: MoveListProps) {
 	const {

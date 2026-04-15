@@ -1,4 +1,44 @@
+# Docker
 docker-compose.yml
-worker
-main.rs
-Cargo.toml
+docker-compose.override.yml
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Secrets and keys
+*.pem
+*.key
+*.crt
+secrets/
+keys/
+credentials/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Archetype data (may contain sensitive configuration)
+worker_go/archetypes.json

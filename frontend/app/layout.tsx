@@ -69,17 +69,23 @@ export default async function RootLayout({
 
 						<nav className="hidden md:flex items-center gap-8 ml-10">
 							<Link
-								href="/about"
-								className="text-[#d9c5b2]/70 hover:text-[#d9c5b2] transition-colors"
-							>
-								About
-							</Link>
-							<Link
 								href="/new"
 								className="text-[#d9c5b2]/70 hover:text-[#d9c5b2] transition-colors"
 							>
 								Create
 							</Link>
+							<Link
+								href="/about"
+								className="text-[#d9c5b2]/70 hover:text-[#d9c5b2] transition-colors"
+							>
+								About
+							</Link>
+							<a
+								href="https://github.com/2017Knight2017/chess_tournaments"
+								className="text-[#d9c5b2]/70 hover:text-[#d9c5b2] transition-colors"
+							>
+								GitHub
+							</a>
 							{username ? (
 								<Link
 									href={`/member/${username}`}
