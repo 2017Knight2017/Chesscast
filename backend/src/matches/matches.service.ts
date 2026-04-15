@@ -3,13 +3,11 @@ import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { eq, desc, and, ne, count } from 'drizzle-orm';
 import { Queue } from 'bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
-import { PgTableWithColumns } from 'drizzle-orm/pg-core';
 import * as sc from '../schema';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
 import { RedisService } from 'src/redis/redis.service';
 import { ArchetypeService } from './archetype.service';
 import { Match, MAX_ACTIVE_MATCHES_PER_USER } from './matches.types';
-import { formatTime } from './utils/format-time';
 
 @Injectable()
 export class MatchesService {
@@ -144,12 +142,10 @@ export class MatchesService {
 			evaluations: analysis.evaluations.slice(0, match.moveIndex) || null,
 			white: {
 				name: match.whitePlayer,
-				time: formatTime(Math.floor(match.whitePlayerTime / 1000)),
 				timeMs: match.whitePlayerTime,
 			},
 			black: {
 				name: match.blackPlayer,
-				time: formatTime(Math.floor(match.blackPlayerTime / 1000)),
 				timeMs: match.blackPlayerTime,
 			},
 			fen: match.fen || '',
@@ -254,10 +250,8 @@ export class MatchesService {
 
 		const paginatedMatches = filteredMatches
 			.sort((a, b) => {
-				// followed матчи идут первыми
 				if (a.isFollowed && !b.isFollowed) return -1;
 				if (!a.isFollowed && b.isFollowed) return 1;
-				// затем сортировка по дате
 				const aTime = a.newestMoveAt?.getTime() || 0;
 				const bTime = b.newestMoveAt?.getTime() || 0;
 				return bTime - aTime;
@@ -276,12 +270,10 @@ export class MatchesService {
 			status: match.status,
 			white: {
 				name: match.whitePlayer,
-				time: formatTime(match.whitePlayerTime),
 				timeMs: match.whitePlayerTime,
 			},
 			black: {
 				name: match.blackPlayer,
-				time: formatTime(match.blackPlayerTime),
 				timeMs: match.blackPlayerTime,
 			},
 			fen: match.fen || '',
@@ -300,24 +292,17 @@ export class MatchesService {
 		};
 	}
 
-	async getMatchesByTable({
-		table,
-		isJoinTable,
-		username,
+	async getMatches({
 		status,
 		page = 1,
 		limit = 25,
-		paginate = false,
 	}: {
-		table: PgTableWithColumns<any>;
-		isJoinTable: boolean;
-		username?: string;
 		status?: Match['status'];
 		page?: number;
 		limit?: number;
 		paginate?: boolean;
 	}): Promise<{ matches: Match[]; total: number; page: number; limit: number; totalPages: number } | Match[]> {
-		this.logger.log('getMatchesByTable called');
+		this.logger.log('getMatches called');
 
 		const query = this.db
 			.select({
@@ -337,112 +322,57 @@ export class MatchesService {
 			.innerJoin(sc.users, eq(sc.matches.author, sc.users.username))
 			.innerJoin(sc.analysis, eq(sc.analysis.id, sc.matches.id));
 
-		if (isJoinTable && username) {
-			const user = await this.db.query.users.findFirst({
-			    where: eq(sc.users.username, username),
-			    columns: { id: true }
-			});
-
-			if (!user) {
-			    throw new Error('User not found');
-			}
-
-			query
-				.innerJoin(table, eq(sc.matches.id, table.matchId as string))
-				.where(eq(table.userId, user.id));
-		} else if (status) {
+		if (status) {
 			query.where(eq(sc.matches.status, status));
 		}
 
-		if (paginate) {
-			const countQuery = this.db
-				.select({ count: sc.matches.id })
-				.from(sc.matches)
-				.innerJoin(sc.users, eq(sc.matches.author, sc.users.username))
-				.innerJoin(sc.analysis, eq(sc.analysis.id, sc.matches.id));
+		let raw;
+		let total = 0;
 
-			if (isJoinTable && username) {
-				const user = await this.db.query.users.findFirst({
-					where: eq(sc.users.username, username),
-					columns: { id: true }
-				});
+		const countQuery = this.db
+			.select({ count: sc.matches.id })
+			.from(sc.matches)
+			.innerJoin(sc.users, eq(sc.matches.author, sc.users.username))
+			.innerJoin(sc.analysis, eq(sc.analysis.id, sc.matches.id));
 
-				if (!user) {
-					throw new Error('User not found');
-				}
-
-				countQuery
-					.innerJoin(table, eq(sc.matches.id, table.matchId as string))
-					.where(eq(table.userId, user.id));
-			} else if (status) {
-				countQuery.where(eq(sc.matches.status, status));
-			}
-
-			const totalResult = await countQuery;
-			const total = totalResult.length;
-
-			const raw = await query.orderBy(desc(sc.matches.createdAt)).limit(limit).offset((page - 1) * limit);
-			const viewerCounts = await Promise.all(
-				raw.map((match) => this.redisService.getViewerData(match.id)),
-			);
-
-			const matches = raw.map((match, index) => ({
-				id: match.id,
-				title: match.title,
-				author: match.author,
-				timeControl: match.timeControl,
-				status: match.status,
-				white: {
-					name: match.whitePlayer,
-					time: formatTime(match.whitePlayerTime),
-					timeMs: match.whitePlayerTime,
-				},
-				black: {
-					name: match.blackPlayer,
-					time: formatTime(match.blackPlayerTime),
-					timeMs: match.blackPlayerTime,
-				},
-				fen: match.fen || '',
-				viewerCount:
-					viewerCounts[index].count + viewerCounts[index].guestCount || 0,
-				newestMoveAt: match.newestMoveAt?.getTime(),
-			}));
-
-			return {
-				matches,
-				total,
-				page,
-				limit,
-				totalPages: Math.ceil(total / limit),
-			};
-		} else {
-			const raw = await query.orderBy(desc(sc.matches.createdAt)).limit(10);
-			const viewerCounts = await Promise.all(
-				raw.map((match) => this.redisService.getViewerData(match.id)),
-			);
-
-			return raw.map((match, index) => ({
-				id: match.id,
-				title: match.title,
-				author: match.author,
-				timeControl: match.timeControl,
-				status: match.status,
-				white: {
-					name: match.whitePlayer,
-					time: formatTime(match.whitePlayerTime),
-					timeMs: match.whitePlayerTime,
-				},
-				black: {
-					name: match.blackPlayer,
-					time: formatTime(match.blackPlayerTime),
-					timeMs: match.blackPlayerTime,
-				},
-				fen: match.fen || '',
-				viewerCount:
-					viewerCounts[index].count + viewerCounts[index].guestCount || 0,
-				newestMoveAt: match.newestMoveAt?.getTime(),
-			}));
+		if (status) {
+			countQuery.where(eq(sc.matches.status, status));
 		}
+
+		const totalResult = await countQuery;
+		total = totalResult.length;
+		raw = await query.orderBy(desc(sc.matches.createdAt)).limit(limit).offset((page - 1) * limit);
+
+		const viewerCounts = await Promise.all(
+			raw.map((match) => this.redisService.getViewerData(match.id)),
+		);
+
+		const matches = raw.map((match, index) => ({
+			id: match.id,
+			title: match.title,
+			author: match.author,
+			timeControl: match.timeControl,
+			status: match.status,
+			white: {
+				name: match.whitePlayer,
+				timeMs: match.whitePlayerTime,
+			},
+			black: {
+				name: match.blackPlayer,
+				timeMs: match.blackPlayerTime,
+			},
+			fen: match.fen || '',
+			viewerCount: viewerCounts[index].count + viewerCounts[index].guestCount || 0,
+			newestMoveAt: match.newestMoveAt?.getTime(),
+		}));
+
+		return {
+			matches,
+			total,
+			page,
+			limit,
+			totalPages: Math.ceil(total / limit),
+		};
 	}
 
 	async deleteMatch(matchId: string, username: string): Promise<void> {

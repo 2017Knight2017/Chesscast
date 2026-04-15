@@ -60,17 +60,32 @@ The repository is organized into four main directories, separating concerns betw
 #### Match Management (`/matches`)
 | Endpoint | Method | Description |
 | :--- | :--- | :--- |
-| `/matches/create` | POST | Initiates a new broadcast. Accepts PGN, archetypes, and time control settings. |
+| `/matches/create` | POST | Initiates a new broadcast. Accepts PGN, archetypes, and time control settings (Requires JWT). |
+| `/matches/:id/report` | POST | Internal endpoint for Go worker to report simulation results (evaluations, times, notation). |
 | `/matches/:id/start` | POST | Triggers the start of a match simulation. |
 | `/matches/:id/state` | GET | Returns the current FEN, clocks, and move history of a match. |
+| `/matches/:username/all` | GET | Lists all matches for a user, filtered by category (live, planned, finished) with pagination. |
+| `/matches/:id` | DELETE | Deletes a match (Requires JWT, must be the owner). |
+| `/matches/:id/follow` | POST | Follows a match (Requires JWT). |
+| `/matches/:id/follow` | DELETE | Unfollows a match (Requires JWT). |
+| `/matches/:id/follow/status` | GET | Returns follow status for the current user (Requires JWT). |
 | `/matches/live` | GET | Lists all currently active broadcasts. |
 | `/matches/planned` | GET | Lists upcoming matches. |
+
+#### Player Registry (`/players`)
+| Endpoint | Method | Description |
+| :--- | :--- | :--- |
+| `/players/search` | GET | Searches for players by name (minimum 2 characters). |
 
 #### User Analysis (`/user-analysis`)
 | Endpoint | Method | Description |
 | :--- | :--- | :--- |
-| `/user-analysis/save` | POST | Persistently saves a move tree branch created by a user. |
-| `/user-analysis/:matchId/:userId` | GET | Retrieves a specific analysis session. |
+| `/user-analysis/by-username/:username` | GET | Retrieves analysis sessions for a specific user by their username. |
+| `/user-analysis/:matchId/:userId` | GET | Retrieves a specific analysis session by match and user ID. |
+| `/user-analysis/save` | POST | Persistently saves a move tree branch created by a user (Requires JWT). |
+| `/user-analysis/save-draft` | POST | Saves analysis state from Redis to the database (Requires JWT). |
+| `/user-analysis/discard` | DELETE | Discards current analysis state from Redis (Requires JWT). |
+| `/user-analysis/is-analyzing/:matchId/:userId` | GET | Checks if a user is currently analyzing a specific match. |
 
 ### 3.2 WebSocket Protocol (Socket.io)
 

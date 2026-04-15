@@ -227,13 +227,10 @@ export class MatchesController {
 		const pageNum = page ? parseInt(page, 10) : 1;
 		const limitNum = limit ? parseInt(limit, 10) : 25;
 
-		const result = await this.matchesService.getMatchesByTable({
-			table: sc.matches,
-			isJoinTable: false,
+		const result = await this.matchesService.getMatches({
 			status: 'waiting',
 			page: pageNum,
 			limit: limitNum,
-			paginate: true,
 		});
 
 		return result;
@@ -248,13 +245,10 @@ export class MatchesController {
 		const pageNum = page ? parseInt(page, 10) : 1;
 		const limitNum = limit ? parseInt(limit, 10) : 25;
 
-		const result = await this.matchesService.getMatchesByTable({
-			table: sc.matches,
-			isJoinTable: false,
+		const result = await this.matchesService.getMatches({
 			status: 'in_progress',
 			page: pageNum,
 			limit: limitNum,
-			paginate: true,
 		});
 
 		return result;

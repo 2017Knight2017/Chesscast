@@ -6,7 +6,7 @@ services:
     command: >
       sh -c "bun run migrate && bun run start:prod"
     environment:
-      - DATABASE_URL=postgresql://admin:BtoiKe22dLq00N78@db:5432/chess_platform?schema=public
+      - DATABASE_URL=postgresql://admin:9eFx3gDjpkdkr8pXBpNxtNKwU7oNd2@db:5432/chess_platform?schema=public
       - REDIS_HOST=redis
       - PORT=3000
       - KEY=8Gs6MfIK9JE0CT22
@@ -65,7 +65,7 @@ services:
       - "5432:5432" 
     environment:
       POSTGRES_USER: admin           
-      POSTGRES_PASSWORD: BtoiKe22dLq00N78    
+      POSTGRES_PASSWORD: 9eFx3gDjpkdkr8pXBpNxtNKwU7oNd2    
       POSTGRES_DB: chess_platform  
     volumes:
       - postgres_data:/var/lib/postgresql/data 
@@ -83,7 +83,7 @@ services:
     ports:
       - "4983:4983"
     environment:
-      - DATABASE_URL=postgresql://admin:BtoiKe22dLq00N78@db:5432/chess_platform?schema=public
+      - DATABASE_URL=postgresql://admin:9eFx3gDjpkdkr8pXBpNxtNKwU7oNd2:5432/chess_platform?schema=public
     depends_on:
       - db
     volumes:
