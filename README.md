@@ -12,19 +12,19 @@ A comprehensive platform for broadcasting and analyzing chess matches with **hum
    ![Main Screen](assets/main.png)
 
 2. **The Broadcast Page**
-   ![Profiles](assets/watch.png)
+   ![Watch](assets/watch.png)
 
 3. **Analysis Board & Move Tree**
    ![Analysis](assets/analysis.png)
 
 4. **Create your own Broadcast**
-   ![History](assets/new.png)
+   ![New](assets/new.png)
 
-5. **Live Matches Lobby**
-   ![Lobby](assets/home.png)
+5. **Homepage**
+   ![Homepage](assets/home.png)
 
 6. **Optimized for Mobile Devices**
-   ![Upload](assets/mobile.png)
+   ![Mobile](assets/mobile.png)
 
 </details>
 
@@ -48,7 +48,6 @@ The platform is built as a **microservices architecture** with the following com
 | **Go Worker** | Go 1.25 + Stockfish | High-performance chess engine analysis and move simulation service |
 | **Database** | PostgreSQL 17 | Persistent storage for users, matches, players, and analysis |
 | **Cache / Queue** | Redis 7 | BullMQ queues, caching, and Socket.IO adapter |
-| **Reverse Proxy** | Nginx | Routes `/api` to backend and `/` to frontend |
 
 ## 🚀 Quick Start
 
@@ -146,4 +145,4 @@ Gemini AI is made by [Google](https://ai.google.dev/gemini-api/docs).
 
 ## 📄 License
 
-This project is licensed under **GNU Public License 3.0**.
+This project is licensed under **GNU Public License v3.0**.
