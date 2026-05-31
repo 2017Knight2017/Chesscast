@@ -2,6 +2,32 @@
 
 A comprehensive platform for broadcasting and analyzing chess matches with **human-like** simulated move times based on player archetypes. Create live broadcasts from static PGN files, where moves are played out in real-time with realistic timing derived from Stockfish engine analysis and player-specific behavioral models.
 
+## 📸 Interface Screenshots
+
+<details>
+<summary><b>🔍 Click to expand gallery (6 Screenshots)</b></summary>
+<br>
+
+1. **Main Broadcast Screen**
+   ![Main Screen](assets/main.png)
+
+2. **The Broadcast Page**
+   ![Profiles](assets/watch.png)
+
+3. **Analysis Board & Move Tree**
+   ![Analysis](assets/analysis.png)
+
+4. **Create your own Broadcast**
+   ![History](assets/new.png)
+
+5. **Live Matches Lobby**
+   ![Lobby](assets/home.png)
+
+6. **Optimized for Mobile Devices**
+   ![Upload](assets/mobile.png)
+
+</details>
+
 ## ✨ Features
 
 - **Live Match Broadcasting** — Upload a PGN and watch it play out in real-time with realistic move times
