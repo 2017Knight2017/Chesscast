@@ -10,7 +10,7 @@ import { ChessBoardProps } from "./chess_board";
 
 interface MobileBottomPanelProps {
 	matchId: string;
-	username: string | null;
+	userId: number | null;
 	onInspectUser: (status: ViewerStatus) => void;
 	currentMoveData: Move | null;
 	usernames: Record<string, ViewerStatus[]>;
@@ -21,7 +21,7 @@ interface MobileBottomPanelProps {
 
 export function MobileBottomPanel({
 	matchId,
-	username,
+	userId,
 	onInspectUser,
 	currentMoveData,
 	usernames,
@@ -79,8 +79,8 @@ export function MobileBottomPanel({
 					)}
 					{activeTab === "boards" && 
 						<ParaboardList 
-							id={matchId}
-							username={username}
+							matchId={matchId}
+							userId={userId}
 						/>}
 					{activeTab === "spectators" && (
 						<SpectatorList

@@ -29,51 +29,70 @@ The platform is built as a **microservices architecture** with the following com
 ### Prerequisites
 
 - **Docker** and **Docker Compose**
-- **Stockfish 16+** (for local worker development)
 - **Bun** (for local backend/frontend development)
+- **Go 1.25+** and **Stockfish 16+** (only if running worker locally)
 
-### Running with Docker
+---
+
+### 🐳 Running with Docker (Easiest)
+
+All environment variables, keys, and database configurations are already pre-configured inside `docker-compose.yml`.
 
 ```bash
 # Clone the repository
 git clone <repository-url>
 cd chess_tournaments
 
-# Configure environment variables (see below)
-
-# Start all services
+# Start all services (Database, Redis, Backend, Frontend, Worker, Nginx)
 docker compose up -d
 
-# Access the application
-# Frontend:  http://localhost
-# Backend:   http://localhost/api
-# Drizzle Studio: http://localhost:4983
+# Access the application on http://localhost
+
 ```
 
-### Running Locally (Development)
+---
 
-#### Backend
+### 💻 Running Locally (Development Mode)
+
+If you want to develop services locally with hot-reload, you still need Docker to run the database and cache. Also you should rename all .env.example files into .env for them to be read as the environment variables.
+
+#### 1. Start Infrastructure Dependencies
+
+```bash
+# Spin up only PostgreSQL and Redis in the background
+docker compose up db redis -d
+
+```
+
+#### 2. Backend Setup
 
 ```bash
 cd backend
 bun install
-bun run migrate          # Run database migrations
-bun run start:dev        # Start development server
+bun run migrate          # Run Drizzle migrations
+bun run seed.ts          # Hydrate database with player's names
+bun run start:dev        # Start NestJS development server
+
 ```
 
-#### Frontend
+#### 3. Frontend Setup
 
 ```bash
 cd frontend
 bun install
-bun run dev              # Start Next.js development server
+bun run dev              # Start Next.js development server on http://localhost:3000
+
 ```
 
-#### Go Worker
+#### 4. Go Worker Setup
+
+Ensure Stockfish is installed on your machine (`brew install stockfish` or `sudo apt install stockfish`).
 
 ```bash
 cd worker_go
-go run main.go worker.go  # Stockfish must be at /usr/games/stockfish
+# Don't forget to set your STOCKFISH_PATH in .env or docker-compose.yml
+go run main.go worker.go
+
 ```
 
 ## 📁 Project Structure
@@ -89,79 +108,16 @@ go run main.go worker.go  # Stockfish must be at /usr/games/stockfish
 └── README.md          # This file
 ```
 
-## 🔑 Environment Variables
+## 📄 Sources
 
-### Backend
-
-| Variable | Purpose |
-|---|---|
-| `DATABASE_URL` | PostgreSQL connection string |
-| `REDIS_HOST` | Redis hostname |
-| `PORT` | Backend port (default: 3000) |
-| `JWT_SECRET` | Secret key for signing JWT tokens |
-| `GEMINI_KEY` | Google AI API key for archetype mapping |
-
-### Frontend
-
-| Variable | Purpose |
-|---|---|
-| `NEXT_PUBLIC_SOCKET_URL` | Public URL for the WebSocket gateway |
-| `NEST_API_URL` | URL of the backend API |
-| `WATCHPACK_POLLING` | Enable file watching in Docker (`true`) |
-
-### Go Worker
-
-| Variable | Purpose |
-|---|---|
-| `BACKEND_URL` | Internal URL for reporting simulation results |
-| `REDIS_URL` | Redis connection string |
-
-## 📖 API Reference
-
-### Authentication (`/auth`)
-
-| Endpoint | Method | Description |
-|---|---|---|
-| `/auth/register` | POST | Register with email, username, password |
-| `/auth/login` | POST | Validate credentials, return JWT |
-| `/auth/profile` | GET | Get current user profile (requires JWT) |
-
-### Match Management (`/matches`)
-
-| Endpoint | Method | Description |
-|---|---|---|
-| `/matches/create` | POST | Create broadcast (accepts PGN, archetypes, time control) |
-| `/matches/:id/start` | POST | Trigger match simulation start |
-| `/matches/:id/state` | GET | Get current FEN, clocks, move history |
-| `/matches/live` | GET | List all active broadcasts |
-| `/matches/planned` | GET | List upcoming matches |
-
-## 🧠 Timing Simulation Logic
-
-The Go Worker uses a **log-normal distribution** to calculate move times based on position complexity:
-
-```
-C = W1 * U + W2 * S + W3 * T
-```
-
-Where:
-- **U (Uncertainty)** — Derived from evaluation delta between top two engine moves
-- **S (Sharpness)** — Deviation of the top move from the average evaluation of top three moves
-- **T (Tactics)** — Ratio of captures and checks among all legal moves
-
-Final move time:
-
-```
-T_move = T_base * C_mult * P * e^(N(0, σ))
-```
-
-Where **P** is the Panic Factor (reduces move time when clock is below 3 minutes).
-
-## 📄 License
-
-This project is proprietary and not licensed for public use.
+Chessground and sound effects are made by [Lichess](https://github.com/lichess-org).
+Gemini AI is made by [Google](https://ai.google.dev/gemini-api/docs).
 
 ## 📚 Additional Resources
 
 - [DOCUMENTATION.md](./DOCUMENTATION.md) — Comprehensive technical documentation
 - [Nginx Configuration](./nginx/default.conf) — Reverse proxy setup
+
+## 📄 License
+
+This project is licensed under **GNU Public License 3.0**.

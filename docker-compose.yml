@@ -4,18 +4,18 @@ services:
     ports:
       - "3001:3000"
     command: >
-      sh -c "bun run migrate && bun run start:prod"
+      sh -c "bun run migrate && bun run dist/seed.js && bun run start:prod"
     environment:
-      - DATABASE_URL=postgresql://admin:9eFx3gDjpkdkr8pXBpNxtNKwU7oNd2@db:5432/chess_platform?schema=public
+      - DATABASE_URL=postgresql://admin:DBPASSWORD@db:5432/chess_platform?schema=public
       - REDIS_HOST=redis
       - PORT=3000
-      - KEY=8Gs6MfIK9JE0CT22
-      - GEMINI_KEY=AIzaSyCqKK67QHLslTaSQkWygaMMJB2-nqEeajw
+      - JWTKEY=YOURJWTKEY
+      # Needs to be filled for archetype generation to work. Otherwise, random
+      # archetype will be chosen unless user enters it manually on the /new page.
+      - GEMINI_KEY=your_gemini_apikey  
     depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_started
+      - db
+      - redis
 
   frontend:
     build: 
@@ -29,22 +29,11 @@ services:
       - /app/.next
     depends_on:
       - redis
+      - backend
     environment:
       - WATCHPACK_POLLING=true
       - NEST_API_URL=http://backend:3000
       - NEXT_PUBLIC_SOCKET_URL=http://localhost:3001
-
-  #worker:
-  #  build: ./worker
-  #  depends_on:
-  #    - redis
-  #  deploy:
-  #    resources:
-  #      limits:
-  #        cpus: '2.0'
-  #        memory: 512M
-  #  environment:
-  #    - BACKEND_URL=http://backend:3000
   
   worker:
     build: ./worker_go
@@ -52,6 +41,7 @@ services:
     environment:
       - REDIS_URL=redis:6379
       - BACKEND_URL=http://backend:3000
+      - STOKFISH_PATH=/usr/games/stockfish
     volumes:
       - ./logs:/root/logs
     depends_on:
@@ -65,7 +55,7 @@ services:
       - "5432:5432" 
     environment:
       POSTGRES_USER: admin           
-      POSTGRES_PASSWORD: 9eFx3gDjpkdkr8pXBpNxtNKwU7oNd2    
+      POSTGRES_PASSWORD: DBPASSWORD    
       POSTGRES_DB: chess_platform  
     volumes:
       - postgres_data:/var/lib/postgresql/data 
@@ -83,7 +73,7 @@ services:
     ports:
       - "4983:4983"
     environment:
-      - DATABASE_URL=postgresql://admin:9eFx3gDjpkdkr8pXBpNxtNKwU7oNd2:5432/chess_platform?schema=public
+      - DATABASE_URL=postgresql://admin:DBPASSWORD:5432/chess_platform?schema=public
     depends_on:
       - db
     volumes:

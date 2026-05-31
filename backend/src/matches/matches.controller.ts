@@ -218,6 +218,15 @@ export class MatchesController {
 		return { isFollowing };
 	}
 
+	@Get(':userId/followed')
+	async getFollowed(
+		@Param('userId') userId: number
+	) {
+		this.logger.log('getFollowed called');
+		const result = await this.followService.getFollowed(userId);
+		return result;
+	}
+	
 	@Get('planned')
 	async getPlanned(
 		@Query('page') page?: string,

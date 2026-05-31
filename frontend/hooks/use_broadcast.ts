@@ -11,8 +11,8 @@ export const useBroadcast = (matchId: string, initialMatch?: Match) => {
 		if (initialMatch) {
 			return {
 				fen: initialMatch.fen,
-				whiteTimeMs: initialMatch.white?.timeMs ?? 0,
-				blackTimeMs: initialMatch.black?.timeMs ?? 0,
+				whiteTimeMs: initialMatch.whitePlayerTime ?? 0,
+				blackTimeMs: initialMatch.blackPlayerTime ?? 0,
 				newestMoveAt: initialMatch.newestMoveAt ?? 0,
 				turn: initialMatch.fen.split(" ")[1],
 				evaluations: initialMatch.evaluations || [],
@@ -66,8 +66,8 @@ export const useBroadcast = (matchId: string, initialMatch?: Match) => {
 				if (data?.fen && !hasLiveMove.current) {
 					setCurrentMoveData({
 						fen: data.fen,
-						whiteTimeMs: data.white?.timeMs ?? 0,
-						blackTimeMs: data.black?.timeMs ?? 0,
+						whiteTimeMs: data.whitePlayerTime ?? 0,
+						blackTimeMs: data.blackPlayerTime ?? 0,
 						newestMoveAt: data.newestMoveAt ?? 0,
 						turn: data.fen.split(" ")[1],
 						evaluations: data.evaluations || [],

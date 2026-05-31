@@ -5,40 +5,40 @@ import { Match } from "@/types/types";
 import { ChessPreview } from "@/components/chess_preview";
 
 interface ParaboardListProps {
-	id: string;
+	matchId: string;
 	setIsSpectatorTab?: (value: boolean) => void;
-	username: string | null
+	userId: number | null
 }
 
-export function ParaboardList({ id, setIsSpectatorTab, username }: ParaboardListProps) {
-	console.log("[watch/[id]/paraboard_list.tsx:ParaboardList]", { id });
+export function ParaboardList({ matchId, setIsSpectatorTab, userId }: ParaboardListProps) {
+	console.log("[watch/[id]/paraboard_list.tsx:ParaboardList]", { matchId });
 
 	const [followedMatches, setFollowedMatches] = useState<Match[]>([]);
 
 	useEffect(() => {
 		const fetchFollowedMatches = async () => {
-			if (!username) return
+			if (!userId) return
 			try {
 				const res = await fetch(
-					`${process.env.NEXT_PUBLIC_SOCKET_URL}/matches/${username}/followed`, { 
+					`${process.env.NEXT_PUBLIC_SOCKET_URL}/matches/${userId}/followed`, { 
 						cache: 'no-store' 
 					},
 				);
 
 				if (!res.ok) {
-					throw new Error("Failed to fetch followed matches");
+					throw new Error(res.status.toString());
 				}
 
 				const data = await res.json();
 				console.log(JSON.stringify(data))
 				setFollowedMatches(data);
-			} catch (err: unknown) {
+			} catch (err) {
 				console.error("Error fetching followed matches:", err);
 			}
 		};
 
 		fetchFollowedMatches();
-	}, [id]);
+	}, [matchId]);
 
 	return (
 		<div className="h-full flex flex-col p-4 border-l-4 border-oak bg-orange-50 shadow-inner overflow-hidden">
@@ -92,10 +92,10 @@ export function ParaboardList({ id, setIsSpectatorTab, username }: ParaboardList
 					</div>
 				)}
 			</div>
-			{username ? (
+			{userId ? (
 				<div className={`grid grid-cols-3 lg:grid-cols-2 gap-2 overflow-y-auto`}>
 					{followedMatches
-						.filter((match) => match.id !== id)
+						.filter((match) => match.id !== matchId)
 						.map((match) => (
 							<ChessPreview key={match.id} match={match} />
 						))}

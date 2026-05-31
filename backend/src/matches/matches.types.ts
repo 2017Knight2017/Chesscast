@@ -7,8 +7,10 @@ export interface Match {
 	id: string;
 	title: string;
 	author: string;
-	white: { name: string; timeMs?: number };
-	black: { name: string; timeMs?: number };
+	whitePlayer: string;
+	blackPlayer: string;
+	whitePlayerTime: number;
+	blackPlayerTime: number;
 	status: 'processing' | 'waiting' | 'in_progress' | 'finished';
 	timeControl: number;
 	fen: string;

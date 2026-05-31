@@ -192,7 +192,7 @@ func ProcessGame(
 	openingTill := rand.Intn(8) + 10
 	isControlMoveReached := false
 
-	engPath := "/usr/games/stockfish"
+	engPath := os.Getenv("STOCKFISH_PATH")
 	eng, err := NewLongLivedEngine(ctx, engPath)
 	if err != nil {
 		return fmt.Errorf("failed to start engine: %v", err)

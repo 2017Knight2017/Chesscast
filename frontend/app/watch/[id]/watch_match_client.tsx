@@ -96,9 +96,9 @@ export default function WatchMatchClient({
 						)}
 						{!isSpectatorTab && (
 							<ParaboardList
-								id={match.id}
+								matchId={match.id}
 								setIsSpectatorTab={setIsSpectatorTab}
-								username={user?.username ?? null}
+								userId={user?.id ?? null}
 							/>
 						)}
 					</div>
@@ -228,7 +228,7 @@ export default function WatchMatchClient({
 				<div className="mt-auto">
 					<MobileBottomPanel
 						matchId={match.id}
-						username={user?.username ?? null}
+						userId={user?.id ?? null}
 						onInspectUser={handleInspectUser}
 						currentMoveData={currentMoveData}
 						usernames={usernames}

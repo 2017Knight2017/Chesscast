@@ -11,7 +11,7 @@ import { DrizzleModule } from '../drizzle/drizzle.module';
 		PassportModule,
 		DrizzleModule,
 		JwtModule.register({
-			secret: process.env.KEY || 'default_secret_key',
+			secret: process.env.JWTKEY || 'default_secret_key',
 			signOptions: { expiresIn: '1d' },
 		}),
 	],

@@ -41,8 +41,7 @@ Supporting infrastructure includes PostgreSQL (persistent storage), Redis (cachi
 │   └── Dockerfile
 ├── nginx/                  # Reverse Proxy configuration
 │   └── default.conf        # Routing for /api and /socket.io
-├── DOCUMENTATION.md        # Comprehensive technical documentation
-└── names.csv               # Player names dataset
+└── DOCUMENTATION.md        # Comprehensive technical documentation
 ```
 
 ---

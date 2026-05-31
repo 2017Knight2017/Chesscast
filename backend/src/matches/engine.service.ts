@@ -100,10 +100,7 @@ export class EngineService {
 
 			nextDelay = Math.max(
 				0,
-				nextTimeBefore +
-					nextIncrementMs +
-					nextBonusTimeMs -
-					nextTimeAfter,
+				nextTimeBefore + nextIncrementMs + nextBonusTimeMs - nextTimeAfter,
 			);
 		}
 

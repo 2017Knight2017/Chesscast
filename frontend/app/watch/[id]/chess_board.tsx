@@ -280,7 +280,7 @@ export function ChessBoard({
 						data={clockData}
 						initial={initialTime}
 						isWhite={false}
-						playerName={match.black.name}
+						playerName={match.blackPlayer}
 						isAnalysisMode={isAnalysisMode}
 						isPaused={isPaused}
 					/>
@@ -378,7 +378,7 @@ export function ChessBoard({
 						data={clockData}
 						initial={initialTime}
 						isWhite={true}
-						playerName={match.white.name}
+						playerName={match.whitePlayer}
 						isAnalysisMode={isAnalysisMode}
 						isPaused={isPaused}
 					/>

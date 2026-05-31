@@ -6,11 +6,6 @@ import { redirect } from "next/navigation";
 const CATEGORIES = ["live", "planned"] as const;
 type Category = (typeof CATEGORIES)[number];
 
-const CATEGORY_STATUS_MAP: Record<Category, string[]> = {
-	live: ["in_progress"],
-	planned: ["waiting", "processing"],
-};
-
 const CATEGORY_TITLES: Record<Category, string> = {
 	live: "Live Matches",
 	planned: "Planned Matches",

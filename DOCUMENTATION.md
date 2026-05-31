@@ -69,6 +69,7 @@ The repository is organized into four main directories, separating concerns betw
 | `/matches/:id/follow` | POST | Follows a match (Requires JWT). |
 | `/matches/:id/follow` | DELETE | Unfollows a match (Requires JWT). |
 | `/matches/:id/follow/status` | GET | Returns follow status for the current user (Requires JWT). |
+| `/matches/:userId/followed` | GET | Lists all broadcasts, followed by the user. |
 | `/matches/live` | GET | Lists all currently active broadcasts. |
 | `/matches/planned` | GET | Lists upcoming matches. |
 

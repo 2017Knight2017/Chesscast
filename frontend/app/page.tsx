@@ -1,6 +1,8 @@
 import { LiveMatchesList } from "@/components/live_matches_list";
 import Link from "next/link";
 
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
 	console.log("[page.tsx:HomePage]");
 	const [liveRes, plannedRes] = await Promise.all([

@@ -6,16 +6,17 @@ import {
 	NotFoundException,
 } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import * as sc from '../schema';
 import { DrizzleAsyncProvider } from '../drizzle/drizzle.provider';
+import { Match } from './matches.types';
 
 @Injectable()
 export class FollowService {
 	private readonly logger = new Logger(FollowService.name);
 
 	constructor(
-		@Inject(DrizzleAsyncProvider) private db: NodePgDatabase<typeof sc>,
+		@Inject(DrizzleAsyncProvider) private db: NodePgDatabase<typeof sc>
 	) {}
 
 	async followMatch(userId: number, matchId: string) {
@@ -23,7 +24,6 @@ export class FollowService {
 			`followMatch called: userId=${userId}, matchId=${matchId}`,
 		);
 
-		// Проверяем, существует ли матч
 		const match = await this.db.query.matches.findFirst({
 			where: eq(sc.matches.id, matchId),
 		});
@@ -32,7 +32,6 @@ export class FollowService {
 			throw new NotFoundException(`Match with id ${matchId} not found`);
 		}
 
-		// Проверяем, не подписан ли уже пользователь
 		const existing = await this.db.query.followedBroadcasts.findFirst({
 			where: and(
 				eq(sc.followedBroadcasts.userId, userId),
@@ -44,7 +43,6 @@ export class FollowService {
 			throw new ConflictException('User already following this match');
 		}
 
-		// Добавляем подписку
 		const [result] = await this.db
 			.insert(sc.followedBroadcasts)
 			.values({
@@ -88,5 +86,51 @@ export class FollowService {
 		});
 
 		return !!existing;
+	}
+
+	async getFollowed(userId: number): Promise<Match[]> {
+		const matchIds = await this.db
+			.select({matchId: sc.followedBroadcasts.matchId})
+			.from(sc.followedBroadcasts)
+			.where(eq(sc.followedBroadcasts.userId, userId));
+
+		if (!matchIds || matchIds.length === 0) {
+			return [];
+		}
+
+		const flatMatchIds = matchIds.map(row => row.matchId);
+		const matches = await this.db
+			.select({
+				id: sc.matches.id,
+				author: sc.users.username,
+				title: sc.matches.title,
+				status: sc.matches.status,
+				whitePlayer: sc.matches.whitePlayer,
+				blackPlayer: sc.matches.blackPlayer,
+				whitePlayerTime: sc.matches.whitePlayerTime,
+				blackPlayerTime: sc.matches.blackPlayerTime,
+				timeControl: sc.analysis.timeControl,
+				fen: sc.matches.fen,
+				newestMoveAt: sc.matches.newestMoveAt,
+			})
+			.from(sc.matches)
+			.where(inArray(sc.matches.id, flatMatchIds))
+			.innerJoin(sc.users, eq(sc.matches.author, sc.users.username))
+			.innerJoin(sc.analysis, eq(sc.analysis.id, sc.matches.id));
+			
+		return matches.map((match) => ({
+			id: match.id,
+			title: match.title,
+			author: match.author,
+			timeControl: match.timeControl,
+			status: match.status,
+			whitePlayer: match.whitePlayer,
+			blackPlayer: match.blackPlayer,
+			whitePlayerTime: match.whitePlayerTime,
+			blackPlayerTime: match.blackPlayerTime,
+			fen: match.fen || '',
+			viewerCount: 0,
+			newestMoveAt: match.newestMoveAt?.getTime(),
+		})); 
 	}
 }

@@ -4,8 +4,10 @@ export interface Match {
 	author: string;
 	timeControl: number;
 	status: "processing" | "waiting" | "in_progress" | "finished";
-	white: { name: string; timeMs?: number };
-	black: { name: string; timeMs?: number };
+	whitePlayer: string;
+	blackPlayer: string;
+	whitePlayerTime: number;
+	blackPlayerTime: number;
 	fen: string;
 	viewerCount: number;
 	history?: string[];
